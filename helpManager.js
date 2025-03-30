@@ -16,12 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
  * Initialise le panneau d'aide latéral
  */
 function initHelpPanel() {
-    // Créer le bouton d'aide dans l'en-tête
+    // Créer le bouton d'aide dans l'en-tête avec texte
     const headerContainer = document.querySelector('.header-container');
     const helpButton = document.createElement('button');
     helpButton.id = 'help-toggle-btn';
     helpButton.className = 'help-btn';
-    helpButton.innerHTML = '<span class="help-icon">?</span>';
+    helpButton.innerHTML = '<span class="help-icon">?</span> <span class="help-text">Aide</span>';
     helpButton.title = "Afficher l'aide";
     headerContainer.appendChild(helpButton);
     
@@ -45,6 +45,12 @@ function initHelpPanel() {
             <div class="help-tab-content active" id="general-tab">
                 <h3>Utilisation générale</h3>
                 <p>Le générateur de code GIFT vous permet de créer facilement des questions au format GIFT pour Moodle.</p>
+                
+                <div class="start-tour-container">
+                    <p><strong>Nouveau sur l'outil ?</strong></p>
+                    <button id="start-tour-from-panel" class="control-btn">Démarrer le tour guidé</button>
+                </div>
+                
                 <h4>Pour commencer</h4>
                 <ol>
                     <li>Renseignez les informations sur l'auteur et le code article (facultatif)</li>
@@ -99,8 +105,9 @@ function initHelpPanel() {
     
     document.body.appendChild(helpPanel);
     
-    // Gérer l'affichage/masquage du panneau
-    helpButton.addEventListener('click', function() {
+    // Gérer l'affichage/masquage du panneau avec correction
+    helpButton.addEventListener('click', function(event) {
+        event.stopPropagation(); // Empêcher la propagation vers le document
         helpPanel.classList.toggle('hidden');
         // Adapter la position du panneau en fonction du scroll
         helpPanel.style.top = window.scrollY + 'px';
@@ -109,6 +116,16 @@ function initHelpPanel() {
     // Fermer le panneau
     const closeBtn = helpPanel.querySelector('.help-close-btn');
     closeBtn.addEventListener('click', function() {
+        helpPanel.classList.add('hidden');
+    });
+    
+    // Empêcher la fermeture quand on clique dans le panneau
+    helpPanel.addEventListener('click', function(event) {
+        event.stopPropagation();
+    });
+    
+    // Fermer le panneau si on clique en dehors
+    document.addEventListener('click', function() {
         helpPanel.classList.add('hidden');
     });
     
@@ -128,16 +145,18 @@ function initHelpPanel() {
         });
     });
     
-    // Fermer le panneau si on clique en dehors
-    document.addEventListener('click', function(event) {
-        if (!helpPanel.contains(event.target) && event.target !== helpButton) {
+    // Démarrer le tour guidé depuis le panneau d'aide
+    const startTourBtn = document.getElementById('start-tour-from-panel');
+    if (startTourBtn) {
+        startTourBtn.addEventListener('click', function() {
             helpPanel.classList.add('hidden');
-        }
-    });
+            startGuidedTour();
+        });
+    }
 }
 
 /**
- * Initialise les tooltips d'aide contextuels
+ * Initialise les tooltips d'aide contextuels (sans icônes)
  */
 function initTooltips() {
     // Définir les éléments qui nécessitent des tooltips et leur contenu
@@ -176,30 +195,12 @@ function initTooltips() {
         }
     ];
     
-    // Créer les tooltips
+    // Créer les tooltips (sans ajouter d'icônes)
     tooltipsConfig.forEach(config => {
         const elements = document.querySelectorAll(config.selector);
         elements.forEach(element => {
-            // Créer l'icône d'aide
-            if (!element.classList.contains('weight-input')) {  // Exclure certains éléments spécifiques
-                const helpIcon = document.createElement('span');
-                helpIcon.className = 'tooltip-icon';
-                helpIcon.innerHTML = 'i';
-                helpIcon.setAttribute('data-tooltip', config.text);
-                
-                // Pour les boutons, ajouter après le texte
-                if (element.tagName === 'BUTTON') {
-                    element.appendChild(document.createTextNode(' '));
-                    element.appendChild(helpIcon);
-                } else {
-                    // Pour les autres éléments, placer à côté
-                    const parent = element.parentNode;
-                    parent.insertBefore(helpIcon, element.nextSibling);
-                }
-            } else {
-                // Pour les éléments spécifiques comme les sélecteurs de poids, ajouter directement le tooltip
-                element.setAttribute('data-tooltip', config.text);
-            }
+            // Ajouter simplement l'attribut data-tooltip sans ajouter d'icône
+            element.setAttribute('data-tooltip', config.text);
         });
     });
     
@@ -237,7 +238,7 @@ function initDynamicTooltips() {
 }
 
 /**
- * Vérifie si c'est la première visite pour proposer le tour guidé
+ * Vérifie si c'est la première visite pour proposer discrètement le tour guidé
  */
 function checkFirstVisit() {
     const hasVisitedBefore = localStorage.getItem('gift_generator_visited');
@@ -246,31 +247,34 @@ function checkFirstVisit() {
         // Marquer comme visité
         localStorage.setItem('gift_generator_visited', 'true');
         
-        // Proposer le tour guidé
-        const tourPrompt = document.createElement('div');
-        tourPrompt.className = 'tour-prompt';
-        tourPrompt.innerHTML = `
-            <div class="tour-prompt-content">
-                <h3>Bienvenue dans le générateur de code GIFT !</h3>
-                <p>Souhaitez-vous suivre un tour guidé pour découvrir les fonctionnalités ?</p>
-                <div class="tour-prompt-buttons">
-                    <button id="start-tour-btn" class="control-btn">Démarrer le tour</button>
-                    <button id="skip-tour-btn">Pas maintenant</button>
-                </div>
+        // Afficher une notification discrète au lieu d'un popup
+        const tourNotification = document.createElement('div');
+        tourNotification.className = 'tour-notification';
+        tourNotification.innerHTML = `
+            <div class="notification-content">
+                <p>Première visite ? Un <strong>tour guidé</strong> est disponible dans le menu d'aide.</p>
+                <button class="close-notification">×</button>
             </div>
         `;
         
-        document.body.appendChild(tourPrompt);
+        document.body.appendChild(tourNotification);
         
-        // Gérer les interactions
-        document.getElementById('start-tour-btn').addEventListener('click', function() {
-            tourPrompt.remove();
-            startGuidedTour();
+        // Gérer la fermeture de la notification
+        const closeBtn = tourNotification.querySelector('.close-notification');
+        closeBtn.addEventListener('click', function() {
+            tourNotification.classList.add('notification-hidden');
+            setTimeout(() => {
+                tourNotification.remove();
+            }, 300);
         });
         
-        document.getElementById('skip-tour-btn').addEventListener('click', function() {
-            tourPrompt.remove();
-        });
+        // Masquer automatiquement après un certain temps
+        setTimeout(() => {
+            tourNotification.classList.add('notification-hidden');
+            setTimeout(() => {
+                tourNotification.remove();
+            }, 300);
+        }, 8000);
     }
 }
 
@@ -390,19 +394,22 @@ function startGuidedTour() {
         const rect = targetElement.getBoundingClientRect();
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         
-        // Couper l'overlay pour laisser apparaître l'élément
+        // Ajouter une marge autour de l'élément pour le cadrage
+        const margin = 10;
+        
+        // Couper l'overlay pour laisser apparaître l'élément avec une marge
         tourOverlay.style.clipPath = `
             polygon(
                 0% 0%, 
                 100% 0%, 
                 100% 100%, 
                 0% 100%, 
-                0% ${rect.top + scrollTop}px, 
-                ${rect.left}px ${rect.top + scrollTop}px, 
-                ${rect.left}px ${rect.bottom + scrollTop}px, 
-                ${rect.right}px ${rect.bottom + scrollTop}px, 
-                ${rect.right}px ${rect.top + scrollTop}px, 
-                0% ${rect.top + scrollTop}px
+                0% ${rect.top + scrollTop - margin}px, 
+                ${rect.left - margin}px ${rect.top + scrollTop - margin}px, 
+                ${rect.left - margin}px ${rect.bottom + scrollTop + margin}px, 
+                ${rect.right + margin}px ${rect.bottom + scrollTop + margin}px, 
+                ${rect.right + margin}px ${rect.top + scrollTop - margin}px, 
+                0% ${rect.top + scrollTop - margin}px
             )
         `;
         
@@ -411,23 +418,23 @@ function startGuidedTour() {
         switch (step.position) {
             case 'top':
                 tooltipX = rect.left + rect.width / 2;
-                tooltipY = rect.top + scrollTop - 10;
+                tooltipY = rect.top + scrollTop - 20;
                 break;
             case 'bottom':
                 tooltipX = rect.left + rect.width / 2;
-                tooltipY = rect.bottom + scrollTop + 10;
+                tooltipY = rect.bottom + scrollTop + 20;
                 break;
             case 'left':
-                tooltipX = rect.left - 10;
+                tooltipX = rect.left - 20;
                 tooltipY = rect.top + scrollTop + rect.height / 2;
                 break;
             case 'right':
-                tooltipX = rect.right + 10;
+                tooltipX = rect.right + 20;
                 tooltipY = rect.top + scrollTop + rect.height / 2;
                 break;
             default:
                 tooltipX = rect.left + rect.width / 2;
-                tooltipY = rect.bottom + scrollTop + 10;
+                tooltipY = rect.bottom + scrollTop + 20;
         }
         
         // Mettre à jour le contenu du tooltip
@@ -437,6 +444,7 @@ function startGuidedTour() {
             <div class="tour-nav">
                 <span>${currentStep + 1}/${tourSteps.length}</span>
                 <div>
+                    <button class="tour-finish-early">Terminer</button>
                     ${currentStep > 0 ? '<button class="tour-prev">Précédent</button>' : ''}
                     ${currentStep < tourSteps.length - 1 ? 
                         '<button class="tour-next">Suivant</button>' : 
@@ -450,10 +458,11 @@ function startGuidedTour() {
         tourTooltip.style.top = `${tooltipY}px`;
         tourTooltip.setAttribute('data-position', step.position);
         
-        // Ajouter les événements aux boutons
+        // Ajouter les événements aux boutons avec stopPropagation
         const prevBtn = tourTooltip.querySelector('.tour-prev');
         if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
+            prevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 currentStep--;
                 showStep(currentStep);
             });
@@ -461,7 +470,8 @@ function startGuidedTour() {
         
         const nextBtn = tourTooltip.querySelector('.tour-next');
         if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
+            nextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 currentStep++;
                 showStep(currentStep);
             });
@@ -469,11 +479,26 @@ function startGuidedTour() {
         
         const finishBtn = tourTooltip.querySelector('.tour-finish');
         if (finishBtn) {
-            finishBtn.addEventListener('click', () => {
+            finishBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 removeTourElements();
                 showTourCompleteMessage();
             });
         }
+        
+        // Bouton pour terminer le tour prématurément
+        const finishEarlyBtn = tourTooltip.querySelector('.tour-finish-early');
+        if (finishEarlyBtn) {
+            finishEarlyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeTourElements();
+            });
+        }
+        
+        // Empêcher la propagation des clics dans le tooltip
+        tourTooltip.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
     }
     
     // Afficher un message de fin de tour
@@ -484,15 +509,21 @@ function startGuidedTour() {
             <div class="tour-complete-content">
                 <h3>Tour terminé !</h3>
                 <p>Vous pouvez maintenant utiliser le générateur de code GIFT en toute autonomie.</p>
-                <p>N'oubliez pas que l'aide reste disponible via le bouton <span class="help-icon">?</span> en haut de la page.</p>
+                <p>N'oubliez pas que l'aide reste disponible via le bouton <span class="help-btn-mini">? Aide</span> en haut de la page.</p>
                 <button class="control-btn close-tour-btn">Commencer à utiliser l'outil</button>
             </div>
         `;
         
         document.body.appendChild(message);
         
-        message.querySelector('.close-tour-btn').addEventListener('click', function() {
+        message.querySelector('.close-tour-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
             message.remove();
+        });
+        
+        // Empêcher la propagation des clics
+        message.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
     }
     
