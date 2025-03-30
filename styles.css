@@ -1,0 +1,702 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.container {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    margin-left: 0;
+    padding-left: 0;
+    position: relative; /* Ajout pour permettre un positionnement absolu du titre */
+}
+
+.logo {
+    margin-right: 20px;
+    max-height: 80px;
+    width: auto;
+    object-fit: contain;
+}
+
+h1 {
+    position: absolute; /* Positionnement absolu pour centrer indépendamment du logo */
+    width: 100%;        /* Prend toute la largeur du conteneur */
+    text-align: center; /* Centre le texte */
+    left: 0;            /* Aligné à gauche du conteneur */
+    margin: 0;          /* Supprime les marges par défaut */
+    pointer-events: none; /* Permet de cliquer à travers le titre si nécessaire */
+}
+
+h1, h2, h3 {
+    color: #2c3e50;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.question-container {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* Groupe de boutons de contrôle */
+.control-group {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.control-left {
+    display: flex;
+    gap: 10px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+/* Style pour les champs optionnels */
+.optional-field {
+    font-weight: normal;
+    font-style: italic;
+    color: #666;
+    font-size: 0.9em;
+}
+
+input[type="text"], textarea, input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.option-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.option-container input[type="text"] {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.option-container input[type="checkbox"], 
+.option-container input[type="radio"] {
+    margin-right: 5px;
+}
+
+.case-select {
+    padding: 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+    width: 180px;
+}
+
+.weight-input {
+    width: 60px !important;
+    margin-left: 10px;
+    margin-right: 10px;
+    text-align: center;
+}
+
+.info-text {
+    font-size: 0.9em;
+    color: #666;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+.radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+}
+
+.radio-option input {
+    margin-right: 5px;
+}
+
+.remove-btn {
+    background-color: #ae2585;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.add-btn {
+    background-color: #2da288;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.control-btn {
+    background-color: #005EB8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+/* Bouton Clear spécifique */
+#clear-btn {
+    background-color: #e74c3c;
+    margin-right: 0;
+}
+
+#questions-container {
+    margin-bottom: 20px;
+}
+
+#gift-output {
+    width: 100%;
+    min-height: 200px;
+    font-family: monospace;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    margin-top: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Styles pour les champs de pondération */
+.weight-container {
+    display: flex;
+    align-items: center;
+    margin: 0 10px;
+}
+
+.weight-input {
+    width: 60px !important;
+    text-align: right;
+    padding-right: 20px !important;
+    position: relative;
+}
+
+.weight-symbol {
+    margin-left: -18px;
+    color: #666;
+    pointer-events: none;
+}
+
+.option-text-input {
+    flex-grow: 1;
+    margin-right: 5px;
+}
+
+.feedback-input {
+    flex-grow: 1;
+    margin-left: 5px;
+}
+
+.active-weight {
+    background-color: #e6f7ff;
+}
+
+/* Style pour les options désactivées */
+.weight-input:disabled {
+    background-color: #f5f5f5;
+    color: #999;
+}
+
+/* Amélioration pour les conteneurs d'options */
+.option-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.option-container:hover {
+    background-color: #f9f9f9;
+}
+
+/* Styles pour la section d'importation de fichier */
+.import-container {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #AED6F1;
+    border-radius: 8px;
+    background-color: #EBF5FB;
+    box-shadow: 0 1px 3px rgba(0, 94, 184, 0.1);
+}
+
+/* Style pour l'affichage du fichier */
+.file-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 15px;
+    background-color: white;
+    border: 1px solid #AED6F1;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.file-display.hidden {
+    display: none;
+}
+
+#file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-grow: 1;
+    font-size: 14px;
+    color: #333;
+}
+
+.remove-file-btn {
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+    color: #ae2585;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.remove-file-btn:hover {
+    background-color: #f8e5ef;
+}
+
+.remove-icon {
+    font-size: 18px;
+    margin-right: 5px;
+    font-weight: bold;
+}
+
+/* Conteneur pour le bouton et l'input file */
+.file-input-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+/* Masquer l'input file natif */
+.file-input {
+    opacity: 0;
+    width: 0.1px;
+    height: 0.1px;
+    position: absolute;
+}
+
+/* Style du label personnalisé pour input file */
+.custom-file-label {
+    display: inline-block;
+    background-color: #ffffff;
+    border: 1px solid #AED6F1;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    margin-right: 10px;
+    font-weight: normal;
+    color: #333;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 300px;
+}
+
+.custom-file-label:hover {
+    background-color: #f5f9fc;
+}
+
+#import-btn {
+    background-color: #005EB8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+}
+
+#import-btn:hover {
+    background-color: #004c93;
+}
+
+#import-btn:disabled {
+    background-color: #939393;
+    cursor: not-allowed;
+}
+
+/* Message de traitement */
+.processing-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px 40px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+/* Animation "Importation en cours" */
+.importing {
+    position: relative;
+}
+
+.importing::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+}
+
+/* Nouveaux styles pour les encadrés d'information */
+.metadata-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    background-color: #EBF5FB;
+    border: 1px solid #AED6F1;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0, 94, 184, 0.1);
+}
+
+/* Remplace la définition existante */
+.metadata-section {
+    flex: 1;
+    background-color: white;
+    border: 1px solid #AED6F1;
+    border-radius: 5px;
+    padding: 15px;
+}
+
+/* Remplace la définition existante */
+.metadata-section h3 {
+    color: #005EB8;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+/* Style responsive pour les petits écrans */
+@media (max-width: 768px) {
+    .metadata-container {
+        flex-direction: column;
+    }
+    
+    .metadata-section {
+        width: 100%;
+    }
+}
+
+/* Améliorer l'affichage des sélecteurs de pondération */
+.weight-input {
+    width: 70px !important; /* Un peu plus large pour garantir que les pourcentages s'affichent bien */
+    text-align: center;
+    padding: 6px 4px;
+    font-size: 0.95em;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6"><path d="M0 0 L6 6 L12 0" fill="%23666"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 10px;
+    padding-right: 24px !important;
+}
+
+/* Style pour la conteneur de poids */
+.weight-container {
+    display: flex;
+    align-items: center;
+    margin: 0 6px;
+    position: relative;
+}
+
+/* Style pour l'affichage des poids actifs */
+.active-weight {
+    background-color: #e6f7ff;
+    border-color: #2da288;
+}
+
+/* Styles pour les champs de pondération des QRC */
+.sa-weight-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin: 0 10px;
+}
+
+.sa-weight-input {
+    width: 60px !important;
+    text-align: right;
+    padding-right: 20px !important;
+    -moz-appearance: textfield; /* Supprime les flèches dans Firefox */
+}
+
+/* Supprime les flèches haut/bas dans Chrome et Safari */
+.sa-weight-input::-webkit-outer-spin-button,
+.sa-weight-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.weight-symbol {
+    position: absolute;
+    right: 8px;
+    pointer-events: none;
+    color: #666;
+}
+
+/* Améliore l'apparence du champ de texte pour les réponses QRC */
+.sa-option-text {
+    flex-grow: 1;
+    margin-right: 5px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Assure que le conteneur d'options s'adapte bien aux différents composants */
+#sa-options-list .option-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: nowrap;
+}
+
+/* Styles pour les couleurs de pondération */
+.positive-weight-bg {
+    background-color: rgba(46, 204, 113, 0.15) !important;
+    border-color: rgba(46, 204, 113, 0.4) !important;
+}
+
+.negative-weight-bg {
+    background-color: rgba(231, 76, 60, 0.15) !important;
+    border-color: rgba(231, 76, 60, 0.4) !important;
+}
+
+.zero-weight-bg {
+    background-color: #f9f9f9 !important;
+    border-color: #ddd !important;
+}
+
+/* Style pour les options dans le select */
+.weight-input option.positive-weight {
+    background-color: rgba(46, 204, 113, 0.15);
+}
+
+.weight-input option.negative-weight {
+    background-color: rgba(231, 76, 60, 0.15);
+}
+
+/* Amélioration de l'apparence des sélecteurs */
+.weight-input, .sa-weight-input {
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Style spécial quand l'option est correcte ET positive */
+.correct-option:checked ~ .weight-container .positive-weight-bg {
+    background-color: rgba(46, 204, 113, 0.25) !important;
+    border-color: rgba(46, 204, 113, 0.6) !important;
+}
+
+/* Ajouter cette nouvelle classe pour les titres de section */
+.section-title {
+    color: #005EB8;
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #AED6F1;
+}
+
+/* Style pour le pied de page */
+.footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+}
+
+.version {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #666;
+    font-weight: normal;
+}
+
+.version p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.copyright {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.copyright p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.usage-info {
+    margin: 0;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.footer a {
+    color: #005EB8;
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive pour le pied de page */
+@media (min-width: 768px) {
+    .footer-content {
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+    }
+    
+    .version, .copyright {
+        align-items: flex-start;
+    }
+    
+    .usage-info {
+        text-align: right;
+    }
+}
+
+/* Styles pour la différenciation des questions paires/impaires */
+.question-odd {
+    background-color: #e6f7f6; /* Version très claire du turquoise #00bcb4 */
+}
+
+.question-even {
+    background-color: #fceef3; /* Version très claire du rose #e6417a */
+}
+
+/* Styles pour la mise en valeur du bouton d'ajout de question */
+.add-question-section {
+    background-color: #f0f8ff;
+    border-top: 1px solid #cce5ff;
+    border-bottom: 1px solid #cce5ff;
+    padding: 15px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.add-question-section .add-btn {
+    background-color: #2da288;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.add-question-section .add-btn:hover {
+    background-color: #259678;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Styles pour la réorganisation des boutons */
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.left-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.right-buttons {
+    display: flex;
+    justify-content: flex-end;
+}

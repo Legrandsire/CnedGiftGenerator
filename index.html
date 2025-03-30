@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de code GIFT</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Ajout du fichier CSS d'aide -->
+    <link rel="stylesheet" href="helpStyles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-container">
+            <img src="images/CNED_Logo_RVB_HD.PNG" alt="Logo CNED" class="logo">
+            <h1>Générateur de code GIFT</h1>
+            <!-- Le bouton d'aide sera ajouté ici par helpManager.js -->
+        </div>
+        <p>Cet outil vous permet de créer des questions au format GIFT pour Moodle et d'autres LMS compatibles.</p>
+        
+        <h3 class="section-title">Importation d'un fichier existant</h3>
+        <div class="form-group">
+            <label for="gift-import">Importer un fichier GIFT:</label>
+            <div class="import-container">
+                <div id="file-display" class="file-display hidden">
+                    <span id="file-name"></span>
+                    <button id="remove-file-btn" class="remove-file-btn"><span class="remove-icon">×</span> Supprimer</button>
+                </div>
+                <div class="file-input-container">
+                    <input type="file" id="gift-import" accept=".txt" class="file-input">
+                    <label for="gift-import" class="custom-file-label">Choisir un fichier</label>
+                    <button id="import-btn" class="control-btn">Importer</button>
+                </div>
+            </div>
+        </div>
+        
+        <h3 class="section-title">Informations sur le document</h3>
+        <div class="metadata-container">
+            <div class="metadata-section">
+                <h3>Informations sur l'auteur</h3>
+                <div class="form-group">
+                    <label for="author-lastname">Nom de l'auteur:</label>
+                    <input type="text" id="author-lastname" placeholder="Entrez le nom de l'auteur">
+                </div>
+                <div class="form-group">
+                    <label for="author-firstname">Prénom de l'auteur:</label>
+                    <input type="text" id="author-firstname" placeholder="Entrez le prénom de l'auteur">
+                </div>
+            </div>
+            
+            <div class="metadata-section">
+                <h3>Chargé d'ingénierie de formation</h3>
+                <div class="form-group">
+                    <label for="course-code">Code article:</label>
+                    <input type="text" id="course-code" placeholder="Entrez le code article">
+                </div>
+            </div>
+        </div>
+
+        <h3 class="section-title">Questions</h3>
+        <div id="questions-container"></div>
+        
+        <div class="add-question-section">
+            <button id="add-question-btn" class="add-btn">Ajouter une question</button>
+        </div>
+        
+        <div class="form-group button-group">
+            <div class="left-buttons">
+                <button id="generate-btn" class="control-btn">Générer le code GIFT</button>
+                <button id="copy-btn" class="control-btn">Copier le code</button>
+                <button id="download-btn" class="control-btn">Télécharger</button>
+            </div>
+            <div class="right-buttons">
+                <button id="clear-btn" class="control-btn">Tout effacer</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="gift-output">Code GIFT généré:</label>
+            <textarea id="gift-output" readonly></textarea>
+        </div>
+        
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="version">
+                    <p>V. W. G. Grandsire</p>
+                    <p>Version beta 1</p>
+                </div>
+                <div class="copyright">
+                    <p>© 2025 CNED</p>
+                    <p>Tous droits réservés.</p>
+                </div>
+                <p class="usage-info">
+                    Format GIFT compatible avec Moodle et autres LMS.<br>
+                    <a href="https://docs.moodle.org/400/en/GIFT_format" target="_blank" rel="noopener noreferrer">Documentation GIFT</a>
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts modularisés -->
+    <script src="core.js"></script>
+    <script src="optionManager.js"></script>
+    <script src="questionManager.js"></script>
+    <script src="giftGenerator.js"></script>
+    <script src="importGift.js"></script>
+    <script src="downloadManager.js"></script>
+    <!-- Ajout du script d'aide -->
+    <script src="helpManager.js"></script>
+</body>
+</html>

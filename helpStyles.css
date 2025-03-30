@@ -1,0 +1,450 @@
+/**
+ * helpStyles.css
+ * Styles pour les composants d'aide du générateur de code GIFT
+ */
+
+/* Bouton d'aide */
+.help-btn {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #005EB8;
+    color: white;
+    border: none;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.help-btn:hover {
+    background-color: #004C9B;
+    transform: scale(1.1);
+}
+
+.help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Panneau d'aide latéral */
+.help-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 350px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+}
+
+.help-panel.hidden {
+    transform: translateX(100%);
+}
+
+.help-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #005EB8;
+    color: white;
+    border-bottom: 1px solid #004C9B;
+}
+
+.help-header h2 {
+    margin: 0;
+    font-size: 1.4em;
+    color: white;
+}
+
+.help-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.help-close-btn:hover {
+    transform: scale(1.2);
+}
+
+/* Onglets du panneau d'aide */
+.help-tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+    background-color: #f5f5f5;
+}
+
+.help-tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.help-tab-btn:hover {
+    background-color: #EBF5FB;
+}
+
+.help-tab-btn.active {
+    border-bottom-color: #005EB8;
+    background-color: white;
+}
+
+/* Contenu du panneau d'aide */
+.help-content {
+    padding: 20px;
+}
+
+.help-tab-content {
+    display: none;
+}
+
+.help-tab-content.active {
+    display: block;
+}
+
+.help-tab-content h3 {
+    color: #005EB8;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.help-tab-content h4 {
+    color: #2C3E50;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.help-tab-content p {
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.help-tab-content ul, .help-tab-content ol {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.help-tab-content li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+/* Tooltips contextuels */
+.tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: #005EB8;
+    color: white;
+    font-size: 12px;
+    margin-left: 8px;
+    cursor: pointer;
+    position: relative;
+    font-style: italic;
+    font-weight: bold;
+}
+
+/* Affichage du tooltip au survol */
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    width: max-content;
+    max-width: 200px;
+    background-color: #333;
+    color: white;
+    padding: 8px 10px;
+    border-radius: 4px;
+    z-index: 1000;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
+    white-space: normal;
+}
+
+/* Position du tooltip selon l'élément (par défaut en bas) */
+[data-tooltip]:hover::after {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+}
+
+button[data-tooltip]:hover::after {
+    top: auto;
+    bottom: 100%;
+    transform: translateX(-50%) translateY(-8px);
+}
+
+.tooltip-icon[data-tooltip]:hover::after {
+    left: 0;
+    transform: translateY(8px);
+}
+
+/* Flèche du tooltip */
+[data-tooltip]:hover::before {
+    content: "";
+    position: absolute;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #333 transparent;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+button[data-tooltip]:hover::before {
+    top: auto;
+    bottom: 100%;
+    border-color: #333 transparent transparent transparent;
+}
+
+/* Tour guidé */
+.tour-prompt {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.tour-prompt-content {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.tour-prompt-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+#skip-tour-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 10px 15px;
+    font-size: 16px;
+}
+
+#skip-tour-btn:hover {
+    text-decoration: underline;
+}
+
+.tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1500;
+}
+
+.tour-tooltip {
+    position: absolute;
+    background-color: white;
+    padding: 15px 20px;
+    border-radius: 6px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-width: 300px;
+    z-index: 1600;
+}
+
+.tour-tooltip::before {
+    content: '';
+    position: absolute;
+    border-width: 10px;
+    border-style: solid;
+}
+
+.tour-tooltip[data-position="bottom"]::before {
+    border-color: transparent transparent white transparent;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tour-tooltip[data-position="top"]::before {
+    border-color: white transparent transparent transparent;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tour-tooltip[data-position="left"]::before {
+    border-color: transparent transparent transparent white;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tour-tooltip[data-position="right"]::before {
+    border-color: transparent white transparent transparent;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tour-tooltip h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #005EB8;
+}
+
+.tour-tooltip p {
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.tour-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.tour-nav button {
+    background-color: #005EB8;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.tour-nav button.tour-prev {
+    background-color: #6c757d;
+}
+
+.tour-nav span {
+    color: #666;
+    font-size: 14px;
+}
+
+.tour-complete {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.tour-complete-content {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.tour-complete-content h3 {
+    color: #005EB8;
+    margin-top: 0;
+}
+
+.tour-complete-content .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: #005EB8;
+    color: white;
+    font-size: 12px;
+    margin: 0 3px;
+    vertical-align: middle;
+}
+
+.close-tour-btn {
+    margin-top: 15px;
+}
+
+/* Styles pour les animations du tour guidé avancé */
+.tour-highlight {
+    animation: pulse 1.5s ease;
+    position: relative;
+    z-index: 1700;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 94, 184, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 94, 184, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 94, 184, 0);
+    }
+}
+
+/* Styles pour les éléments d'aide en responsive */
+@media (max-width: 768px) {
+    .help-panel {
+        width: 100%;
+    }
+    
+    .tour-tooltip {
+        max-width: 90%;
+        left: 5% !important;
+        transform: none !important;
+    }
+    
+    .tour-tooltip::before {
+        display: none;
+    }
+    
+    .tooltip-icon {
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
+    }
+    
+    [data-tooltip]:hover::after {
+        max-width: 160px;
+    }
+}
