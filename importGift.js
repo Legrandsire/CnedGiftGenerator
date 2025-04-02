@@ -414,7 +414,7 @@ function cleanQuestionId(questionId, courseCode) {
         };
     }
     
-    // Vérifier s'il y a un motif -Q suivi de chiffres à la fin
+    // Vérifier s'il y a un motif -Q suivi de chiffres à la fin (y compris format -Q01, -Q02)
     const qSuffixPattern = /-Q\d+$/;
     if (qSuffixPattern.test(questionId)) {
         // Supprimer le suffixe -Q et les chiffres
@@ -434,106 +434,146 @@ function cleanQuestionId(questionId, courseCode) {
     };
 }
     
-    /**
-     * Extrait les options avec leurs feedbacks d'une section de réponses GIFT
-     * @param {string} answersContent - Le contenu des réponses
-     * @param {boolean} isSingleChoice - true pour QCU, false pour QCM
-     * @returns {Array} - Un tableau d'objets représentant chaque option
-     */
-    function extractOptionsWithFeedback(answersContent, isSingleChoice) {
-        const options = [];
+/**
+ * Extrait les options avec leurs feedbacks d'une section de réponses GIFT
+ * @param {string} answersContent - Le contenu des réponses
+ * @param {boolean} isSingleChoice - true pour QCU, false pour QCM
+ * @returns {Array} - Un tableau d'objets représentant chaque option
+ */
+function extractOptionsWithFeedback(answersContent, isSingleChoice) {
+    const options = [];
+    
+    // Normaliser les retours à la ligne
+    const normalizedContent = answersContent.replace(/\r\n/g, '\n');
+    
+    // Diviser le contenu en lignes
+    const lines = normalizedContent.split('\n');
+    
+    // Variables temporaires pour reconstituer les options
+    let currentOption = null;
+    let optionLines = [];
+    let inFeedback = false;
+    
+    // Parcourir chaque ligne
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
         
-        // Normaliser les retours à la ligne
-        const normalizedContent = answersContent.replace(/\r\n/g, '\n');
+        // Ignorer les lignes vides
+        if (line === '') continue;
         
-        // Diviser le contenu en lignes
-        const lines = normalizedContent.split('\n');
-        
-        // Variables temporaires pour reconstituer les options
-        let currentOption = null;
-        let optionLines = [];
-        
-        // Parcourir chaque ligne
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
+        // Si c'est le début d'une option (= ou ~)
+        if ((isSingleChoice && (line.startsWith('=') || line.startsWith('~'))) || 
+            (!isSingleChoice && line.startsWith('~'))) {
             
-            // Ignorer les lignes vides
-            if (line === '') continue;
+            // Si on a déjà une option en cours, l'ajouter à la liste
+            if (currentOption !== null) {
+                options.push(parseOptionWithFeedback(optionLines.join(' '), isSingleChoice));
+                inFeedback = false;
+            }
             
-            // Si c'est le début d'une option
-            if ((isSingleChoice && (line.startsWith('=') || line.startsWith('~'))) || 
-                (!isSingleChoice && line.startsWith('~'))) {
-                // Si on a déjà une option en cours, l'ajouter à la liste
-                if (currentOption !== null) {
-                    options.push(parseOptionWithFeedback(optionLines.join(' '), isSingleChoice));
-                }
-                
-                // Commencer une nouvelle option
-                currentOption = line;
-                optionLines = [line];
-            }
-            // Si c'est un feedback (ligne commençant par #)
-            else if (line.startsWith('#')) {
-                // Ajouter à l'option en cours
-                optionLines.push(line);
-            }
-            // Sinon, c'est la suite du texte de l'option
-            else if (currentOption !== null) {
-                optionLines.push(line);
+            // Commencer une nouvelle option
+            currentOption = line;
+            optionLines = [line];
+        }
+        // Si c'est un feedback (ligne commençant par #)
+        else if (line.startsWith('#')) {
+            // Marquer que nous sommes dans une section de feedback
+            inFeedback = true;
+            // Ajouter à l'option en cours avec un espace pour assurer la séparation
+            optionLines.push(line);
+        }
+        // Sinon, c'est la suite du texte de l'option ou du feedback
+        else if (currentOption !== null) {
+            // Si nous sommes dans une section de feedback, préserver cette structure
+            if (inFeedback) {
+                // Ajouter un espace pour garantir la bonne séparation
+                optionLines[optionLines.length - 1] += ' ' + line;
+            } else {
+                // Sinon, c'est la suite du texte de l'option
+                optionLines.push(' ' + line);
             }
         }
-        
-        // Ajouter la dernière option
-        if (currentOption !== null) {
-            options.push(parseOptionWithFeedback(optionLines.join(' '), isSingleChoice));
-        }
-        
-        console.log("Extracted options:", options);
-        return options;
     }
     
-    /**
-     * Parse une ligne d'option avec feedback
-     * @param {string} optionLine - La ligne d'option
-     * @param {boolean} isSingleChoice - true pour QCU, false pour QCM
-     * @returns {Object} - Un objet représentant l'option
-     */
-    function parseOptionWithFeedback(optionLine, isSingleChoice) {
-        const option = {
-            text: '',
-            isCorrect: false,
-            weight: '0',
-            feedback: ''
-        };
-        
-        // Extraire le feedback s'il existe
-        const feedbackParts = optionLine.split('#');
-        if (feedbackParts.length > 1) {
-            option.feedback = feedbackParts.slice(1).join('#').trim();
-            optionLine = feedbackParts[0].trim();
-        }
-        
-        // Traiter en fonction du type de question
-        if (isSingleChoice) {
-            // Pour QCU (= ou ~)
-            option.isCorrect = optionLine.startsWith('=');
-            option.text = optionLine.substring(1).trim();
-            option.weight = option.isCorrect ? '100' : '0';
-        } else {
-            // Pour QCM (~)
-            option.text = optionLine.substring(1).trim();
-            
-            // Extraire la pondération si elle existe
-            const weightMatch = option.text.match(/^%([+-]?\d+(?:\.\d+)?)%(.*)/);
-            if (weightMatch) {
-                option.weight = weightMatch[1];
-                option.text = weightMatch[2].trim();
-                option.isCorrect = parseFloat(option.weight) > 0;
-            }
-        }
-        
-        return option;
+    // Ajouter la dernière option
+    if (currentOption !== null) {
+        options.push(parseOptionWithFeedback(optionLines.join(' '), isSingleChoice));
     }
+    
+    console.log("Extracted options:", options);
+    return options;
+}
+    
+/**
+ * Parse une ligne d'option avec feedback
+ * @param {string} optionLine - La ligne d'option
+ * @param {boolean} isSingleChoice - true pour QCU, false pour QCM
+ * @returns {Object} - Un objet représentant l'option
+ */
+function parseOptionWithFeedback(optionLine, isSingleChoice) {
+    const option = {
+        text: '',
+        isCorrect: false,
+        weight: '0',
+        feedback: ''
+    };
+    
+    // Extraire le feedback s'il existe
+    const feedbackParts = optionLine.split('#');
+    if (feedbackParts.length > 1) {
+        // Récupérer tout ce qui suit le premier # comme feedback
+        option.feedback = feedbackParts.slice(1).join('#').trim();
+        optionLine = feedbackParts[0].trim();
+    }
+    
+    // Traiter en fonction du type de question
+    if (isSingleChoice) {
+        // Pour QCU (= ou ~)
+        option.isCorrect = optionLine.startsWith('=');
+        option.text = optionLine.substring(1).trim();
+        option.weight = option.isCorrect ? '100' : '0';
+    } else {
+        // Pour QCM (~)
+        option.text = optionLine.substring(1).trim();
+        
+        // Extraire la pondération si elle existe
+        const weightMatch = option.text.match(/^%([+-]?\d+(?:\.\d+)?)%(.*)/);
+        if (weightMatch) {
+            // Stocker la valeur originale non formatée pour utilisation ultérieure
+            let weightValue = parseFloat(weightMatch[1]);
+            
+            // Liste des valeurs fractionnaires nécessitant un traitement spécial
+            const fractionValues = [
+                83.33333, -83.33333, 
+                66.66667, -66.66667, 
+                33.33333, -33.33333, 
+                16.66667, -16.66667, 
+                14.28571, -14.28571, 
+                12.5, -12.5, 
+                11.11111, -11.11111
+            ];
+            
+            // Vérifier si le poids est proche d'une des valeurs fractionnaires
+            // Utilisation d'une petite tolérance pour gérer les erreurs d'arrondi
+            for (const fractionValue of fractionValues) {
+                if (Math.abs(weightValue - fractionValue) < 0.0001) {
+                    weightValue = fractionValue;
+                    break;
+                }
+            }
+            
+            option.weight = weightValue.toString();
+            option.text = weightMatch[2].trim();
+            option.isCorrect = parseFloat(option.weight) > 0;
+        }
+    }
+    
+    // Nettoyer les balises HTML du texte et du feedback
+    option.text = cleanHtmlTags(option.text);
+    option.feedback = cleanHtmlTags(option.feedback);
+    
+    return option;
+}
     function splitGiftQuestions(giftContent) {
         // Nettoyer le contenu (retirer les commentaires, etc.)
         let cleanContent = giftContent
@@ -617,6 +657,8 @@ function parseGiftQuestion(questionText, courseCode) {
         const htmlTagMatch = afterTitle.match(/^\[html\](.*?)\{/s);
         if (htmlTagMatch) {
             questionContent = htmlTagMatch[1].trim();
+            // Nettoyer les balises HTML et les espaces insécables pour l'affichage
+            questionContent = cleanHtmlTags(questionContent);
         } else {
             // Si pas de tag [html], prendre tout jusqu'à {
             const plainMatch = afterTitle.match(/(.*?)\{/s);
@@ -653,6 +695,19 @@ function parseGiftQuestion(questionText, courseCode) {
     if (newQuestionId) {
         fillQuestionAnswers(newQuestionId, questionType, answersContent);
     }
+}
+
+// Fonction utilitaire pour nettoyer les balises HTML
+function cleanHtmlTags(text) {
+    // Remplacer les espaces insécables par des espaces normaux
+    text = text.replace(/&nbsp;/g, ' ');
+    
+    // Supprimer les balises HTML communes
+    return text.replace(/<\/?p>/g, '')
+              .replace(/<\/?div>/g, '')
+              .replace(/<\/?span>/g, '')
+              .replace(/<\/?br\s?\/?>/g, '\n')
+              .replace(/<[^>]+>/g, ''); // Supprimer toutes les autres balises HTML
 }
     
     /**
@@ -757,241 +812,249 @@ function addNewQuestionFromImport(questionId, questionContent, questionType) {
     return newQuestionId;
 }
     
-    /**
-     * Remplit les réponses d'une question en fonction de son type
-     * @param {string} questionId - L'identifiant de l'élément de question
-     * @param {string} questionType - Le type de question ('mc', 'sc', 'tf', 'sa', 'num')
-     * @param {string} answersContent - Le contenu des réponses
-     */
-    function fillQuestionAnswers(questionId, questionType, answersContent) {
-        console.log(`Filling answers for question ${questionId} of type ${questionType}`);
-        console.log('Answers content:', answersContent);
-        
-        // Extraire le feedback général s'il existe
-        let generalFeedback = '';
-        const feedbackMatch = answersContent.match(/####([\s\S]*)/);
-        if (feedbackMatch) {
-            generalFeedback = feedbackMatch[1].trim();
-            // Mettre à jour le champ de feedback
-            document.getElementById(`general-feedback-${questionId}`).value = generalFeedback;
-        }
-        
-        // Nettoyer le contenu des réponses (retirer le feedback général)
-        let cleanAnswers = answersContent;
-        if (feedbackMatch) {
-            cleanAnswers = answersContent.substring(0, answersContent.indexOf('####'));
-        }
-        
-        // Traiter spécifiquement les commentaires de retour (feedback) pour chaque option
-        cleanAnswers = cleanAnswers.replace(/#([^\n]*)/g, function(match, p1) {
-            return "#" + p1.trim();
-        });
-        
-        switch (questionType) {
-            case 'tf': // Vrai/Faux
-                const isTrueChecked = cleanAnswers.trim().startsWith('T');
-                document.getElementById(`true-option-${questionId}`).checked = isTrueChecked;
-                document.getElementById(`false-option-${questionId}`).checked = !isTrueChecked;
-                break;
-                
-            case 'num': // Numérique
-                const numMatch = cleanAnswers.match(/#([\d.-]+)(?::([\d.-]+))?/);
-                if (numMatch) {
-                    const numValue = numMatch[1];
-                    const numMargin = numMatch[2];
-                    
-                    document.getElementById(`num-answer-${questionId}`).value = numValue;
-                    
-                    if (numMargin) {
-                        document.getElementById(`num-range-${questionId}`).checked = true;
-                        document.getElementById(`num-margin-${questionId}`).value = numMargin;
-                        // Afficher les options de marge
-                        const numRangeOptions = document.getElementById(`num-range-options-${questionId}`);
-                        if (numRangeOptions) {
-                            numRangeOptions.classList.remove('hidden');
-                        }
-                    }
-                }
-                break;
-                
-            case 'sa': // QRC
-                const saOptionsList = document.getElementById(`sa-options-list-${questionId}`);
-                if (!saOptionsList) {
-                    console.error(`Could not find sa-options-list-${questionId}`);
-                    break;
-                }
-                
-                // Vider les options existantes
-                while (saOptionsList.firstChild) {
-                    saOptionsList.removeChild(saOptionsList.firstChild);
-                }
-                
-                // Extraire les réponses acceptées - CORRECTION ICI
-                // Utiliser une expression régulière plus précise pour capturer les réponses QRC
-                const saResponses = [];
-                const reEqualLines = /^=(%\d+(?:\.\d+)?%)?([^\n#]*)/gm;
-                let match;
-                
-                while ((match = reEqualLines.exec(cleanAnswers)) !== null) {
-                    let weight = '100';
-                    let text = match[2].trim();
-                    
-                    // Si un pourcentage est spécifié
-                    if (match[1]) {
-                        weight = match[1].replace(/%/g, '').trim();
-                    }
-                    
-                    saResponses.push({
-                        weight: weight,
-                        text: text
-                    });
-                }
-                
-                console.log('SA responses extracted:', saResponses);
-                
-                if (saResponses.length === 0) {
-                    console.error('No SA responses found in:', cleanAnswers);
-                }
-                
-                // Ajouter chaque réponse
-                saResponses.forEach((response) => {
-                    const addSAOptionBtn = document.querySelector(`.add-sa-option-btn[data-qid="${questionId}"]`);
-                    if (addSAOptionBtn) {
-                        addSAOptionBtn.click();
-                        
-                        // Mettre à jour le dernier élément ajouté
-                        const optionElements = saOptionsList.querySelectorAll('.option-container');
-                        const lastOption = optionElements[optionElements.length - 1];
-                        
-                        if (lastOption) {
-                            const optionId = lastOption.querySelector('.remove-sa-option-btn').getAttribute('data-oid');
-                            const textInput = document.getElementById(`sa-option-text-${questionId}-${optionId}`);
-                            const weightInput = document.getElementById(`sa-option-weight-${questionId}-${optionId}`);
-                            
-                            if (textInput) textInput.value = response.text;
-                            if (weightInput) weightInput.value = response.weight;
-                        }
-                    }
-                });
-                break;
-                
-            case 'sc': // QCU
-                const scOptionsList = document.getElementById(`sc-options-list-${questionId}`);
-                if (!scOptionsList) {
-                    console.error(`Could not find sc-options-list-${questionId}`);
-                    break;
-                }
-                
-                // Vider les options existantes
-                while (scOptionsList.firstChild) {
-                    scOptionsList.removeChild(scOptionsList.firstChild);
-                }
-                
-                // Traiter proprement les options et leurs feedbacks
-                const scOptionsWithFeedback = extractOptionsWithFeedback(cleanAnswers, true);
-                console.log('SC options with feedback:', scOptionsWithFeedback);
-                
-                // Ajouter chaque option
-                scOptionsWithFeedback.forEach((option) => {
-                    const addSCOptionBtn = document.querySelector(`.add-sc-option-btn[data-qid="${questionId}"]`);
-                    if (addSCOptionBtn) {
-                        addSCOptionBtn.click();
-                        
-                        // Mettre à jour le dernier élément ajouté
-                        const optionElements = scOptionsList.querySelectorAll('.option-container');
-                        const lastOption = optionElements[optionElements.length - 1];
-                        
-                        if (lastOption) {
-                            const optionId = lastOption.querySelector('.remove-sc-option-btn').getAttribute('data-oid');
-                            const radioInput = lastOption.querySelector(`.correct-sc-option`);
-                            
-                            if (radioInput) radioInput.checked = option.isCorrect;
-                            
-                            const textInput = document.getElementById(`sc-option-text-${questionId}-${optionId}`);
-                            if (textInput) textInput.value = option.text;
-                            
-                            const feedbackInput = document.getElementById(`sc-option-feedback-${questionId}-${optionId}`);
-                            if (feedbackInput && option.feedback) feedbackInput.value = option.feedback;
-                        }
-                    }
-                });
-                break;
-                
-            // Dans le switch(questionType), cas 'mc':
-case 'mc': // QCM
-const mcOptionsList = document.getElementById(`options-list-${questionId}`);
-if (!mcOptionsList) {
-    console.error(`Could not find options-list-${questionId}`);
-    break;
-}
-
-// Vider les options existantes
-while (mcOptionsList.firstChild) {
-    mcOptionsList.removeChild(mcOptionsList.firstChild);
-}
-
-// Traiter proprement les options et leurs feedbacks
-const mcOptionsWithFeedback = extractOptionsWithFeedback(cleanAnswers, false);
-console.log('MC options with feedback:', mcOptionsWithFeedback);
-
-// Ajouter chaque option
-mcOptionsWithFeedback.forEach((option) => {
-    const addOptionBtn = document.querySelector(`.add-option-btn[data-qid="${questionId}"]`);
-    if (addOptionBtn) {
-        addOptionBtn.click();
-        
-        // Mettre à jour le dernier élément ajouté
-        const optionElements = mcOptionsList.querySelectorAll('.option-container');
-        const lastOption = optionElements[optionElements.length - 1];
-        
-        if (lastOption) {
-            const optionId = lastOption.querySelector('.remove-option-btn').getAttribute('data-oid');
-            const checkbox = lastOption.querySelector('.correct-option');
+/**
+ * Remplit les réponses d'une question en fonction de son type
+ * @param {string} questionId - L'identifiant de l'élément de question
+ * @param {string} questionType - Le type de question ('mc', 'sc', 'tf', 'sa', 'num')
+ * @param {string} answersContent - Le contenu des réponses
+ */
+function fillQuestionAnswers(questionId, questionType, answersContent) {
+    console.log(`Filling answers for question ${questionId} of type ${questionType}`);
+    console.log('Answers content:', answersContent);
+    
+    // Extraire le feedback général s'il existe
+    let generalFeedback = '';
+    const feedbackMatch = answersContent.match(/####([\s\S]*)/);
+    if (feedbackMatch) {
+        generalFeedback = feedbackMatch[1].trim();
+        // Nettoyer le feedback général des balises HTML
+        generalFeedback = cleanHtmlTags(generalFeedback);
+        // Mettre à jour le champ de feedback
+        document.getElementById(`general-feedback-${questionId}`).value = generalFeedback;
+    }
+    
+    // Nettoyer le contenu des réponses (retirer le feedback général)
+    let cleanAnswers = answersContent;
+    if (feedbackMatch) {
+        cleanAnswers = answersContent.substring(0, answersContent.indexOf('####'));
+    }
+    
+    // Traiter spécifiquement les commentaires de retour (feedback) pour chaque option
+    cleanAnswers = cleanAnswers.replace(/#([^\n]*)/g, function(match, p1) {
+        return "#" + p1.trim();
+    });
+    
+    switch (questionType) {
+        case 'tf': // Vrai/Faux
+            const isTrueChecked = cleanAnswers.trim().startsWith('T');
+            document.getElementById(`true-option-${questionId}`).checked = isTrueChecked;
+            document.getElementById(`false-option-${questionId}`).checked = !isTrueChecked;
+            break;
             
-            if (checkbox) checkbox.checked = option.isCorrect;
-            
-            const textInput = document.getElementById(`option-text-${questionId}-${optionId}`);
-            if (textInput) textInput.value = option.text;
-            
-            // Sélectionner la valeur du poids dans le select
-            const weightSelect = document.getElementById(`option-weight-${questionId}-${optionId}`);
-            if (weightSelect) {
-                // Trouver l'option la plus proche dans le select
-                let closestOption = null;
-                let minDiff = Infinity;
+        case 'num': // Numérique
+            const numMatch = cleanAnswers.match(/#([\d.-]+)(?::([\d.-]+))?/);
+            if (numMatch) {
+                const numValue = numMatch[1];
+                const numMargin = numMatch[2];
                 
-                for (let i = 0; i < weightSelect.options.length; i++) {
-                    const optValue = parseFloat(weightSelect.options[i].value);
-                    const diff = Math.abs(optValue - parseFloat(option.weight));
-                    
-                    if (diff < minDiff) {
-                        minDiff = diff;
-                        closestOption = weightSelect.options[i];
-                    }
-                }
+                document.getElementById(`num-answer-${questionId}`).value = numValue;
                 
-                if (closestOption) {
-                    closestOption.selected = true;
-                    
-                    // Ajouter la classe active-weight si nécessaire
-                    if (option.isCorrect) {
-                        weightSelect.classList.add('active-weight');
-                    } else {
-                        weightSelect.classList.remove('active-weight');
+                if (numMargin) {
+                    document.getElementById(`num-range-${questionId}`).checked = true;
+                    document.getElementById(`num-margin-${questionId}`).value = numMargin;
+                    // Afficher les options de marge
+                    const numRangeOptions = document.getElementById(`num-range-options-${questionId}`);
+                    if (numRangeOptions) {
+                        numRangeOptions.classList.remove('hidden');
                     }
-                    
-                    // Appliquer la couleur en fonction de la valeur sélectionnée
-                    updateWeightColor(weightSelect);
                 }
             }
+            break;
             
-            // Ajouter le feedback s'il existe
-            const feedbackInput = document.getElementById(`option-feedback-${questionId}-${optionId}`);
-            if (feedbackInput && option.feedback) feedbackInput.value = option.feedback;
-        }
-    }
-});
-break;
+        case 'sa': // QRC
+            const saOptionsList = document.getElementById(`sa-options-list-${questionId}`);
+            if (!saOptionsList) {
+                console.error(`Could not find sa-options-list-${questionId}`);
+                break;
+            }
+            
+            // Vider les options existantes
+            while (saOptionsList.firstChild) {
+                saOptionsList.removeChild(saOptionsList.firstChild);
+            }
+            
+            // Extraire les réponses acceptées avec leurs pondérations
+            const saResponses = [];
+            // Recherche les lignes commençant par = ou =% pour les QRC
+            const reEqualLines = /^=(?:%(\d+(?:\.\d+)?)%)?([^#\n]*)(?:#([^\n]*))?/gm;
+            let match;
+            
+            while ((match = reEqualLines.exec(cleanAnswers)) !== null) {
+                let weight = match[1] ? match[1] : '100';
+                let text = match[2].trim();
+                let feedback = match[3] ? match[3].trim() : '';
+                
+                // Nettoyer le texte et le feedback des balises HTML
+                text = cleanHtmlTags(text);
+                feedback = feedback ? cleanHtmlTags(feedback) : '';
+                
+                saResponses.push({
+                    weight: weight,
+                    text: text,
+                    feedback: feedback
+                });
+            }
+            
+            console.log('SA responses extracted:', saResponses);
+            
+            if (saResponses.length === 0) {
+                console.error('No SA responses found in:', cleanAnswers);
+            }
+            
+            // Ajouter chaque réponse
+            saResponses.forEach((response) => {
+                const addSAOptionBtn = document.querySelector(`.add-sa-option-btn[data-qid="${questionId}"]`);
+                if (addSAOptionBtn) {
+                    addSAOptionBtn.click();
+                    
+                    // Mettre à jour le dernier élément ajouté
+                    const optionElements = saOptionsList.querySelectorAll('.option-container');
+                    const lastOption = optionElements[optionElements.length - 1];
+                    
+                    if (lastOption) {
+                        const optionId = lastOption.querySelector('.remove-sa-option-btn').getAttribute('data-oid');
+                        const textInput = document.getElementById(`sa-option-text-${questionId}-${optionId}`);
+                        const weightInput = document.getElementById(`sa-option-weight-${questionId}-${optionId}`);
+                        const feedbackInput = document.getElementById(`sa-option-feedback-${questionId}-${optionId}`);
+                        
+                        if (textInput) textInput.value = response.text;
+                        if (weightInput) {
+                            weightInput.value = response.weight;
+                            weightInput.setAttribute('data-full-value', response.weight);
+                            updateSAWeightColor(weightInput);
+                        }
+                        if (feedbackInput && response.feedback) feedbackInput.value = response.feedback;
+                    }
+                }
+            });
+            break;
+            
+        case 'sc': // QCU
+            const scOptionsList = document.getElementById(`sc-options-list-${questionId}`);
+            if (!scOptionsList) {
+                console.error(`Could not find sc-options-list-${questionId}`);
+                break;
+            }
+            
+            // Vider les options existantes
+            while (scOptionsList.firstChild) {
+                scOptionsList.removeChild(scOptionsList.firstChild);
+            }
+            
+            // Traiter proprement les options et leurs feedbacks
+            const scOptionsWithFeedback = extractOptionsWithFeedback(cleanAnswers, true);
+            console.log('SC options with feedback:', scOptionsWithFeedback);
+            
+            // Ajouter chaque option
+            scOptionsWithFeedback.forEach((option) => {
+                const addSCOptionBtn = document.querySelector(`.add-sc-option-btn[data-qid="${questionId}"]`);
+                if (addSCOptionBtn) {
+                    addSCOptionBtn.click();
+                    
+                    // Mettre à jour le dernier élément ajouté
+                    const optionElements = scOptionsList.querySelectorAll('.option-container');
+                    const lastOption = optionElements[optionElements.length - 1];
+                    
+                    if (lastOption) {
+                        const optionId = lastOption.querySelector('.remove-sc-option-btn').getAttribute('data-oid');
+                        const radioInput = lastOption.querySelector(`.correct-sc-option`);
+                        
+                        if (radioInput) radioInput.checked = option.isCorrect;
+                        
+                        const textInput = document.getElementById(`sc-option-text-${questionId}-${optionId}`);
+                        if (textInput) textInput.value = cleanHtmlTags(option.text);
+                        
+                        const feedbackInput = document.getElementById(`sc-option-feedback-${questionId}-${optionId}`);
+                        if (feedbackInput && option.feedback) feedbackInput.value = cleanHtmlTags(option.feedback);
+                    }
+                }
+            });
+            break;
+            
+        case 'mc': // QCM
+            const mcOptionsList = document.getElementById(`options-list-${questionId}`);
+            if (!mcOptionsList) {
+                console.error(`Could not find options-list-${questionId}`);
+                break;
+            }
+            
+            // Vider les options existantes
+            while (mcOptionsList.firstChild) {
+                mcOptionsList.removeChild(mcOptionsList.firstChild);
+            }
+            
+            // Traiter proprement les options et leurs feedbacks
+            const mcOptionsWithFeedback = extractOptionsWithFeedback(cleanAnswers, false);
+            console.log('MC options with feedback:', mcOptionsWithFeedback);
+            
+            // Ajouter chaque option
+            mcOptionsWithFeedback.forEach((option) => {
+                const addOptionBtn = document.querySelector(`.add-option-btn[data-qid="${questionId}"]`);
+                if (addOptionBtn) {
+                    addOptionBtn.click();
+                    
+                    // Mettre à jour le dernier élément ajouté
+                    const optionElements = mcOptionsList.querySelectorAll('.option-container');
+                    const lastOption = optionElements[optionElements.length - 1];
+                    
+                    if (lastOption) {
+                        const optionId = lastOption.querySelector('.remove-option-btn').getAttribute('data-oid');
+                        const checkbox = lastOption.querySelector('.correct-option');
+                        
+                        if (checkbox) checkbox.checked = option.isCorrect;
+                        
+                        const textInput = document.getElementById(`option-text-${questionId}-${optionId}`);
+                        if (textInput) textInput.value = cleanHtmlTags(option.text);
+                        
+                        // Sélectionner la valeur du poids dans le select
+                        const weightSelect = document.getElementById(`option-weight-${questionId}-${optionId}`);
+                        if (weightSelect) {
+                            // Trouver l'option la plus proche dans le select
+                            let closestOption = null;
+                            let minDiff = Infinity;
+                            
+                            for (let i = 0; i < weightSelect.options.length; i++) {
+                                const optValue = parseFloat(weightSelect.options[i].value);
+                                const diff = Math.abs(optValue - parseFloat(option.weight));
+                                
+                                if (diff < minDiff) {
+                                    minDiff = diff;
+                                    closestOption = weightSelect.options[i];
+                                }
+                            }
+                            
+                            if (closestOption) {
+                                closestOption.selected = true;
+                                
+                                // Ajouter la classe active-weight si nécessaire
+                                if (option.isCorrect) {
+                                    weightSelect.classList.add('active-weight');
+                                } else {
+                                    weightSelect.classList.remove('active-weight');
+                                }
+                                
+                                // Appliquer la couleur en fonction de la valeur sélectionnée
+                                updateWeightColor(weightSelect);
+                            }
+                        }
+                        
+                        // Ajouter le feedback s'il existe
+                        const feedbackInput = document.getElementById(`option-feedback-${questionId}-${optionId}`);
+                        if (feedbackInput && option.feedback) feedbackInput.value = cleanHtmlTags(option.feedback);
+                    }
+                }
+            });
+            break;
         }
     }
 });

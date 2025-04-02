@@ -1,4 +1,5 @@
 // Fonction pour ajouter une option QCM
+// Fonction pour ajouter une option QCM
 function addOption(questionId, optionsListElement) {
     const optionId = optionsListElement.children.length + 1;
     
@@ -24,47 +25,48 @@ function addOption(questionId, optionsListElement) {
     // Créer le HTML pour le conteneur d'options avec le nouveau select personnalisé
     let selectHtml = `<select id="option-weight-${questionId}-${optionId}" class="weight-input" title="Pondération en pourcentage">`;
     
-    // Liste des valeurs de pondération avec leur affichage simplifié et valeur complète
+    // Liste des valeurs de pondération avec leur affichage avec 2 décimales pour les valeurs décimales
+    // Sans arrondir (par exemple 66,66 au lieu de 66,67)
     const weightOptions = [
         { value: "0", display: "0%" },
         { value: "100", display: "100%" },
         { value: "90", display: "90%" },
-        { value: "83.33333", display: "83%" },
+        { value: "83.33333", display: "83,33%" },
         { value: "80", display: "80%" },
         { value: "75", display: "75%" },
         { value: "70", display: "70%" },
-        { value: "66.66667", display: "67%" },
+        { value: "66.66667", display: "66,66%" },
         { value: "60", display: "60%" },
         { value: "50", display: "50%" },
         { value: "40", display: "40%" },
-        { value: "33.33333", display: "33%" },
+        { value: "33.33333", display: "33,33%" },
         { value: "30", display: "30%" },
         { value: "25", display: "25%" },
         { value: "20", display: "20%" },
-        { value: "16.66667", display: "17%" },
-        { value: "14.28571", display: "14%" },
-        { value: "12.5", display: "13%" },
-        { value: "11.11111", display: "11%" },
+        { value: "16.66667", display: "16,66%" },
+        { value: "14.28571", display: "14,28%" },
+        { value: "12.5", display: "12,50%" },
+        { value: "11.11111", display: "11,11%" },
         { value: "10", display: "10%" },
         { value: "5", display: "5%" },
         { value: "-5", display: "-5%" },
         { value: "-10", display: "-10%" },
-        { value: "-11.11111", display: "-11%" },
-        { value: "-12.5", display: "-13%" },
-        { value: "-14.28571", display: "-14%" },
-        { value: "-16.66667", display: "-17%" },
+        { value: "-11.11111", display: "-11,11%" },
+        { value: "-12.5", display: "-12,50%" },
+        { value: "-14.28571", display: "-14,28%" },
+        { value: "-16.66667", display: "-16,66%" },
         { value: "-20", display: "-20%" },
         { value: "-25", display: "-25%" },
         { value: "-30", display: "-30%" },
-        { value: "-33.33333", display: "-33%" },
+        { value: "-33.33333", display: "-33,33%" },
         { value: "-40", display: "-40%" },
         { value: "-50", display: "-50%" },
         { value: "-60", display: "-60%" },
-        { value: "-66.66667", display: "-67%" },
+        { value: "-66.66667", display: "-66,66%" },
         { value: "-70", display: "-70%" },
         { value: "-75", display: "-75%" },
         { value: "-80", display: "-80%" },
-        { value: "-83.33333", display: "-83%" },
+        { value: "-83.33333", display: "-83,33%" },
         { value: "-90", display: "-90%" },
         { value: "-100", display: "-100%" }
     ];
@@ -109,8 +111,13 @@ function addOption(questionId, optionsListElement) {
             }
         } else {
             weightSelect.classList.remove('active-weight');
-            // On laisse la valeur telle quelle, même si elle est positive
+            // Remettre la valeur à 0 quand on décoche l'option
+            weightSelect.value = "0";
+            updateWeightColor(weightSelect);
         }
+        
+        // Ajuster automatiquement les pondérations de toutes les options
+        autoAdjustWeights(questionId);
     });
     
     // Ajouter un événement pour mettre à jour la couleur quand la valeur change
@@ -122,6 +129,8 @@ function addOption(questionId, optionsListElement) {
     const removeOptionBtn = optionDiv.querySelector('.remove-option-btn');
     removeOptionBtn.addEventListener('click', function() {
         optionsListElement.removeChild(optionDiv);
+        // Ajuster automatiquement les pondérations après la suppression
+        setTimeout(() => autoAdjustWeights(questionId), 0);
     });
 }
 
@@ -219,3 +228,76 @@ function updateSAWeightColor(inputElement) {
         inputElement.classList.add('zero-weight-bg');
     }
 }
+
+// Fonction pour ajuster automatiquement les pondérations des options cochées
+function autoAdjustWeights(questionId) {
+    const optionsContainer = document.getElementById(`options-list-${questionId}`);
+    const options = optionsContainer.querySelectorAll('.option-container');
+    
+    // Compter le nombre d'options cochées
+    let checkedCount = 0;
+    const checkedOptions = [];
+    
+    options.forEach(option => {
+        const checkbox = option.querySelector('.correct-option');
+        if (checkbox && checkbox.checked) {
+            checkedCount++;
+            const weightSelect = option.querySelector('.weight-input');
+            checkedOptions.push(weightSelect);
+        }
+    });
+    
+    // Si aucune option n'est cochée, pas besoin d'ajuster
+    if (checkedCount === 0) return;
+    
+    // Calculer la pondération par option en fonction du nombre d'options cochées
+    // Utiliser des valeurs prédéfinies pour les fractions courantes
+    let weightPerOption;
+    
+    switch (checkedCount) {
+        case 1:
+            weightPerOption = "100";
+            break;
+        case 2:
+            weightPerOption = "50";
+            break;
+        case 3:
+            weightPerOption = "33.33333";
+            break;
+        case 4:
+            weightPerOption = "25";
+            break;
+        case 5:
+            weightPerOption = "20";
+            break;
+        case 6:
+            weightPerOption = "16.66667";
+            break;
+        case 7:
+            weightPerOption = "14.28571";
+            break;
+        case 8:
+            weightPerOption = "12.5";
+            break;
+        case 9:
+            weightPerOption = "11.11111";
+            break;
+        default:
+            // Pour 10 options ou plus, calculer une valeur approximative
+            weightPerOption = (100 / checkedCount).toFixed(5);
+    }
+    
+    // Appliquer la pondération à chaque option cochée
+    checkedOptions.forEach(weightSelect => {
+        // Trouver l'option correspondant à la valeur
+        for (let i = 0; i < weightSelect.options.length; i++) {
+            if (weightSelect.options[i].value === weightPerOption) {
+                weightSelect.selectedIndex = i;
+                break;
+            }
+        }
+        // Mettre à jour la couleur
+        updateWeightColor(weightSelect);
+    });
+}
+

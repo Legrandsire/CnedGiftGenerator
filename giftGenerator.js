@@ -1,4 +1,5 @@
 // Fonction pour générer le code GIFT
+// Fonction pour générer le code GIFT
 function generateGIFTCode() {
     let giftCode = '';
     const questions = document.querySelectorAll('.question-container');
@@ -34,13 +35,17 @@ function generateGIFTCode() {
             // Si le champ est vide, générer automatiquement l'identifiant
             // Utiliser le code article si disponible, sinon "Q" comme préfixe
             const prefix = courseCodeValue ? courseCodeValue : "Q";
-            finalQuestionId = `${prefix}-Q${index + 1}`;
+            // Formatter le numéro de question avec deux chiffres pour les chiffres 1-9
+            const questionNumber = (index + 1).toString().padStart(2, '0');
+            finalQuestionId = `${prefix}-Q${questionNumber}`;
         } else {
             // Si renseigné manuellement, ajouter simplement le suffixe -Q et un numéro
             // mais ne pas ajouter le code article
             const qSuffixPattern = /-Q\d+$/;
             if (!qSuffixPattern.test(questionIdValue)) {
-                finalQuestionId = `${questionIdValue}-Q${index + 1}`;
+                // Formatter le numéro de question avec deux chiffres pour les chiffres 1-9
+                const questionNumber = (index + 1).toString().padStart(2, '0');
+                finalQuestionId = `${questionIdValue}-Q${questionNumber}`;
             } else {
                 // Si l'ID contient déjà un suffixe -Q, le conserver tel quel
                 finalQuestionId = questionIdValue;
@@ -56,8 +61,11 @@ function generateGIFTCode() {
             return;
         }
         
+        // Envelopper le texte de la question dans des balises HTML et ajouter des espaces insécables pour les ponctuations doubles
+        const formattedQuestionText = addHtmlTags(addNonBreakingSpaces(questionText));
+        
         // Format de question GIFT conforme au modèle
-        giftCode += `::${finalQuestionId}::[html]${questionText}\n{`;
+        giftCode += `::${finalQuestionId}::[html]${formattedQuestionText}\n{`;
         
         // Gérer en fonction du type de question
         switch(questionType) {
@@ -85,7 +93,9 @@ function generateGIFTCode() {
         
         // Ajouter le feedback général si présent, avec 4 # comme demandé
         if (generalFeedback) {
-            giftCode += `\n####${generalFeedback}`;
+            // Envelopper le feedback dans des balises HTML et ajouter des espaces insécables
+            const formattedFeedback = addHtmlTags(addNonBreakingSpaces(generalFeedback));
+            giftCode += `\n####${formattedFeedback}`;
         }
         
         // Fermer l'accolade
@@ -98,6 +108,21 @@ function generateGIFTCode() {
     window.giftOutput.value = giftCode;
 }
 
+// Fonction utilitaire pour ajouter des balises HTML autour du texte
+function addHtmlTags(text) {
+    if (!text.startsWith('<p>') && !text.startsWith('<div>') && !text.startsWith('<span>')) {
+        return `<p>${text}</p>`;
+    }
+    return text;
+}
+
+// Fonction utilitaire pour ajouter des espaces insécables avant les ponctuations doubles
+function addNonBreakingSpaces(text) {
+    // Remplacer l'espace normal suivi d'une ponctuation double par un espace insécable
+    return text.replace(/ ([;:!?])/g, '&nbsp;$1');
+}
+
+// Fonction pour générer le code des questions à choix multiples
 // Fonction pour générer le code des questions à choix multiples
 function generateMCQuestionCode(giftCode, questionId, questionText) {
     const mcOptions = document.querySelectorAll('#options-list-' + questionId + ' .option-container');
@@ -140,21 +165,53 @@ function generateMCQuestionCode(giftCode, questionId, questionText) {
         
         if (!optionText) return;
         
+        // Ajouter les balises HTML et espaces insécables aux textes d'option
+        const formattedOptionText = addHtmlTags(addNonBreakingSpaces(optionText));
+        
         // Obtenir la valeur de poids du select
         const weightSelect = document.getElementById(`option-weight-${questionId}-${optionId}`);
         const weight = parseFloat(weightSelect.value);
         
-        // Formater avec 5 décimales exactement, comme requis dans le code d'origine
-        giftCode += `\n~%${weight.toFixed(5)}%${optionText}`;
+        // Déterminer le format approprié pour le poids
+        let formattedWeight;
+        
+        // Liste des valeurs fractionnaires nécessitant 5 décimales
+        const fractionValues = [
+            83.33333, -83.33333, 
+            66.66667, -66.66667, 
+            33.33333, -33.33333, 
+            16.66667, -16.66667, 
+            14.28571, -14.28571, 
+            12.5, -12.5, 
+            11.11111, -11.11111
+        ];
+        
+        // Si c'est une des valeurs fractionnaires spécifiques, utiliser 5 décimales
+        if (fractionValues.includes(weight)) {
+            formattedWeight = weight.toFixed(5);
+        } else {
+            // Sinon, pour les nombres entiers, ne pas afficher de décimales
+            if (Number.isInteger(weight)) {
+                formattedWeight = weight.toString();
+            } else {
+                // Pour les autres valeurs décimales, utiliser 2 décimales
+                formattedWeight = weight.toFixed(2);
+            }
+        }
+        
+        // Formater avec le poids approprié
+        giftCode += `\n~%${formattedWeight}%${formattedOptionText}`;
         
         // Ajouter feedback spécifique à l'option si présent
         if (feedbackText) {
-            giftCode += `\n#${feedbackText}`;
+            const formattedFeedback = addHtmlTags(addNonBreakingSpaces(feedbackText));
+            giftCode += `\n#${formattedFeedback}`;
         }
     });
     
     return giftCode;
 }
+// Fonction pour générer le code des questions à choix unique
 // Fonction pour générer le code des questions à choix unique
 function generateSCQuestionCode(giftCode, questionId, questionText) {
     const scOptions = document.querySelectorAll('#sc-options-list-' + questionId + ' .option-container');
@@ -179,16 +236,20 @@ function generateSCQuestionCode(giftCode, questionId, questionText) {
         
         if (!optionText) return;
         
+        // Ajouter des balises HTML et espaces insécables au texte de l'option
+        const formattedOptionText = addHtmlTags(addNonBreakingSpaces(optionText));
+        
         // Ajout d'un saut de ligne entre chaque option
         if (isCorrect) {
-            giftCode += `\n=${optionText}`;
+            giftCode += `\n=${formattedOptionText}`;
         } else {
-            giftCode += `\n~${optionText}`;
+            giftCode += `\n~${formattedOptionText}`;
         }
         
         // Ajouter feedback spécifique à l'option si présent
         if (feedbackText) {
-            giftCode += `\n#${feedbackText}`;
+            const formattedFeedback = addHtmlTags(addNonBreakingSpaces(feedbackText));
+            giftCode += `\n#${formattedFeedback}`;
         }
     });
     
@@ -196,35 +257,56 @@ function generateSCQuestionCode(giftCode, questionId, questionText) {
 }
 
 // Fonction pour générer le code des questions à réponse courte
-// Fonction pour générer le code des questions à réponse courte
 function generateSAQuestionCode(giftCode, questionId, questionText) {
     const saOptions = document.querySelectorAll('#sa-options-list-' + questionId + ' .option-container');
     
     let hasSaOption = false;
     saOptions.forEach(option => {
         const optionId = option.querySelector('.remove-sa-option-btn').getAttribute('data-oid');
-        const caseType = document.getElementById(`sa-case-${questionId}-${optionId}`).value;
-        const optionText = document.getElementById(`sa-option-text-${questionId}-${optionId}`).value.trim();
         
-        // Utiliser l'attribut data-full-value pour récupérer la valeur complète
+        // Récupérer les éléments avec vérification de leur existence
+        const caseTypeElement = document.getElementById(`sa-case-${questionId}-${optionId}`);
+        const optionTextElement = document.getElementById(`sa-option-text-${questionId}-${optionId}`);
         const weightInput = document.getElementById(`sa-option-weight-${questionId}-${optionId}`);
+        
+        // Vérifier que les éléments nécessaires existent
+        if (!caseTypeElement || !optionTextElement || !weightInput) {
+            console.warn(`Éléments manquants pour l'option ${optionId} de la question ${questionId}`);
+            return;
+        }
+        
+        const caseType = caseTypeElement.value;
+        const optionText = optionTextElement.value.trim();
+        
+        // Récupérer la valeur de poids avec sécurité
         const weight = weightInput.getAttribute('data-full-value') || weightInput.value.trim();
         
         if (!optionText) return;
         hasSaOption = true;
         
-        let prefix = '=';
-        if (weight && weight !== '100') {
-            prefix = `=%${weight}%`;
-        }
+        // Modifier le format pour toujours inclure le pourcentage
+        let prefix = `=%${weight}%`;
+        
+        // Ajouter les balises HTML et espaces insécables au texte de la réponse
+        const formattedOptionText = addHtmlTags(addNonBreakingSpaces(optionText));
         
         // Gérer la sensibilité à la casse et ajouter un saut de ligne
         if (caseType === 'case_sensitive') {
-            giftCode += `\n${prefix}${optionText}`;
+            giftCode += `\n${prefix}${formattedOptionText}`;
         } else if (caseType === 'case_insensitive') {
-            giftCode += `\n${prefix}${optionText}`;
+            giftCode += `\n${prefix}${formattedOptionText}`;
         } else {
-            giftCode += `\n${prefix}${optionText}`;
+            giftCode += `\n${prefix}${formattedOptionText}`;
+        }
+        
+        // Ajouter feedback spécifique à l'option si présent
+        const feedbackElement = document.getElementById(`sa-option-feedback-${questionId}-${optionId}`);
+        if (feedbackElement) {
+            const feedbackText = feedbackElement.value.trim();
+            if (feedbackText) {
+                const formattedFeedback = addHtmlTags(addNonBreakingSpaces(feedbackText));
+                giftCode += `\n#${formattedFeedback}`;
+            }
         }
     });
     
