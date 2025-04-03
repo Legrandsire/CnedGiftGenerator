@@ -287,8 +287,8 @@ function generateSAQuestionCode(giftCode, questionId, questionText) {
         // Modifier le format pour toujours inclure le pourcentage
         let prefix = `=%${weight}%`;
         
-        // Ajouter les balises HTML et espaces insécables au texte de la réponse
-        const formattedOptionText = addHtmlTags(addNonBreakingSpaces(optionText));
+        // Ajouter seulement les espaces insécables au texte de la réponse sans balises HTML
+        const formattedOptionText = addNonBreakingSpaces(optionText);
         
         // Gérer la sensibilité à la casse et ajouter un saut de ligne
         if (caseType === 'case_sensitive') {
@@ -304,6 +304,7 @@ function generateSAQuestionCode(giftCode, questionId, questionText) {
         if (feedbackElement) {
             const feedbackText = feedbackElement.value.trim();
             if (feedbackText) {
+                // Pour le feedback, on conserve les balises HTML car elles sont nécessaires
                 const formattedFeedback = addHtmlTags(addNonBreakingSpaces(feedbackText));
                 giftCode += `\n#${formattedFeedback}`;
             }
