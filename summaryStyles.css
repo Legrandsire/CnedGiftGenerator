@@ -1,0 +1,245 @@
+/**
+ * summaryStyles.css
+ * Styles pour le résumé des questions du générateur de code GIFT
+ */
+
+/* Section de résumé */
+.summary-section {
+    background-color: #f0f8ff;
+    border: 1px solid #cce5ff;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+/* En-tête du résumé */
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+}
+
+.summary-header h3 {
+    margin: 0;
+    color: #005EB8;
+}
+
+.summary-toggle-icon {
+    display: inline-block;
+    margin-right: 5px;
+    transition: transform 0.3s ease;
+}
+
+/* Contenu du résumé */
+.summary-content {
+    padding: 0 15px 15px;
+    max-height: 500px;
+    overflow-y: auto;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.summary-content.hidden {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+}
+
+/* Table de résumé */
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-size: 0.9em; /* Police réduite pour afficher plus de contenu */
+}
+
+.summary-table th,
+.summary-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.summary-table th {
+    background-color: #005EB8;
+    color: white;
+    font-weight: bold;
+}
+
+.summary-table tr:last-child td {
+    border-bottom: none;
+}
+
+.summary-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.summary-table tr:hover {
+    background-color: #f0f7ff;
+}
+
+/* Colonnes spécifiques */
+.summary-number {
+    width: 40px;
+    text-align: center;
+}
+
+.summary-id {
+    width: 150px;
+    font-family: monospace;
+}
+
+.summary-type {
+    width: 100px;
+}
+
+.summary-text {
+    min-width: 200px;
+    word-break: break-word; /* Permet aux mots longs de se casser */
+    max-width: 50vw; /* Limite la largeur maximale */
+}
+
+.summary-actions {
+    width: 80px;
+    text-align: center;
+}
+
+/* Styles pour les ID auto-générés */
+.auto-id {
+    color: #888;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+/* Boutons d'action */
+.summary-btn {
+    background-color: transparent;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.summary-btn:hover {
+    background-color: #f0f7ff;
+    border-color: #005EB8;
+}
+
+.goto-icon {
+    font-size: 16px;
+    color: #005EB8;
+}
+
+/* Message quand il n'y a pas de questions */
+.summary-empty-message {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+/* Style pour le bouton d'ajout dans le message vide */
+.small-btn {
+    font-size: 14px;
+    padding: 5px 10px;
+    margin-top: 10px;
+}
+
+/* Style pour la mise en évidence de la question ciblée */
+.highlight-question {
+    animation: questionHighlight 2s ease;
+}
+
+@keyframes questionHighlight {
+    0% {
+        background-color: #ffff99;
+    }
+    100% {
+        background-color: inherit;
+    }
+}
+
+/* Boutons de navigation persistants */
+.navigation-buttons {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #005EB8; /* Même bleu que les boutons */
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 18px; /* Boutons légèrement plus grands */
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    opacity: 0.8;
+    font-size: 1.1em;
+}
+
+.nav-btn:hover {
+    background-color: #004a93;
+    opacity: 1;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.nav-btn.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    pointer-events: none;
+}
+
+.nav-icon {
+    margin-right: 6px;
+    font-size: 1.2em; /* Flèche plus grande */
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .summary-table {
+        font-size: 0.85em;
+    }
+    
+    .summary-id {
+        width: 100px;
+    }
+    
+    .summary-type {
+        width: 80px;
+    }
+    
+    .summary-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .summary-header button {
+        margin-top: 10px;
+    }
+    
+    .navigation-buttons {
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .nav-btn {
+        padding: 10px 15px;
+        font-size: 1em;
+    }
+}
