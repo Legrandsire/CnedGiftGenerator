@@ -1,5 +1,4 @@
 // Fonction pour ajouter une option QCM
-// Fonction pour ajouter une option QCM
 function addOption(questionId, optionsListElement) {
     const optionId = optionsListElement.children.length + 1;
     
@@ -131,7 +130,22 @@ function addOption(questionId, optionsListElement) {
         optionsListElement.removeChild(optionDiv);
         // Ajuster automatiquement les pondérations après la suppression
         setTimeout(() => autoAdjustWeights(questionId), 0);
+        // Vérifier les doublons après la suppression
+        setTimeout(() => checkDuplicateOptions(questionId, 'mc'), 0);
     });
+    
+    // Ajouter un écouteur pour vérifier les doublons lors de la saisie dans le champ de texte
+    const optionTextInput = optionDiv.querySelector('.option-text-input');
+    optionTextInput.addEventListener('input', function() {
+        // Délai court pour permettre à l'utilisateur de finir sa saisie
+        clearTimeout(this.duplicateCheckTimeout);
+        this.duplicateCheckTimeout = setTimeout(() => {
+            checkDuplicateOptions(questionId, 'mc');
+        }, 300); // Délai de 300ms avant vérification
+    });
+    
+    // Vérifier les doublons après l'ajout d'une nouvelle option
+    setTimeout(() => checkDuplicateOptions(questionId, 'mc'), 0);
 }
 
 // Fonction utilitaire pour mettre à jour la couleur de fond du sélecteur en fonction de la valeur
@@ -170,7 +184,22 @@ function addSCOption(questionId, optionsListElement) {
     const removeOptionBtn = optionDiv.querySelector('.remove-sc-option-btn');
     removeOptionBtn.addEventListener('click', function() {
         optionsListElement.removeChild(optionDiv);
+        // Vérifier les doublons après la suppression
+        setTimeout(() => checkDuplicateOptions(questionId, 'sc'), 0);
     });
+    
+    // Ajouter un écouteur pour vérifier les doublons lors de la saisie dans le champ de texte
+    const optionTextInput = optionDiv.querySelector('input[type="text"]');
+    optionTextInput.addEventListener('input', function() {
+        // Délai court pour permettre à l'utilisateur de finir sa saisie
+        clearTimeout(this.duplicateCheckTimeout);
+        this.duplicateCheckTimeout = setTimeout(() => {
+            checkDuplicateOptions(questionId, 'sc');
+        }, 300); // Délai de 300ms avant vérification
+    });
+    
+    // Vérifier les doublons après l'ajout d'une nouvelle option
+    setTimeout(() => checkDuplicateOptions(questionId, 'sc'), 0);
 }
 
 // Fonction pour ajouter une réponse QRC
@@ -301,3 +330,87 @@ function autoAdjustWeights(questionId) {
     });
 }
 
+/**
+ * Vérifie les doublons dans les options d'une question
+ * @param {string} questionId - L'identifiant de la question
+ * @param {string} questionType - Le type de question ('mc' ou 'sc')
+ * @returns {Array} - Tableau d'objets contenant les options dupliquées
+ */
+function checkDuplicateOptions(questionId, questionType) {
+    // Déterminer quel type de liste d'options utiliser
+    const listId = questionType === 'sc' ? `sc-options-list-${questionId}` : `options-list-${questionId}`;
+    const optionsList = document.getElementById(listId);
+    
+    if (!optionsList) return [];
+    
+    // Obtenir toutes les options
+    const options = optionsList.querySelectorAll('.option-container');
+    const optionTexts = [];
+    const duplicates = [];
+    
+    // Collecter tous les textes d'options et vérifier les doublons
+    options.forEach((optionElement, index) => {
+        // Déterminer le préfixe du champ de texte en fonction du type de question
+        const textFieldPrefix = questionType === 'sc' ? `sc-option-text-` : `option-text-`;
+        const optionId = questionType === 'sc' 
+            ? optionElement.querySelector('.remove-sc-option-btn').getAttribute('data-oid')
+            : optionElement.querySelector('.remove-option-btn').getAttribute('data-oid');
+        
+        const textField = document.getElementById(`${textFieldPrefix}${questionId}-${optionId}`);
+        
+        if (textField) {
+            const optionText = textField.value.trim().toLowerCase();
+            
+            // Ignorer les options vides
+            if (optionText === '') return;
+            
+            // Vérifier si ce texte existe déjà dans notre liste
+            const existingIndex = optionTexts.findIndex(item => item.text === optionText);
+            
+            if (existingIndex !== -1) {
+                // Trouvé un doublon
+                if (!duplicates.some(d => d.text === optionText)) {
+                    // Ajouter le premier élément trouvé
+                    duplicates.push({
+                        text: optionText,
+                        elements: [optionTexts[existingIndex].element, textField]
+                    });
+                } else {
+                    // Ajouter à un groupe de doublons existant
+                    const duplicateEntry = duplicates.find(d => d.text === optionText);
+                    if (duplicateEntry && !duplicateEntry.elements.includes(textField)) {
+                        duplicateEntry.elements.push(textField);
+                    }
+                }
+            }
+            
+            // Dans tous les cas, ajouter à notre liste pour comparaison future
+            optionTexts.push({
+                text: optionText,
+                element: textField
+            });
+        }
+    });
+    
+    // Appliquer le style visuel aux champs concernés
+    duplicates.forEach(duplicate => {
+        duplicate.elements.forEach(element => {
+            element.classList.add('duplicate-option');
+            
+            // Ajouter une info-bulle (tooltip) pour expliquer l'erreur
+            element.setAttribute('title', 'Option dupliquée ! Le texte de cette option existe déjà.');
+        });
+    });
+    
+    // Si aucun doublon n'a été trouvé, nettoyer tous les champs
+    if (duplicates.length === 0) {
+        // Réinitialiser les styles pour tous les champs d'options
+        const allOptionFields = document.querySelectorAll(`#${listId} input[type="text"]`);
+        allOptionFields.forEach(field => {
+            field.classList.remove('duplicate-option');
+            field.removeAttribute('title');
+        });
+    }
+    
+    return duplicates;
+}

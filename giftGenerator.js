@@ -4,6 +4,37 @@ function generateGIFTCode() {
     let giftCode = '';
     const questions = document.querySelectorAll('.question-container');
     
+    // Vérifier les doublons dans toutes les questions avant de générer le code
+    let hasDuplicates = false;
+    let duplicateQuestionNumbers = [];
+    
+    questions.forEach((question, index) => {
+        const questionId = question.dataset.id;
+        const questionType = document.querySelector(`input[name="question-type-${questionId}"]:checked`).value;
+        
+        // Vérifier les doublons pour les QCM et QCU
+        if (questionType === 'mc' || questionType === 'sc') {
+            const duplicates = checkDuplicateOptions(questionId, questionType);
+            if (duplicates.length > 0) {
+                hasDuplicates = true;
+                duplicateQuestionNumbers.push(index + 1);
+            }
+        }
+    });
+    
+    // Afficher un avertissement si des doublons sont détectés
+    if (hasDuplicates) {
+        let message = "Des options dupliquées ont été détectées dans les questions suivantes :\n";
+        duplicateQuestionNumbers.forEach(num => {
+            message += `- Question ${num}\n`;
+        });
+        message += "\nLes options dupliquées sont mises en évidence en rouge.\nVoulez-vous continuer quand même ?";
+        
+        if (!confirm(message)) {
+            return; // Arrêter la génération si l'utilisateur choisit d'annuler
+        }
+    }
+    
     // Récupérer les informations d'auteur et de code article
     const authorLastnameValue = window.authorLastname.value.trim();
     const authorFirstnameValue = window.authorFirstname.value.trim();

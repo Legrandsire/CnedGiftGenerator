@@ -8,12 +8,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Ajouter l'écouteur d'événement pour le téléchargement
     downloadBtn.addEventListener('click', function() {
-        // Récupérer le contenu GIFT
+        // Générer d'abord le code GIFT s'il est vide
+        if (!giftOutput.value.trim()) {
+            // Vérifier si la fonction generateGIFTCode existe dans la portée globale
+            if (typeof generateGIFTCode === 'function') {
+                generateGIFTCode();
+            } else if (typeof window.generateGIFTCode === 'function') {
+                window.generateGIFTCode();
+            } else {
+                console.error('La fonction generateGIFTCode n\'est pas disponible');
+                alert('Impossible de générer le code GIFT automatiquement. Veuillez cliquer sur "Générer le code GIFT" avant de télécharger.');
+                return;
+            }
+        }
+        
+        // Récupérer le contenu GIFT (qui vient d'être généré si nécessaire)
         const giftContent = giftOutput.value;
         
-        // Vérifier si le contenu est vide
+        // Vérifier si le contenu est toujours vide après génération (cas où il n'y a pas de questions)
         if (!giftContent.trim()) {
-            alert('Aucun code GIFT à télécharger. Veuillez d\'abord générer le code.');
+            alert('Aucun code GIFT à télécharger. Veuillez d\'abord ajouter des questions.');
             return;
         }
         
@@ -64,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
         URL.revokeObjectURL(link.href);
         document.body.removeChild(link);
         
-        // Message de confirmation
-        alert(`Le fichier "${fileName}" a été téléchargé.`);
+
     });
 });

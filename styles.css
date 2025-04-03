@@ -700,3 +700,74 @@ textarea {
     display: flex;
     justify-content: flex-end;
 }
+
+/* Styles pour les options dupliquées */
+.duplicate-option {
+    border: 2px solid #e74c3c !important;
+    background-color: rgba(231, 76, 60, 0.1) !important;
+    box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+    animation: duplicatePulse 2s infinite;
+}
+
+/* Animation de pulsation pour les champs dupliqués */
+@keyframes duplicatePulse {
+    0% {
+        box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 8px rgba(231, 76, 60, 0.8);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(231, 76, 60, 0.5);
+    }
+}
+
+/* Message d'erreur pour les options dupliquées qui apparaît au focus */
+.duplicate-option:focus::after {
+    content: "Option dupliquée !";
+    position: absolute;
+    right: 10px;
+    top: 100%;
+    background-color: #e74c3c;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+/* Style pour le message de confirmation/alerte avec liste des questions */
+.alert-list {
+    padding-left: 15px;
+    margin: 5px 0;
+}
+
+.alert-list li {
+    margin-bottom: 3px;
+}
+
+/* Tooltip personnalisé pour les champs dupliqués */
+[data-title]:hover:after {
+    opacity: 1;
+    transition: all 0.1s ease 0.5s;
+    visibility: visible;
+}
+
+[data-title]:after {
+    content: attr(data-title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    color: #fff;
+    background-color: #e74c3c;
+    white-space: nowrap;
+    z-index: 99999;
+    visibility: hidden;
+    opacity: 0;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: normal;
+}
