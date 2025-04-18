@@ -1,0 +1,333 @@
+/**
+ * previewStyles.css
+ * Styles pour le mode prévisualisation du générateur de code GIFT
+ */
+
+/* Bouton flottant de bascule du mode prévisualisation */
+.floating-toggle-container {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    align-items: center;
+    background-color: white;
+    padding: 8px 12px;
+    border-radius: 50px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: transform 0.3s ease, opacity 0.2s ease;
+}
+
+.floating-toggle-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* Styles pour l'interrupteur */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    margin-right: 10px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2da288;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2da288;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 24px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.mode-label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Styles des éléments en mode prévisualisation */
+.preview-text {
+    padding: 8px 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.preview-auto-id {
+    padding: 6px 0;
+    color: #666;
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+.preview-question-type {
+    display: inline-block;
+    margin-left: 12px;
+    font-weight: normal;
+    font-size: 0.9em;
+    color: #2da288;
+    padding: 4px 10px;
+    background-color: rgba(45, 162, 136, 0.1);
+    border-radius: 15px;
+    vertical-align: middle;
+}
+
+/* Style pour les icônes de réponse */
+.preview-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 14px;
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.preview-icon.correct {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.preview-icon.incorrect {
+    background-color: #F44336;
+    color: white;
+}
+
+/* Style pour les badges de pondération */
+.preview-weight-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+.preview-weight-badge.positive {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #2E7D32;
+}
+
+.preview-weight-badge.negative {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #C62828;
+}
+
+.preview-weight-badge.neutral {
+    background-color: rgba(158, 158, 158, 0.2);
+    color: #616161;
+}
+
+/* Style pour les feedbacks généraux */
+.preview-feedback {
+    background-color: #f5f5f5;
+    padding: 12px 15px;
+    border-left: 4px solid #2da288;
+    margin: 15px 0;
+    border-radius: 0 4px 4px 0;
+    color: #333;
+}
+
+/* Style pour les feedbacks d'options */
+.preview-option-feedback {
+    font-size: 0.9em;
+    color: #666;
+    padding: 5px 10px;
+    border-left: 2px solid #ddd;
+    margin-top: 3px;
+    margin-bottom: 10px;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 0 4px 4px 0;
+}
+
+/* Style pour les questions Vrai/Faux */
+.preview-tf-answer {
+    margin: 15px 0;
+    display: flex;
+    gap: 20px;
+}
+
+.tf-answer-container {
+    display: flex;
+    align-items: center;
+    padding: 8px 15px;
+    border-radius: 6px;
+    background-color: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.tf-answer-container.disabled {
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    opacity: 0.7;
+}
+
+.tf-label {
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+/* Style pour les questions à réponse courte */
+.preview-sa-answer-container {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 10px;
+}
+
+.sa-text {
+    flex: 1;
+}
+
+.sa-case-info {
+    font-style: italic;
+    color: #666;
+    font-size: 0.9em;
+}
+
+/* Préserver les couleurs alternées des questions */
+body.preview-mode .question-odd {
+    background-color: #e6f7f6 !important;
+}
+
+body.preview-mode .question-even {
+    background-color: #fceef3 !important;
+}
+
+/* Améliorer l'affichage des conteneurs d'options */
+body.preview-mode .option-container {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: flex-start;
+}
+
+/* Styles pour les options correctes et incorrectes */
+body.preview-mode .preview-correct-option {
+    background-color: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+body.preview-mode .preview-incorrect-option {
+    background-color: rgba(244, 67, 54, 0.05);
+    border: 1px solid rgba(244, 67, 54, 0.1);
+}
+
+/* Adapter l'affichage global des questions en mode prévisualisation */
+body.preview-mode .question-container {
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+body.preview-mode .question-container h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Style pour les listes d'options */
+body.preview-mode .options-list,
+body.preview-mode .options-list-radio,
+body.preview-mode .sa-options-list {
+    margin-top: 15px;
+}
+
+/* Style pour les libellés de questions */
+body.preview-mode label {
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Styles pour les réponses aux questions numériques */
+body.preview-mode #num-options-container {
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 15px;
+    border-radius: 4px;
+}
+
+/* Adaptation responsive du mode prévisualisation */
+@media (max-width: 768px) {
+    .floating-toggle-container {
+        top: 10px;
+        right: 10px;
+        padding: 6px 10px;
+    }
+    
+    .preview-question-type {
+        display: block;
+        margin-left: 0;
+        margin-top: 5px;
+        font-size: 0.8em;
+        text-align: center;
+    }
+    
+    body.preview-mode .question-container {
+        padding: 15px;
+    }
+    
+    .preview-tf-answer {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .preview-sa-answer-container {
+        flex-wrap: wrap;
+    }
+    
+    .preview-weight-badge {
+        margin-top: 5px;
+    }
+}
