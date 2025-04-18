@@ -3,25 +3,25 @@
  * Styles pour les composants d'aide du générateur de code GIFT
  */
 
-/* Bouton d'aide avec texte */
+/* Bouton d'aide fixe en haut de l'écran */
 .help-btn {
-    position: absolute;
-    right: 15px;
+    position: fixed;
+    right: 160px; /* Position à droite du bouton preview avec un espace adéquat */
     top: 15px;
-    height: 30px;
-    border-radius: 15px;
+    height: 36px;
+    border-radius: 18px;
     background-color: #005EB8;
     color: white;
     border: none;
     font-weight: bold;
-    padding: 0 12px;
+    padding: 0 15px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
-    z-index: 10;
+    z-index: 1000; /* S'assurer qu'il est au-dessus des autres éléments */
 }
 
 .help-btn:hover {
@@ -62,7 +62,7 @@
     height: 100vh;
     background-color: white;
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
+    z-index: 1001; /* Au-dessus des boutons fixes */
     overflow-y: auto;
     transition: transform 0.3s ease;
 }
@@ -79,6 +79,9 @@
     background-color: #005EB8;
     color: white;
     border-bottom: 1px solid #004C9B;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .help-header h2 {
@@ -105,6 +108,9 @@
     display: flex;
     border-bottom: 1px solid #ddd;
     background-color: #f5f5f5;
+    position: sticky;
+    top: 56px; /* Hauteur du header */
+    z-index: 5;
 }
 
 .help-tab-btn {
@@ -241,12 +247,12 @@
     transform: translateX(-50%) translateY(8px);
 }
 
-/* Affichage du tooltip avec délai au survol (2 secondes) */
+/* Affichage du tooltip avec délai au survol (1 seconde) */
 [data-tooltip]:hover::after,
 [data-tooltip]:hover::before {
     opacity: 1;
     visibility: visible;
-    transition-delay: 2s; /* Délai de 2 secondes avant affichage */
+    transition-delay: 1s; /* Délai d'une seconde avant affichage */
     animation: tooltipFadeIn 0.25s ease-in-out;
 }
 
@@ -337,8 +343,19 @@ select[data-tooltip]::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: transparent; /* Complètement transparent */
     z-index: 1500;
+    pointer-events: none;
+}
+
+.tour-target-highlight {
+    position: absolute;
+    box-shadow: 0 0 0 4px #e00417, 0 0 0 8px rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 1600;
+    transition: all 0.3s ease;
+    background-color: transparent; /* Rendre l'arrière-plan transparent */
 }
 
 .tour-tooltip {
@@ -347,8 +364,9 @@ select[data-tooltip]::before {
     padding: 15px 20px;
     border-radius: 6px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    max-width: 300px;
-    z-index: 1600;
+    max-width: 320px;
+    z-index: 1601;
+    pointer-events: auto; /* Le tooltip doit recevoir les clics */
 }
 
 .tour-tooltip::before {
@@ -402,6 +420,8 @@ select[data-tooltip]::before {
     justify-content: space-between;
     align-items: center;
     margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 12px;
 }
 
 .tour-nav button {
@@ -413,6 +433,12 @@ select[data-tooltip]::before {
     cursor: pointer;
     font-size: 14px;
     margin-left: 5px;
+    transition: all 0.2s ease;
+}
+
+.tour-nav button:hover {
+    background-color: #004a93;
+    transform: translateY(-2px);
 }
 
 .tour-nav button.tour-prev {
@@ -486,6 +512,14 @@ select[data-tooltip]::before {
         width: 100%;
     }
     
+    .help-btn {
+        right: 120px; /* Ajusté pour petits écrans */
+        top: 10px;
+        height: 32px;
+        padding: 0 10px;
+        font-size: 13px;
+    }
+    
     .tour-tooltip {
         max-width: 90%;
         left: 5% !important;
@@ -498,11 +532,6 @@ select[data-tooltip]::before {
     
     [data-tooltip]:hover::after {
         max-width: 160px;
-    }
-    
-    .help-btn {
-        top: 10px;
-        right: 10px;
     }
     
     .help-text {
