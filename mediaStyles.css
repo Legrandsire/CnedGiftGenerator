@@ -129,14 +129,16 @@
     background-color: #2e7d32;
     color: #fff;
     border: none;
-    border-radius: 6px;
-    padding: 9px 18px;
-    font-size: 0.95em;
+    border-radius: 4px;
+    padding: 10px 15px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
@@ -172,10 +174,9 @@
 /* ── Zone des boutons de téléchargement (si elle existe déjà dans styles.css) */
 .download-area {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 10px;
     align-items: center;
-    margin-top: 10px;
 }
 
 /* ── Mode prévisualisation : cacher le bloc média ───────────────────────── */

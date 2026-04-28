@@ -2,11 +2,9 @@
 function addNewQuestion() {
     window.questionCounter++;
     
-    const questionDiv = document.createElement('div');
-    questionDiv.className = 'question-container';
-    // Ajouter la classe 'question-even' ou 'question-odd' selon la parité
-    questionDiv.className += window.questionCounter % 2 === 0 ? ' question-even' : ' question-odd';
-    questionDiv.dataset.id = window.questionCounter;
+const questionDiv = document.createElement('div');
+questionDiv.className = 'question-container';
+questionDiv.dataset.id = window.questionCounter;
     
     questionDiv.innerHTML = `
 <h2>Question ${document.querySelectorAll('.question-container').length + 1}</h2>
@@ -124,6 +122,7 @@ function addNewQuestion() {
     `;
     
     window.questionsContainer.appendChild(questionDiv);
+    renumberQuestions();
  
     // Initialiser les éditeurs RTE de la nouvelle question
     const newQuestion = window.questionsContainer.lastElementChild;

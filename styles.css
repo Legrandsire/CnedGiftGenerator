@@ -180,8 +180,10 @@ textarea {
     border-radius: 4px;
     padding: 10px 15px;
     cursor: pointer;
-    font-size: 16px;
-    margin-right: 10px;
+    font-size: 14px;
+    margin-right: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* Bouton Clear spécifique */
@@ -694,6 +696,7 @@ textarea {
 .left-buttons {
     display: flex;
     gap: 10px;
+    align-items: center;
 }
 
 .right-buttons {
