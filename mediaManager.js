@@ -360,3 +360,4 @@ window.hasAnyMedia            = hasAnyMedia;
 window.getMediaList           = getMediaList;
 window.removeMedia            = removeMedia;
 window.attachMediaFromZip     = attachMediaFromZip;
+window.getMediaIcon            = getMediaIcon; 

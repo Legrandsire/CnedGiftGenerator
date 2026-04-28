@@ -39,38 +39,35 @@ function createSummarySection() {
  * Initialise les écouteurs d'événements pour la section de résumé
  */
 function initSummaryEvents() {
-    // Écouteur pour le bouton de toggle du résumé
     const toggleBtn = document.getElementById('toggle-summary-btn');
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
-            const summarySection = document.getElementById('summary-section');
-            const summaryContent = document.getElementById('summary-content');
-            const toggleIcon = this.querySelector('.summary-toggle-icon');
-            
-            if (summarySection && summaryContent && toggleIcon) {
-                if (summarySection.classList.contains('collapsed')) {
-                    // Ouvrir le résumé
-                    summarySection.classList.remove('collapsed');
-                    summaryContent.classList.remove('hidden');
-                    toggleIcon.textContent = '▲';
-                    this.innerHTML = this.innerHTML.replace('Afficher le résumé', 'Masquer le résumé');
-                    
-                    // Mettre à jour le résumé
-                    updateQuestionsSummary();
-                } else {
-                    // Fermer le résumé
-                    summarySection.classList.add('collapsed');
-                    summaryContent.classList.add('hidden');
-                    toggleIcon.textContent = '▼';
-                    this.innerHTML = this.innerHTML.replace('Masquer le résumé', 'Afficher le résumé');
-                }
-            }
-        });
-    }
-    
-    // Délégation d'événements pour les boutons d'actions dans le résumé
-    document.addEventListener('click', function(event) {
-        // Utiliser closest pour une meilleure fiabilité
+    if (!toggleBtn) return;
+
+    toggleBtn.addEventListener('click', function () {
+        const summarySection = document.getElementById('summary-section');
+        const summaryContent = document.getElementById('summary-content');
+        const toggleIcon     = this.querySelector('.summary-toggle-icon');
+        const toggleLabel    = this.querySelector('.summary-toggle-label');
+
+        if (!summarySection || !summaryContent || !toggleIcon || !toggleLabel) return;
+
+        if (summarySection.classList.contains('collapsed')) {
+            // ── Ouvrir ──
+            summarySection.classList.remove('collapsed');
+            summaryContent.classList.remove('hidden');
+            toggleIcon.textContent  = '▲';
+            toggleLabel.textContent = 'Masquer le résumé';
+            updateQuestionsSummary();
+        } else {
+            // ── Fermer ──
+            summarySection.classList.add('collapsed');
+            summaryContent.classList.add('hidden');
+            toggleIcon.textContent  = '▼';
+            toggleLabel.textContent = 'Afficher le résumé';
+        }
+    });
+
+    // Délégation d'événements pour les boutons ⮞ dans le tableau
+    document.addEventListener('click', function (event) {
         const gotoButton = event.target.closest('.goto-question-btn');
         if (gotoButton) {
             const questionId = gotoButton.getAttribute('data-qid');
@@ -87,19 +84,18 @@ function initSummaryEvents() {
  * Met à jour le résumé des questions
  */
 function updateQuestionsSummary() {
-    const summaryTableBody  = document.getElementById('summary-table-body');
+    const summaryTableBody   = document.getElementById('summary-table-body');
     const questionsContainer = document.getElementById('questions-container');
- 
+
     if (!summaryTableBody || !questionsContainer) return;
- 
+
     summaryTableBody.innerHTML = '';
- 
-    // Si le résumé est masqué, ne pas le mettre à jour
+
     const summaryContent = document.getElementById('summary-content');
     if (summaryContent && summaryContent.classList.contains('hidden')) return;
- 
+
     const questions = questionsContainer.querySelectorAll('.question-container');
- 
+
     if (questions.length === 0) {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
@@ -111,7 +107,7 @@ function updateQuestionsSummary() {
             </td>
         `;
         summaryTableBody.appendChild(emptyRow);
- 
+
         const addFirstQuestionBtn = document.getElementById('add-first-question-btn');
         if (addFirstQuestionBtn) {
             addFirstQuestionBtn.addEventListener('click', function () {
@@ -121,21 +117,21 @@ function updateQuestionsSummary() {
         }
         return;
     }
- 
+
     questions.forEach((question, index) => {
         if (!question) return;
- 
-        // Utiliser dataset.id (attribut data-id) cohérent avec questionManager.js
+
         const questionId = question.dataset.id;
         if (!questionId) return;
- 
+
         const questionIdField = document.getElementById(`question-id-${questionId}`);
         const questionIdValue = questionIdField ? questionIdField.value : '';
- 
-        // Détecter le type de question sélectionné
+
         const questionTypeRadio = question.querySelector(
             `input[name^="question-type-"]:checked`
         );
+
+        // ── CORRECTION BUG 1 : la variable s'appelle questionType (pas questionTypeLabel) ──
         let questionType = 'QCM';
         if (questionTypeRadio) {
             switch (questionTypeRadio.value) {
@@ -146,27 +142,26 @@ function updateQuestionsSummary() {
                 case 'num': questionType = 'Numérique'; break;
             }
         }
- 
-        // CORRECTION : getRichTextValue() au lieu de .value
+
         const rawText    = getRichTextValue(`question-text-${questionId}`);
-        // Extraire le texte brut depuis le HTML pour l'affichage dans le tableau
         const plainText  = rawText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
         const questionText = truncateText(plainText, 80);
- 
-        const row = document.createElement('tr');
-        row.className = 'summary-row';
-        row.dataset.qid = questionId;
- 
-// Icône média dans le sommaire
-const mediaFile    = window.questionMediaFiles && window.questionMediaFiles[questionId];
-const mediaIconHtml = mediaFile
-    ? `<span class="summary-media-icon" title="Contient un média : ${mediaFile.name}">${getMediaIcon(mediaFile.name)}</span>`
-    : '';
 
+        // ── CORRECTION BUG 2 : sécuriser l'appel à getMediaIcon ──
+        const mediaFile     = window.questionMediaFiles && window.questionMediaFiles[questionId];
+        const mediaIconHtml = (mediaFile && typeof window.getMediaIcon === 'function')
+            ? `<span class="summary-media-icon" title="Contient un média : ${mediaFile.name}">${window.getMediaIcon(mediaFile.name)}</span>`
+            : '';
+
+        const row = document.createElement('tr');
+        row.className  = 'summary-row';
+        row.dataset.qid = questionId;
+
+        // ── CORRECTION BUG 1 : ${questionType} et non ${questionTypeLabel} ──
         row.innerHTML = `
             <td class="summary-number">${index + 1}</td>
             <td class="summary-id">${questionIdValue || `<span class="auto-id">Auto</span>`}</td>
-            <td class="summary-type">${questionTypeLabel}${mediaIconHtml}</td>
+            <td class="summary-type">${questionType}${mediaIconHtml}</td>
             <td class="summary-text">${questionText}</td>
             <td class="summary-actions">
                 <button class="summary-btn goto-question-btn" data-qid="${questionId}" title="Aller à cette question">
@@ -174,7 +169,7 @@ const mediaIconHtml = mediaFile
                 </button>
             </td>
         `;
- 
+
         summaryTableBody.appendChild(row);
     });
 }
