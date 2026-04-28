@@ -1,4 +1,25 @@
-// Fonction pour générer le code GIFT
+/**
+ * Construit la ligne d'en-tête GIFT d'une question.
+ * Insère automatiquement le tag @@PLUGINFILE@@ si un média est associé.
+ *
+ * @param {string}       finalQuestionId  — Identifiant GIFT final (ex. "ECO101-Q03")
+ * @param {string|number} questionId      — ID interne de la question (dataset.id)
+ * @param {string}       formattedText    — Texte de la question déjà formaté (HTML + nbsp)
+ * @returns {string}  — Ligne GIFT de type "::id::[html]texte{" (sans fermeture)
+ */
+function buildQuestionLine(finalQuestionId, questionId, formattedText) {
+    let mediaTag = '';
+ 
+    if (typeof getPluginfileTag === 'function'
+        && window.questionMediaFiles
+        && window.questionMediaFiles[questionId]) {
+        mediaTag = getPluginfileTag(questionId, finalQuestionId);
+    }
+ 
+    return `::${finalQuestionId}::[html]${formattedText}${mediaTag}\n{`;
+}
+ 
+
 // Fonction pour générer le code GIFT
 function generateGIFTCode() {
     let giftCode = '';
@@ -9,6 +30,8 @@ function generateGIFTCode() {
         return;
     }
  
+    window.generatedQuestionIds = {};
+
     // ── 1. Vérification des doublons ─────────────────────────────────────────
     let hasDuplicates = false;
     const duplicateQuestionNumbers = [];
@@ -88,7 +111,14 @@ function generateGIFTCode() {
         }
  
         const formattedQuestionText = addHtmlTags(addNonBreakingSpaces(questionText));
-        giftCode += `::${finalQuestionId}::[html]${formattedQuestionText}\n{`;
+ 
+        // ── AJOUT : Mémoriser le finalQuestionId pour l'export ZIP ───────────
+        window.generatedQuestionIds[questionId] = finalQuestionId;
+        // ─────────────────────────────────────────────────────────────────────
+ 
+        // ── MODIFICATION : Utiliser buildQuestionLine() (gère le tag @@PLUGINFILE@@)
+        giftCode += buildQuestionLine(finalQuestionId, questionId, formattedQuestionText);
+        // ─────────────────────────────────────────────────────────────────────
  
         switch (questionType) {
             case 'mc':
