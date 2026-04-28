@@ -1,3 +1,74 @@
+async function downloadAsZip() {
+    // ── 1. Générer le code GIFT (met aussi à jour window.generatedQuestionIds) ──
+    const giftOutput = document.getElementById('gift-output');
+ 
+    if (typeof generateGIFTCode === 'function') {
+        generateGIFTCode();
+    } else if (typeof window.generateGIFTCode === 'function') {
+        window.generateGIFTCode();
+    } else {
+        alert('Impossible de générer le code GIFT. Veuillez cliquer sur "Générer le code GIFT" manuellement.');
+        return;
+    }
+ 
+    const giftContent = giftOutput ? giftOutput.value : '';
+    if (!giftContent.trim()) {
+        alert('Aucun code GIFT à télécharger. Veuillez d\'abord ajouter des questions.');
+        return;
+    }
+ 
+    // ── 2. Construire le nom de base du fichier (même logique que downloadBtn) ──
+    const authorLastname  = document.getElementById('author-lastname');
+    const authorFirstname = document.getElementById('author-firstname');
+    const courseCode      = document.getElementById('course-code');
+ 
+    const authorLastnameValue  = authorLastname  ? authorLastname.value.trim()  : '';
+    const courseCodeValue      = courseCode      ? courseCode.value.trim()      : '';
+ 
+    const date          = new Date();
+    const formattedDate = date.toISOString().slice(0, 10).replace(/-/g, '');
+    const formattedTime = date.toTimeString().slice(0, 8).replace(/:/g, '');
+ 
+    let baseName = 'questions_gift';
+    if (courseCodeValue)     baseName += `_${courseCodeValue}`;
+    if (authorLastnameValue) baseName += `_${authorLastnameValue}`;
+    baseName += `_${formattedDate}_${formattedTime}`;
+ 
+    // ── 3. Créer le ZIP avec JSZip ───────────────────────────────────────────
+    if (typeof JSZip === 'undefined') {
+        alert('La bibliothèque JSZip n\'est pas chargée. Vérifiez que la balise <script> JSZip est présente dans index.html.');
+        return;
+    }
+ 
+    const zip = new JSZip();
+ 
+    // Ajouter le fichier GIFT
+    zip.file(`${baseName}.txt`, giftContent);
+ 
+    // Ajouter les médias (renommés avec le finalQuestionId)
+    const mediaList = (typeof getMediaList === 'function') ? getMediaList() : [];
+    for (const { file, filename } of mediaList) {
+        const arrayBuffer = await file.arrayBuffer();
+        zip.file(filename, arrayBuffer);
+    }
+ 
+    // ── 4. Générer et télécharger ────────────────────────────────────────────
+    try {
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const link = document.createElement('a');
+        link.href     = URL.createObjectURL(blob);
+        link.download = `${baseName}.zip`;
+        link.target   = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        URL.revokeObjectURL(link.href);
+        document.body.removeChild(link);
+    } catch (err) {
+        console.error('[downloadAsZip] Erreur lors de la génération du ZIP :', err);
+        alert('Une erreur s\'est produite lors de la création du ZIP.');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Récupérer les éléments nécessaires
     const giftOutput = document.getElementById('gift-output');
@@ -80,4 +151,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
 
     });
+ // ── AJOUT : Bouton "Télécharger le ZIP" ──────────────────────────────
+            const downloadZipBtn = document.getElementById('download-zip-btn');
+        if (downloadZipBtn) {
+            downloadZipBtn.addEventListener('click', downloadAsZip);
+        }
+
 });
