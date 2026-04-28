@@ -629,24 +629,25 @@ function transformNumOptions(container, questionId) {
  * Transforme le feedback général
  */
 function transformGeneralFeedback(question, questionId) {
-    // CORRECTION : getRichTextValue au lieu de .value.trim()
     const feedbackText = getRichTextValue(`general-feedback-${questionId}`);
-    if (!feedbackText) return;
- 
+
     const feedbackDisplay = document.createElement('div');
     feedbackDisplay.className = 'preview-display preview-general-feedback';
- 
+
     const feedbackLabel = document.createElement('strong');
     feedbackLabel.textContent = 'Feedback général : ';
     feedbackDisplay.appendChild(feedbackLabel);
- 
+
     const feedbackContent = document.createElement('span');
-    // CORRECTION : innerHTML pour conserver la mise en forme HTML
-    feedbackContent.innerHTML = feedbackText;
+    if (feedbackText) {
+        feedbackContent.innerHTML = feedbackText;
+    } else {
+        feedbackContent.innerHTML = '<em class="preview-missing">Feedback général manquant</em>';
+    }
     feedbackDisplay.appendChild(feedbackContent);
- 
+
     question.appendChild(feedbackDisplay);
- 
+
     // Masquer le champ original
     const feedbackField = document.getElementById(`general-feedback-${questionId}`);
     if (feedbackField) {
@@ -654,7 +655,6 @@ function transformGeneralFeedback(question, questionId) {
         if (formGroup) formGroup.classList.add('preview-hidden-field');
     }
 }
-
 /**
  * Récupère le type de question sélectionné
  */

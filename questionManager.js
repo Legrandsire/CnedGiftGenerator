@@ -9,7 +9,7 @@ function addNewQuestion() {
     questionDiv.dataset.id = window.questionCounter;
     
     questionDiv.innerHTML = `
-        <h2>Question ${window.questionCounter}</h2>
+<h2>Question ${document.querySelectorAll('.question-container').length + 1}</h2>
         <div class="form-group">
             <label for="question-id-${window.questionCounter}">Identifiant/Numéro de question: <span class="optional-field">(facultatif)</span></label>
             <input type="text" id="question-id-${window.questionCounter}" placeholder="Laissez vide pour générer automatiquement">
@@ -179,6 +179,7 @@ function addNewQuestion() {
         const qid = this.getAttribute('data-qid');
         const questionElement = document.querySelector(`.question-container[data-id="${qid}"]`);
         window.questionsContainer.removeChild(questionElement);
+            renumberQuestions();
     });
 }
 
@@ -257,6 +258,25 @@ function setupNumericQuestionHandlers(questionId) {
             numRangeOptions.classList.remove('hidden');
         } else {
             numRangeOptions.classList.add('hidden');
+        }
+    });
+}
+
+function renumberQuestions() {
+    const questions = document.querySelectorAll('.question-container');
+    questions.forEach((question, index) => {
+        // Renumérotation du titre
+        const h2 = question.querySelector('h2');
+        if (h2) {
+            h2.textContent = `Question ${index + 1}`;
+        }
+
+        // Recalcul de l'alternance de couleur
+        question.classList.remove('question-odd', 'question-even');
+        if ((index + 1) % 2 === 0) {
+            question.classList.add('question-even');
+        } else {
+            question.classList.add('question-odd');
         }
     });
 }
