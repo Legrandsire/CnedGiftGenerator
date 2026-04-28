@@ -25,69 +25,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Crée la section de résumé dans le DOM
+ * Vérifie que la section de résumé est présente dans le DOM.
+ * Le HTML est défini statiquement dans index.html.
  */
 function createSummarySection() {
-    // Créer le conteneur principal du résumé
-    const summarySection = document.createElement('div');
-    summarySection.id = 'summary-section';
-    summarySection.className = 'summary-section collapsed';
-    
-    // Créer le header du résumé avec le bouton de toggle
-    const summaryHeader = document.createElement('div');
-    summaryHeader.className = 'summary-header';
-    summaryHeader.innerHTML = `
-        <h3 class="section-title">Résumé des questions</h3>
-        <button id="toggle-summary-btn" class="control-btn">
-            <span class="summary-toggle-icon">▼</span> Afficher le résumé
-        </button>
-    `;
-    
-    // Créer le conteneur pour le contenu du résumé
-    const summaryContent = document.createElement('div');
-    summaryContent.id = 'summary-content';
-    summaryContent.className = 'summary-content hidden';
-    
-    // Créer la table de résumé
-    const summaryTable = document.createElement('table');
-    summaryTable.id = 'summary-table';
-    summaryTable.className = 'summary-table';
-    summaryTable.innerHTML = `
-        <thead>
-            <tr>
-                <th>N°</th>
-                <th>Identifiant</th>
-                <th>Type</th>
-                <th>Texte de la question</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="summary-table-body">
-            <!-- Les lignes du résumé seront générées dynamiquement -->
-        </tbody>
-    `;
-    
-    // Assembler les éléments
-    summaryContent.appendChild(summaryTable);
-    summarySection.appendChild(summaryHeader);
-    summarySection.appendChild(summaryContent);
-    
-// ✅ Nouveau code robuste :
-const questionsContainer = document.getElementById('questions-container');
-if (questionsContainer) {
-    // On cherche le h3 "Questions" le plus proche avant le conteneur
-    const h3Questions = questionsContainer.previousElementSibling;
-    if (h3Questions) {
-        questionsContainer.parentNode.insertBefore(summarySection, h3Questions);
-    } else {
-        // Fallback : insérer juste avant le conteneur de questions
-        questionsContainer.parentNode.insertBefore(summarySection, questionsContainer);
+    const summarySection = document.getElementById('summary-section');
+    if (!summarySection) {
+        console.error('[summaryManager] Erreur : #summary-section est introuvable dans index.html.');
     }
-} else {
-    // Dernier recours : insérer à la fin du main
-    const main = document.querySelector('.container') || document.body;
-    main.appendChild(summarySection);
-}
 }
 
 /**

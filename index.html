@@ -63,6 +63,33 @@
             </div>
         </div>
 
+<!-- ── Sommaire des questions ─────────────────────────────────────────── -->
+<div id="summary-section" class="summary-section collapsed">
+    <div class="summary-header">
+        <h3 class="section-title">Résumé des questions</h3>
+        <button id="toggle-summary-btn" class="control-btn">
+            <span class="summary-toggle-icon">▼</span> Afficher le résumé
+        </button>
+    </div>
+    <div id="summary-content" class="summary-content hidden">
+        <table id="summary-table" class="summary-table">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Identifiant</th>
+                    <th>Type</th>
+                    <th>Texte de la question</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="summary-table-body">
+                <!-- Rempli dynamiquement par summaryManager.js -->
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- ─────────────────────────────────────────────────────────────────────── -->
+
         <h3 class="section-title">Questions</h3>
         <div id="questions-container"></div>
         
