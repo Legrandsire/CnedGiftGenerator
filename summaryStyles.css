@@ -243,3 +243,12 @@
         font-size: 1em;
     }
 }
+
+/* Icône média dans le sommaire */
+.summary-media-icon {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 1em;
+    vertical-align: middle;
+    cursor: default;
+}

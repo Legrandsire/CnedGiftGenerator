@@ -70,24 +70,33 @@
             <button id="add-question-btn" class="add-btn">Ajouter une question</button>
         </div>
         
-        <div class="form-group button-group">
-            <div class="left-buttons">
-                <button id="generate-btn" class="control-btn">Générer le code GIFT</button>
-                <button id="copy-btn" class="control-btn">Copier le code</button>
-                <div class="download-area">
-    <button id="download-btn" class="control-btn">
-        ⬇️ Télécharger (.txt)
-    </button>
-    <button id="download-zip-btn" class="download-zip-btn">
-        📦 Télécharger le ZIP
-        <span class="media-badge" id="media-count-badge" style="display:none">0 média</span>
-    </button>
-</div>
-            </div>
-            <div class="right-buttons">
-                <button id="clear-btn" class="control-btn">Tout effacer</button>
-            </div>
+       <div class="form-group button-group">
+    <div class="action-buttons-row">
+        <!-- ACTION PRINCIPALE -->
+        <button id="generate-btn" class="btn-primary">
+            ⚙️ Générer le code GIFT
+        </button>
+
+        <!-- ACTIONS SECONDAIRES -->
+        <div class="action-group-secondary">
+            <button id="copy-btn" class="btn-secondary">
+                📋 Copier
+            </button>
+            <button id="download-btn" class="btn-download">
+                ⬇️ Télécharger (.txt)
+            </button>
+            <button id="download-zip-btn" class="btn-download-zip">
+                📦 Télécharger le ZIP
+                <span class="media-badge" id="media-count-badge" style="display:none">0 média</span>
+            </button>
         </div>
+
+        <!-- ACTION DESTRUCTIVE -->
+        <button id="clear-btn" class="btn-danger">
+            🗑️ Tout effacer
+        </button>
+    </div>
+</div>
         
         <div class="form-group">
             <label for="gift-output">Code GIFT généré:</label>

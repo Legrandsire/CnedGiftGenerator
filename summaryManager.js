@@ -72,11 +72,22 @@ function createSummarySection() {
     summarySection.appendChild(summaryHeader);
     summarySection.appendChild(summaryContent);
     
-    // Insérer la section de résumé avant la section des questions
-    const questionsSection = document.querySelector('h3.section-title + #questions-container');
-    if (questionsSection) {
-        questionsSection.parentNode.insertBefore(summarySection, questionsSection.previousElementSibling);
+// ✅ Nouveau code robuste :
+const questionsContainer = document.getElementById('questions-container');
+if (questionsContainer) {
+    // On cherche le h3 "Questions" le plus proche avant le conteneur
+    const h3Questions = questionsContainer.previousElementSibling;
+    if (h3Questions) {
+        questionsContainer.parentNode.insertBefore(summarySection, h3Questions);
+    } else {
+        // Fallback : insérer juste avant le conteneur de questions
+        questionsContainer.parentNode.insertBefore(summarySection, questionsContainer);
     }
+} else {
+    // Dernier recours : insérer à la fin du main
+    const main = document.querySelector('.container') || document.body;
+    main.appendChild(summarySection);
+}
 }
 
 /**
@@ -201,10 +212,16 @@ function updateQuestionsSummary() {
         row.className = 'summary-row';
         row.dataset.qid = questionId;
  
+// Icône média dans le sommaire
+const mediaFile    = window.questionMediaFiles && window.questionMediaFiles[questionId];
+const mediaIconHtml = mediaFile
+    ? `<span class="summary-media-icon" title="Contient un média : ${mediaFile.name}">${getMediaIcon(mediaFile.name)}</span>`
+    : '';
+
         row.innerHTML = `
             <td class="summary-number">${index + 1}</td>
             <td class="summary-id">${questionIdValue || `<span class="auto-id">Auto</span>`}</td>
-            <td class="summary-type">${questionType}</td>
+            <td class="summary-type">${questionTypeLabel}${mediaIconHtml}</td>
             <td class="summary-text">${questionText}</td>
             <td class="summary-actions">
                 <button class="summary-btn goto-question-btn" data-qid="${questionId}" title="Aller à cette question">

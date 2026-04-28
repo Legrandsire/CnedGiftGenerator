@@ -97,40 +97,54 @@ function getPluginfileTag(questionId, finalQuestionId) {
 
 /**
  * Crée et retourne le div contenant l'interface d'upload pour une question.
- * À insérer dans le DOM par l'appelant.
+ * Le panneau média est masqué par défaut et s'ouvre via un bouton toggle.
  * @param {string|number} questionId
  * @returns {HTMLDivElement}
  */
 function createMediaUploadUI(questionId) {
-    const container = document.createElement('div');
-    container.className = 'form-group media-upload-container';
-    container.id = `media-container-${questionId}`;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'media-toggle-wrapper';
+    wrapper.id = `media-wrapper-${questionId}`;
 
-    container.innerHTML = `
-        <label class="media-label">
-            Média associé à la question&nbsp;:
-            <span class="optional-field">(facultatif)</span>
-        </label>
-        <div class="media-upload-area">
-            <input  type="file"
-                    id="media-file-${questionId}"
-                    class="media-file-input"
-                    accept="${MEDIA_ACCEPT}"
-                    style="display:none">
-            <button type="button"
-                    class="control-btn media-add-btn"
-                    data-qid="${questionId}">
-                📎 Ajouter un média
-            </button>
-            <div id="media-preview-${questionId}" class="media-preview hidden"></div>
+    wrapper.innerHTML = `
+        <button type="button"
+                class="media-toggle-btn"
+                data-qid="${questionId}"
+                title="Ajouter ou modifier un média pour cette question">
+            📎 Ajouter un média
+        </button>
+        <div id="media-container-${questionId}" class="form-group media-upload-container media-panel-hidden">
+            <div class="media-panel-header">
+                <label class="media-label">
+                    Média associé à la question&nbsp;:
+                    <span class="optional-field">(facultatif)</span>
+                </label>
+                <button type="button"
+                        class="media-panel-close-btn"
+                        data-qid="${questionId}"
+                        title="Fermer le panneau média">✕</button>
+            </div>
+            <div class="media-upload-area">
+                <input  type="file"
+                        id="media-file-${questionId}"
+                        class="media-file-input"
+                        accept="${MEDIA_ACCEPT}"
+                        style="display:none">
+                <button type="button"
+                        class="control-btn media-add-btn"
+                        data-qid="${questionId}">
+                    📎 Choisir un fichier
+                </button>
+                <div id="media-preview-${questionId}" class="media-preview hidden"></div>
+            </div>
+            <p class="info-text">
+                Le média sera intégré via <code>@@PLUGINFILE@@</code> dans le GIFT
+                et inclus dans l'export&nbsp;ZIP.
+            </p>
         </div>
-        <p class="info-text">
-            Le média sera intégré via <code>@@PLUGINFILE@@</code> dans le GIFT
-            et inclus dans l'export&nbsp;ZIP.
-        </p>
     `;
 
-    return container;
+    return wrapper;
 }
 
 /**
@@ -200,24 +214,47 @@ function removeMedia(questionId) {
  * @param {string|number} questionId
  */
 function initMediaEvents(questionId) {
-    const addBtn    = document.querySelector(`.media-add-btn[data-qid="${questionId}"]`);
-    const fileInput = document.getElementById(`media-file-${questionId}`);
+    const toggleBtn  = document.querySelector(`.media-toggle-btn[data-qid="${questionId}"]`);
+    const closeBtn   = document.querySelector(`.media-panel-close-btn[data-qid="${questionId}"]`);
+    const panel      = document.getElementById(`media-container-${questionId}`);
+    const addBtn     = document.querySelector(`.media-add-btn[data-qid="${questionId}"]`);
+    const fileInput  = document.getElementById(`media-file-${questionId}`);
 
-    if (!addBtn || !fileInput) {
+    if (!toggleBtn || !panel || !addBtn || !fileInput) {
         console.warn(`[mediaManager] Éléments introuvables pour la question ${questionId}`);
         return;
     }
 
-    // Ouvrir le sélecteur de fichier au clic du bouton
+    // Ouvrir / fermer le panneau via le bouton toggle
+    toggleBtn.addEventListener('click', () => {
+        const isHidden = panel.classList.contains('media-panel-hidden');
+        panel.classList.toggle('media-panel-hidden', !isHidden);
+        panel.classList.toggle('media-panel-visible',  isHidden);
+    });
+
+    // Fermer le panneau via la croix interne
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            panel.classList.add('media-panel-hidden');
+            panel.classList.remove('media-panel-visible');
+        });
+    }
+
+    // Ouvrir le sélecteur de fichier au clic du bouton interne
     addBtn.addEventListener('click', () => fileInput.click());
 
     // Gérer la sélection d'un fichier
     fileInput.addEventListener('change', function () {
         const file = this.files[0];
         if (!file) return;
-
         window.questionMediaFiles[questionId] = file;
         renderMediaPreview(questionId, file);
+        // Garder le panneau ouvert après sélection
+        panel.classList.remove('media-panel-hidden');
+        panel.classList.add('media-panel-visible');
+        // Mettre à jour le libellé du bouton toggle
+        const icon = getMediaIcon(file.name);
+        toggleBtn.textContent = `${icon} Média ajouté — Modifier`;
     });
 }
 
@@ -294,15 +331,22 @@ function getMediaList() {
 function attachMediaFromZip(questionId, file) {
     if (!file || !questionId) return;
 
-    // Stocker le fichier (même emplacement que l'upload manuel)
     window.questionMediaFiles[questionId] = file;
-
-    // Rendre la prévisualisation via la fonction existante
     renderMediaPreview(questionId, file);
 
-    // Mettre à jour le libellé du bouton d'ajout
-    const addBtn = document.querySelector(`.media-add-btn[data-qid="${questionId}"]`);
-    if (addBtn) addBtn.textContent = '📎 Changer le média';
+    // Ouvrir le panneau automatiquement
+    const panel = document.getElementById(`media-container-${questionId}`);
+    if (panel) {
+        panel.classList.remove('media-panel-hidden');
+        panel.classList.add('media-panel-visible');
+    }
+
+    // Mettre à jour le bouton toggle
+    const toggleBtn = document.querySelector(`.media-toggle-btn[data-qid="${questionId}"]`);
+    if (toggleBtn) {
+        const icon = getMediaIcon(file.name);
+        toggleBtn.textContent = `${icon} Média ajouté — Modifier`;
+    }
 
     console.log(`[mediaManager] Média attaché depuis ZIP → question ${questionId} : ${file.name}`);
 }
