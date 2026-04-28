@@ -1,0 +1,185 @@
+/**
+ * mediaStyles.css
+ * Styles pour le bloc d'upload de médias par question
+ * Générateur de code GIFT — module média
+ */
+
+/* ── Conteneur principal ─────────────────────────────────────────────────── */
+.media-upload-container {
+    background-color: #f8f4ff;
+    border: 1px dashed #b39ddb;
+    border-radius: 6px;
+    padding: 12px 15px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s ease;
+}
+
+.media-upload-container:hover {
+    border-color: #7e57c2;
+}
+
+.media-label {
+    display: block;
+    font-weight: 600;
+    color: #4a4a6a;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+}
+
+/* ── Zone d'upload ───────────────────────────────────────────────────────── */
+.media-upload-area {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.media-add-btn {
+    background-color: #7e57c2;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    white-space: nowrap;
+}
+
+.media-add-btn:hover {
+    background-color: #6a42b0;
+    transform: translateY(-1px);
+}
+
+.media-add-btn:active {
+    transform: translateY(0);
+}
+
+/* ── Prévisualisation ────────────────────────────────────────────────────── */
+.media-preview {
+    flex: 1;
+    min-width: 200px;
+}
+
+.media-preview.hidden {
+    display: none;
+}
+
+.media-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #ede7f6;
+    border: 1px solid #ce93d8;
+    border-radius: 5px;
+    padding: 6px 10px;
+    font-size: 0.88em;
+    margin-bottom: 6px;
+}
+
+.media-icon {
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+.media-filename {
+    flex: 1;
+    color: #4a148c;
+    font-weight: 500;
+    word-break: break-all;
+    white-space: normal;
+}
+
+.remove-media-btn {
+    background: none;
+    border: 1px solid #ce93d8;
+    border-radius: 50%;
+    color: #9c27b0;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.remove-media-btn:hover {
+    background-color: #9c27b0;
+    color: #fff;
+}
+
+/* Miniature image */
+.media-thumbnail {
+    max-width: 100%;
+    max-height: 120px;
+    border-radius: 4px;
+    border: 1px solid #ce93d8;
+    object-fit: contain;
+    display: block;
+}
+
+/* ── Bouton "Télécharger le ZIP" ─────────────────────────────────────────── */
+.download-zip-btn {
+    background-color: #2e7d32;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 18px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.download-zip-btn:hover {
+    background-color: #1b5e20;
+    transform: translateY(-1px);
+}
+
+.download-zip-btn:active {
+    transform: translateY(0);
+}
+
+.download-zip-btn:disabled {
+    background-color: #a5d6a7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Badge "contient des médias" */
+.media-badge {
+    display: inline-block;
+    background-color: #7e57c2;
+    color: #fff;
+    font-size: 0.75em;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 1px 7px;
+    margin-left: 6px;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+}
+
+/* ── Zone des boutons de téléchargement (si elle existe déjà dans styles.css) */
+.download-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+/* ── Mode prévisualisation : cacher le bloc média ───────────────────────── */
+.preview-hidden-field .media-upload-container,
+.media-upload-container.preview-hidden-field {
+    display: none !important;
+}

@@ -124,10 +124,15 @@ function addNewQuestion() {
     `;
     
     window.questionsContainer.appendChild(questionDiv);
-    
+ 
     // Initialiser les éditeurs RTE de la nouvelle question
     const newQuestion = window.questionsContainer.lastElementChild;
     initRichTextEditors(newQuestion);
+ 
+    // ── AJOUT : Attacher le bloc média à la nouvelle question ────────────────
+    if (typeof attachMediaToQuestion === 'function') {
+        attachMediaToQuestion(window.questionCounter);
+    }
 
     // Ajouter deux options par défaut pour QCM
     const optionsList = document.getElementById(`options-list-${window.questionCounter}`);
@@ -178,6 +183,11 @@ function addNewQuestion() {
     removeQuestionBtn.addEventListener('click', function() {
         const qid = this.getAttribute('data-qid');
         const questionElement = document.querySelector(`.question-container[data-id="${qid}"]`);
+
+        if (typeof cleanupMediaForQuestion === 'function') {
+            cleanupMediaForQuestion(qid);
+        }
+
         window.questionsContainer.removeChild(questionElement);
             renumberQuestions();
     });
