@@ -123,42 +123,107 @@ function extractMetadata(giftContent) {
     console.log('Extraction des métadonnées terminée. Code article trouvé:', courseCode);
     return courseCode;  // Retourner le code article pour l'utilisation dans les questions
 }
-    
-    // Fonction pour l'importation des fichiers GIFT
-    importBtn.addEventListener('click', function() {
-        if (fileInput.files.length === 0) {
-            alert('Veuillez sélectionner un fichier GIFT (.txt) à importer.');
-            return;
-        }
-        
-        // Désactiver le bouton pendant le traitement pour éviter les clics multiples
-        importBtn.disabled = true;
-        importBtn.textContent = 'Importation...';
-        
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            try {
-                const giftContent = e.target.result;
-                parseGiftContent(giftContent);
-            } catch (error) {
-                console.error('Erreur lors du parsing du fichier GIFT:', error);
-                alert('Erreur lors du parsing du fichier GIFT. Vérifiez le format de votre fichier.');
-            } finally {
-                // Réactiver le bouton une fois terminé
-                importBtn.disabled = false;
-                importBtn.textContent = 'Importer';
-            }
-        };
-        
-        reader.onerror = function() {
-            alert('Erreur lors de la lecture du fichier.');
+
+/**
+ * Gère l'import d'un fichier texte GIFT (.txt).
+ * @param {File} file - Le fichier .txt sélectionné
+ */
+function handleTextImport(file) {
+    importBtn.disabled = true;
+    importBtn.textContent = 'Importation...';
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+        try {
+            parseGiftContent(e.target.result);
+        } catch (error) {
+            console.error('Erreur lors du parsing du fichier GIFT :', error);
+            alert('Erreur lors du parsing du fichier GIFT. Vérifiez le format de votre fichier.');
+        } finally {
             importBtn.disabled = false;
             importBtn.textContent = 'Importer';
-        };
-        
-        reader.readAsText(file);
+        }
+    };
+
+    reader.onerror = function () {
+        alert('Erreur lors de la lecture du fichier.');
+        importBtn.disabled = false;
+        importBtn.textContent = 'Importer';
+    };
+
+    reader.readAsText(file);
+}
+
+/**
+ * Gère l'import d'une archive ZIP contenant un fichier GIFT (.txt) et des médias.
+ * @param {File} file - Le fichier .zip sélectionné
+ */
+async function handleZipImport(file) {
+    if (typeof JSZip === 'undefined') {
+        alert('La bibliothèque JSZip est requise pour importer des fichiers ZIP.');
+        return;
+    }
+
+    importBtn.disabled = true;
+    importBtn.textContent = 'Extraction ZIP…';
+
+    try {
+        const zip = await JSZip.loadAsync(file);
+
+        let giftEntry  = null;
+        const mediaMap = {};
+
+        zip.forEach((relativePath, zipEntry) => {
+            if (zipEntry.dir) return;
+            const basename = relativePath.split('/').pop();
+            if (basename.toLowerCase().endsWith('.txt') && !giftEntry) {
+                giftEntry = zipEntry;
+            } else {
+                mediaMap[basename] = zipEntry;
+            }
+        });
+
+        if (!giftEntry) {
+            alert('Aucun fichier GIFT (.txt) trouvé dans l\'archive ZIP.');
+            return;
+        }
+
+        const giftContent = await giftEntry.async('string');
+        const mediaFiles  = {};
+
+        for (const [basename, zipEntry] of Object.entries(mediaMap)) {
+            const arrayBuffer    = await zipEntry.async('arraybuffer');
+            mediaFiles[basename] = new File([arrayBuffer], basename);
+        }
+
+        console.log(`[handleZipImport] ${Object.keys(mediaFiles).length} média(s) détecté(s).`);
+        parseGiftContent(giftContent, mediaFiles);
+
+    } catch (error) {
+        console.error('[handleZipImport] Erreur :', error);
+        alert('Erreur lors de l\'extraction du fichier ZIP.');
+    } finally {
+        importBtn.disabled    = false;
+        importBtn.textContent = 'Importer';
+    }
+}
+
+// Fonction pour l'importation des fichiers GIFT
+    importBtn.addEventListener('click', function () {
+        if (fileInput.files.length === 0) {
+            alert('Veuillez sélectionner un fichier GIFT (.txt) ou une archive (.zip) à importer.');
+            return;
+        }
+
+        const file  = fileInput.files[0];
+        const isZip = file.name.toLowerCase().endsWith('.zip');
+
+        if (isZip) {
+            handleZipImport(file);
+        } else {
+            handleTextImport(file);
+        }
     });
     
     /**
@@ -216,7 +281,7 @@ function extractMetadata(giftContent) {
  * Parse le contenu GIFT et crée les questions correspondantes dans l'interface
  * @param {string} giftContent - Le contenu du fichier GIFT
  */
-function parseGiftContent(giftContent) {
+function parseGiftContent(giftContent, mediaFiles = {}) {
     console.log("Début du parsing du contenu GIFT");
     
     // Valider le format GIFT
@@ -279,7 +344,7 @@ function parseGiftContent(giftContent) {
                 if (questionText.trim() === '') return;
                 
                 try {
-                    parseGiftQuestion(questionText, courseCode);
+                    parseGiftQuestion(questionText, courseCode, mediaFiles);
                     successCount++;
                 } catch (error) {
                     console.error(`Erreur lors du parsing de la question ${index + 1}:`, error);
@@ -294,6 +359,10 @@ function parseGiftContent(giftContent) {
                 resultMessage += `\n${errorCount} question(s) n'ont pas pu être importées correctement. Consultez la console pour plus de détails.`;
             }
             
+if (Object.keys(mediaFiles).length > 0) {
+                resultMessage += `\n${Object.keys(mediaFiles).length} média(s) associé(s) aux questions.`;
+            }
+
             alert(resultMessage);
             
             // Regénérer le code GIFT pour montrer le résultat
@@ -631,7 +700,7 @@ function parseOptionWithFeedback(optionLine, isSingleChoice) {
  * @param {string} questionText - Le texte d'une question GIFT
  * @param {string} courseCode - Le code article actuel
  */
-function parseGiftQuestion(questionText, courseCode) {
+function parseGiftQuestion(questionText, courseCode, mediaFiles = {}) {
     // Nettoyage préliminaire du texte
     questionText = questionText.trim();
     
@@ -641,6 +710,7 @@ function parseGiftQuestion(questionText, courseCode) {
     let questionId = titleMatch ? titleMatch[1].trim() : '';
     
     // Nettoyer l'identifiant en supprimant les suffixes "-Qx"
+    const originalGiftId = questionId; // ← ajouter cette ligne
     const cleanedIdInfo = cleanQuestionId(questionId, courseCode);
     questionId = cleanedIdInfo.id; // Utiliser l'ID nettoyé (vide si auto-généré)
     
@@ -683,12 +753,40 @@ function parseGiftQuestion(questionText, courseCode) {
     let questionType = determineQuestionType(answersContent);
     console.log('Question type determined:', questionType);
     
+// Supprimer les tags @@PLUGINFILE@@ déjà présents dans le texte importé
+    // (ils seront rajoutés automatiquement à la génération via mediaManager)
+    questionContent = questionContent
+        .replace(/<img\s[^>]*@@PLUGINFILE@@[^>]*>/gi, '')
+        .replace(/<audio[\s\S]*?@@PLUGINFILE@@[\s\S]*?<\/audio>/gi, '')
+        .replace(/<video[\s\S]*?@@PLUGINFILE@@[\s\S]*?<\/video>/gi, '')
+        .replace(/<a[^>]*@@PLUGINFILE@@[^>]*>[\s\S]*?<\/a>/gi, '')
+        .trim();
+
     // Créer une nouvelle question dans l'interface
     const newQuestionId = addNewQuestionFromImport(questionId, questionContent, questionType);
     
     // Remplir les réponses en fonction du type de question
     if (newQuestionId) {
         fillQuestionAnswers(newQuestionId, questionType, answersContent);
+    }
+    // ── Association du média issu d'un ZIP ───────────────────────────────────
+    if (newQuestionId && Object.keys(mediaFiles).length > 0) {
+        const rawGiftId = originalGiftId.trim();
+
+        for (const [basename, file] of Object.entries(mediaFiles)) {
+            const prefixMatch = basename.match(/^(.+?)_media\.[^.]+$/i);
+            if (!prefixMatch) continue;
+
+            const mediaPrefix = prefixMatch[1];
+
+            if (mediaPrefix === rawGiftId || basename.startsWith(rawGiftId + '_')) {
+                if (typeof attachMediaFromZip === 'function') {
+                    attachMediaFromZip(newQuestionId, file);
+                    console.log(`[parseGiftQuestion] Média associé : ${basename} → question ${newQuestionId}`);
+                }
+                break;
+            }
+        }
     }
 }
 

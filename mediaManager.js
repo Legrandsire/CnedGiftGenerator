@@ -284,6 +284,28 @@ function getMediaList() {
     return list;
 }
 
+/**
+ * Attache programmatiquement un fichier média à une question importée depuis un ZIP.
+ * Stocke le fichier et rafraîchit l'aperçu dans l'interface sans passer par l'input file.
+ *
+ * @param {string|number} questionId - ID interne de la question (dataset.id)
+ * @param {File}          file       - Fichier média extrait de l'archive ZIP
+ */
+function attachMediaFromZip(questionId, file) {
+    if (!file || !questionId) return;
+
+    // Stocker le fichier (même emplacement que l'upload manuel)
+    window.questionMediaFiles[questionId] = file;
+
+    // Rendre la prévisualisation via la fonction existante
+    renderMediaPreview(questionId, file);
+
+    // Mettre à jour le libellé du bouton d'ajout
+    const addBtn = document.querySelector(`.media-add-btn[data-qid="${questionId}"]`);
+    if (addBtn) addBtn.textContent = '📎 Changer le média';
+
+    console.log(`[mediaManager] Média attaché depuis ZIP → question ${questionId} : ${file.name}`);
+}
 
 // ── Exposition globale ───────────────────────────────────────────────────────
 window.attachMediaToQuestion  = attachMediaToQuestion;
@@ -293,3 +315,4 @@ window.getMediaFilename       = getMediaFilename;
 window.hasAnyMedia            = hasAnyMedia;
 window.getMediaList           = getMediaList;
 window.removeMedia            = removeMedia;
+window.attachMediaFromZip     = attachMediaFromZip;
