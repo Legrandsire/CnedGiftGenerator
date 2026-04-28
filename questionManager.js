@@ -43,7 +43,7 @@ function addNewQuestion() {
         
         <div class="form-group">
             <label for="question-text-${window.questionCounter}">Texte de la question:</label>
-            <input type="text" id="question-text-${window.questionCounter}" placeholder="Entrez le texte de la question">
+        ${createRichTextEditor(`question-text-${window.questionCounter}`, 'Entrez le texte de la question')}
         </div>
         
         <!-- Options QCM -->
@@ -117,7 +117,7 @@ function addNewQuestion() {
         
         <div class="form-group">
             <label for="general-feedback-${window.questionCounter}">Feedback général:</label>
-            <textarea id="general-feedback-${window.questionCounter}" placeholder="Feedback affiché à tous les étudiants après la tentative"></textarea>
+        ${createRichTextEditor(`general-feedback-${window.questionCounter}`, 'Entrez le feedback général (optionnel)')}
         </div>
         
         <button class="remove-btn remove-question-btn" data-qid="${window.questionCounter}">Supprimer cette question</button>
@@ -125,6 +125,10 @@ function addNewQuestion() {
     
     window.questionsContainer.appendChild(questionDiv);
     
+    // Initialiser les éditeurs RTE de la nouvelle question
+    const newQuestion = window.questionsContainer.lastElementChild;
+    initRichTextEditors(newQuestion);
+
     // Ajouter deux options par défaut pour QCM
     const optionsList = document.getElementById(`options-list-${window.questionCounter}`);
     addOption(window.questionCounter, optionsList);

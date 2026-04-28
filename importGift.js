@@ -568,10 +568,6 @@ function parseOptionWithFeedback(optionLine, isSingleChoice) {
         }
     }
     
-    // Nettoyer les balises HTML du texte et du feedback
-    option.text = cleanHtmlTags(option.text);
-    option.feedback = cleanHtmlTags(option.feedback);
-    
     return option;
 }
     function splitGiftQuestions(giftContent) {
@@ -658,7 +654,6 @@ function parseGiftQuestion(questionText, courseCode) {
         if (htmlTagMatch) {
             questionContent = htmlTagMatch[1].trim();
             // Nettoyer les balises HTML et les espaces insécables pour l'affichage
-            questionContent = cleanHtmlTags(questionContent);
         } else {
             // Si pas de tag [html], prendre tout jusqu'à {
             const plainMatch = afterTitle.match(/(.*?)\{/s);
@@ -781,34 +776,41 @@ function cleanHtmlTags(text) {
  * @returns {string} - L'identifiant du nouvel élément de question créé
  */
 function addNewQuestionFromImport(questionId, questionContent, questionType) {
+    const questionsContainer = document.getElementById('questions-container');
+    if (!questionsContainer) {
+        console.error('Questions container not found');
+        return null;
+    }
+ 
     console.log(`Adding new question: ${questionId}, type: ${questionType}`);
-    
-    // Utiliser directement la fonction addNewQuestion() exposée globalement
-    // au lieu de simuler un clic sur le bouton
+ 
+    // Créer la question via la fonction globale existante
     addNewQuestion();
-    
+ 
     // Récupérer la dernière question ajoutée
     const questionContainer = questionsContainer.lastElementChild;
     if (!questionContainer) {
         console.error('Failed to create a new question element');
         return null;
     }
-    
+ 
     const newQuestionId = questionContainer.dataset.id;
-    
-    // Remplir les informations de base
-    document.getElementById(`question-id-${newQuestionId}`).value = questionId;
-    document.getElementById(`question-text-${newQuestionId}`).value = questionContent;
-    
-    // Sélectionner le type de question
+ 
+    // Remplir l'identifiant (champ input classique, inchangé)
+    const questionIdField = document.getElementById(`question-id-${newQuestionId}`);
+    if (questionIdField) questionIdField.value = questionId;
+ 
+    // CORRECTION : setRichTextValue() au lieu de .value =
+    // (le champ question-text est désormais un div contenteditable)
+    setRichTextValue(`question-text-${newQuestionId}`, questionContent);
+ 
+    // Sélectionner le type de question et déclencher l'affichage des bons champs
     const questionTypeRadio = document.getElementById(`${questionType}-type-${newQuestionId}`);
     if (questionTypeRadio) {
         questionTypeRadio.checked = true;
-        // Déclencher l'événement change pour afficher les bons champs
-        const changeEvent = new Event('change');
-        questionTypeRadio.dispatchEvent(changeEvent);
+        questionTypeRadio.dispatchEvent(new Event('change'));
     }
-    
+ 
     return newQuestionId;
 }
     
@@ -827,10 +829,8 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
     const feedbackMatch = answersContent.match(/####([\s\S]*)/);
     if (feedbackMatch) {
         generalFeedback = feedbackMatch[1].trim();
-        // Nettoyer le feedback général des balises HTML
-        generalFeedback = cleanHtmlTags(generalFeedback);
         // Mettre à jour le champ de feedback
-        document.getElementById(`general-feedback-${questionId}`).value = generalFeedback;
+        setRichTextValue(`general-feedback-${questionId}`, generalFeedback);
     }
     
     // Nettoyer le contenu des réponses (retirer le feedback général)
@@ -971,11 +971,9 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
                         
                         if (radioInput) radioInput.checked = option.isCorrect;
                         
-                        const textInput = document.getElementById(`sc-option-text-${questionId}-${optionId}`);
-                        if (textInput) textInput.value = cleanHtmlTags(option.text);
+                        setRichTextValue(`sc-option-text-${questionId}-${optionId}`, option.text);
                         
-                        const feedbackInput = document.getElementById(`sc-option-feedback-${questionId}-${optionId}`);
-                        if (feedbackInput && option.feedback) feedbackInput.value = cleanHtmlTags(option.feedback);
+                        if (option.feedback) setRichTextValue(`sc-option-feedback-${questionId}-${optionId}`, option.feedback);
                     }
                 }
             });
@@ -1013,8 +1011,7 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
                         
                         if (checkbox) checkbox.checked = option.isCorrect;
                         
-                        const textInput = document.getElementById(`option-text-${questionId}-${optionId}`);
-                        if (textInput) textInput.value = cleanHtmlTags(option.text);
+                        setRichTextValue(`option-text-${questionId}-${optionId}`, option.text);
                         
                         // Sélectionner la valeur du poids dans le select
                         const weightSelect = document.getElementById(`option-weight-${questionId}-${optionId}`);
@@ -1049,8 +1046,7 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
                         }
                         
                         // Ajouter le feedback s'il existe
-                        const feedbackInput = document.getElementById(`option-feedback-${questionId}-${optionId}`);
-                        if (feedbackInput && option.feedback) feedbackInput.value = cleanHtmlTags(option.feedback);
+                        if (option.feedback) setRichTextValue(`option-feedback-${questionId}-${optionId}`, option.feedback);
                     }
                 }
             });

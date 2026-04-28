@@ -131,25 +131,19 @@ function initSummaryEvents() {
  * Met à jour le résumé des questions
  */
 function updateQuestionsSummary() {
-    const summaryTableBody = document.getElementById('summary-table-body');
+    const summaryTableBody  = document.getElementById('summary-table-body');
     const questionsContainer = document.getElementById('questions-container');
-    
-    // Vérifications de sécurité
+ 
     if (!summaryTableBody || !questionsContainer) return;
-    
-    // Vider le tableau de résumé
+ 
     summaryTableBody.innerHTML = '';
-    
+ 
     // Si le résumé est masqué, ne pas le mettre à jour
     const summaryContent = document.getElementById('summary-content');
-    if (summaryContent && summaryContent.classList.contains('hidden')) {
-        return;
-    }
-    
-    // Récupérer toutes les questions
+    if (summaryContent && summaryContent.classList.contains('hidden')) return;
+ 
     const questions = questionsContainer.querySelectorAll('.question-container');
-    
-    // Message si aucune question n'est présente
+ 
     if (questions.length === 0) {
         const emptyRow = document.createElement('tr');
         emptyRow.innerHTML = `
@@ -161,64 +155,52 @@ function updateQuestionsSummary() {
             </td>
         `;
         summaryTableBody.appendChild(emptyRow);
-        
-        // Ajouter un écouteur pour le bouton d'ajout de question
+ 
         const addFirstQuestionBtn = document.getElementById('add-first-question-btn');
         if (addFirstQuestionBtn) {
-            addFirstQuestionBtn.addEventListener('click', function() {
+            addFirstQuestionBtn.addEventListener('click', function () {
                 const addQuestionBtn = document.getElementById('add-question-btn');
-                if (addQuestionBtn) {
-                    addQuestionBtn.click();
-                }
+                if (addQuestionBtn) addQuestionBtn.click();
             });
         }
-        
         return;
     }
-    
-    // Parcourir toutes les questions et créer une ligne pour chacune
+ 
     questions.forEach((question, index) => {
         if (!question) return;
-        
+ 
+        // Utiliser dataset.id (attribut data-id) cohérent avec questionManager.js
         const questionId = question.dataset.id;
         if (!questionId) return;
-        
+ 
         const questionIdField = document.getElementById(`question-id-${questionId}`);
         const questionIdValue = questionIdField ? questionIdField.value : '';
-        
+ 
         // Détecter le type de question sélectionné
-        const questionTypeRadio = question.querySelector('input[name^="question-type-"]:checked');
-        let questionType = 'QCM'; // Par défaut
-        
+        const questionTypeRadio = question.querySelector(
+            `input[name^="question-type-"]:checked`
+        );
+        let questionType = 'QCM';
         if (questionTypeRadio) {
             switch (questionTypeRadio.value) {
-                case 'mc':
-                    questionType = 'QCM';
-                    break;
-                case 'sc':
-                    questionType = 'QCU';
-                    break;
-                case 'tf':
-                    questionType = 'Vrai/Faux';
-                    break;
-                case 'sa':
-                    questionType = 'QRC';
-                    break;
-                case 'num':
-                    questionType = 'Numérique';
-                    break;
+                case 'mc':  questionType = 'QCM';       break;
+                case 'sc':  questionType = 'QCU';       break;
+                case 'tf':  questionType = 'Vrai/Faux'; break;
+                case 'sa':  questionType = 'QRC';       break;
+                case 'num': questionType = 'Numérique'; break;
             }
         }
-        
-        // Récupérer le texte de la question
-        const questionTextField = document.getElementById(`question-text-${questionId}`);
-        const questionText = questionTextField ? questionTextField.value : '';
-        
-        // Créer la ligne du tableau
+ 
+        // CORRECTION : getRichTextValue() au lieu de .value
+        const rawText    = getRichTextValue(`question-text-${questionId}`);
+        // Extraire le texte brut depuis le HTML pour l'affichage dans le tableau
+        const plainText  = rawText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+        const questionText = truncateText(plainText, 80);
+ 
         const row = document.createElement('tr');
         row.className = 'summary-row';
         row.dataset.qid = questionId;
-        
+ 
         row.innerHTML = `
             <td class="summary-number">${index + 1}</td>
             <td class="summary-id">${questionIdValue || `<span class="auto-id">Auto</span>`}</td>
@@ -230,7 +212,7 @@ function updateQuestionsSummary() {
                 </button>
             </td>
         `;
-        
+ 
         summaryTableBody.appendChild(row);
     });
 }
