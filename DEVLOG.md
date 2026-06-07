@@ -22,6 +22,32 @@
 
 ---
 
+## 2026-06-07 (suite 4) — Prévisualisation épurée (0.22.1)
+
+- **Objectif** : retour utilisateur après 0.22.0 — la preview était jugée
+  « chargée » (boîtes colorées imbriquées). Rendre l'affichage **épuré**.
+- **Choix validé (AskUserQuestion)** : style **« Liste épurée »** (parmi liste /
+  accent latéral / minimal tinté).
+- **Réalisé** (un seul fichier : `previewStyles.css`) :
+  - Réponses sans encadré (marque ✓/✗ + texte, gras bleu pour la bonne) ;
+    feedback d'option en retrait « ↳ », sans cadre ; pondération/casse en texte
+    discret (sans pastille).
+  - Filets de séparation **teintés par parité** (vert/rose), plus marqués (2 px)
+    avant les rétroactions ; carte quasi blanche + fin accent latéral.
+  - Énoncé mis en valeur (police 1.2em + fond très léger teinté par parité).
+  - Étiquette de type en **contraste inversé** (fond clair, texte foncé).
+- **Méthode** : itérations livrées sur une **branche d'essai `preview-epuree`**
+  (3 commits), validées visuellement par l'utilisateur, puis **fusionnées en
+  fast-forward dans `main`** ; bump PATCH ici.
+- **Fichiers modifiés** : `previewStyles.css` (via la branche), puis `core.js`
+  (0.22.0 → 0.22.1), `CHANGELOG.md`, `DEVLOG.md`.
+- **Tests** : inchangés (74) — modification purement CSS, preview non couverte
+  par le harnais.
+- **Tag Git proposé (non exécuté)** : `v0.22.1`.
+- **Version** : 0.22.1 (PATCH — raffinement visuel, rétrocompatible).
+
+---
+
 ## 2026-06-07 (suite 3) — Refonte UI/UX globale (0.22.0)
 
 - **Objectif** : chantier ROADMAP n°10 (absorbe le n°9) — refonte visuelle,

@@ -11,6 +11,26 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.22.1] — 2026-06-07
+
+### Modifié
+- **Prévisualisation épurée** (suite du chantier UI/UX n°10, retour utilisateur) :
+  suppression de l'empilement de boîtes colorées imbriquées au profit de filets
+  fins et d'espace.
+  - **Réponses** sans encadré : marque ✓/✗ colorée (bleu/rouge) + texte, bonne
+    réponse en gras bleu ; feedback d'option en retrait préfixé « ↳ », sans cadre.
+  - **Filets de séparation** teintés selon la parité de la question (vert/rose) :
+    fin entre réponses, plus marqué (2 px) avant les rétroactions.
+  - **Énoncé** mis en valeur : police plus grande, fond très légèrement teinté
+    selon la parité.
+  - **Rétroaction générale / feedback combiné** : titre discret en capitales,
+    sans fond ni boîte.
+  - **Étiquette de type** en contraste inversé (fond clair vert/rose, texte foncé).
+  - **Carte de question** quasi blanche, identité de parité portée par un fin
+    accent latéral (au lieu d'un aplat de couleur).
+
+---
+
 ## [0.22.0] — 2026-06-07
 
 ### Ajouté
