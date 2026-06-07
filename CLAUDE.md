@@ -54,8 +54,9 @@ domaine fonctionnel précis.
 | `optionManager.js` | Gestion des options de réponse (QCM, QCU, QRC) |
 | `mediaManager.js` | Pièce jointe média par question, balise `@@PLUGINFILE@@`, export ZIP |
 | `giftGenerator.js` | Génération du code GIFT à partir du DOM |
-| `exportMoodleXml.js` | Génération de l'export **Moodle XML** (feedback combiné) — en plus du GIFT |
-| `importGift.js` | Import et parsing de fichiers `.txt` / `.zip` GIFT |
+| `exportMoodleXml.js` | Génération de l'export **Moodle XML** (feedback combiné, médias base64) — en plus du GIFT |
+| `importGift.js` | Import et parsing de fichiers `.txt` / `.zip` GIFT ; aiguillage `.xml` |
+| `importMoodleXml.js` | Import **Moodle XML** (`DOMParser`) : mapping inverse des 5 types, feedback combiné, `<usecase>`/`<tolerance>`, médias base64 |
 | `downloadManager.js` | Téléchargement `.txt` et `.zip` |
 | `helpManager.js` | Panneau d'aide, tooltips, tour guidé |
 | `advancedTourFeatures.js` | Fonctionnalités avancées du tour guidé |

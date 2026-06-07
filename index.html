@@ -28,14 +28,14 @@
         
         <h3 class="section-title">Importation d'un fichier existant</h3>
         <div class="form-group">
-            <label for="gift-import">Importer un fichier GIFT:</label>
+            <label for="gift-import">Importer un fichier (GIFT&nbsp;.txt/.zip ou Moodle&nbsp;.xml)&nbsp;:</label>
             <div class="import-container">
                 <div id="file-display" class="file-display hidden">
                     <span id="file-name"></span>
                     <button id="remove-file-btn" class="remove-file-btn"><span class="remove-icon">×</span> Supprimer</button>
                 </div>
                 <div class="file-input-container">
-                    <input type="file" id="gift-import" accept=".txt,.zip" class="file-input">
+                    <input type="file" id="gift-import" accept=".txt,.zip,.xml" class="file-input">
                     <label for="gift-import" class="custom-file-label">Choisir un fichier</label>
                     <button id="import-btn" class="control-btn">Importer</button>
                 </div>
@@ -167,6 +167,7 @@
     <script src="giftGenerator.js"></script>
     <script src="exportMoodleXml.js"></script>
     <script src="importGift.js"></script>
+    <script src="importMoodleXml.js"></script>
     <script src="downloadManager.js"></script>
     <!-- Ajout des scripts d'aide -->
     <script src="helpManager.js"></script>

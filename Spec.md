@@ -76,10 +76,17 @@ Application automatique des espaces insécables avant la ponctuation double
 
 ### 2.7 Import
 
-- Formats acceptés : `.txt` (GIFT brut) et `.zip` (GIFT + médias).
-- Validation du format avant import : présence d'au moins une structure de
-  question, équilibre des accolades.
-- Parsing et reconstruction des questions dans l'interface.
+- Formats acceptés : `.txt` (GIFT brut), `.zip` (GIFT + médias) et `.xml`
+  (**Moodle XML**, module `importMoodleXml.js`, depuis 0.19.0).
+- Un seul bouton « Importer » aiguille selon l'extension **et** le contenu
+  (détection de la racine `<quiz>` pour le XML).
+- **Import GIFT** : validation du format (présence d'au moins une structure de
+  question, équilibre des accolades), parsing et reconstruction des questions.
+- **Import Moodle XML** : parsing `DOMParser`, mapping inverse des 5 types,
+  restitution du **feedback combiné** et de l'`<usecase>` (impossible via GIFT),
+  médias `base64` décodés et réattachés. Les types non gérés (essay, matching,
+  cloze…) sont **ignorés** avec un récapitulatif. HTML importé assaini
+  (`sanitizeRichHtml`).
 
 ### 2.8 Export
 
@@ -89,8 +96,10 @@ Application automatique des espaces insécables avant la ponctuation double
   en plus du GIFT. Couvre les 5 types (mc→`multichoice` single=false,
   sc→`multichoice` single=true, tf→`truefalse`, sa→`shortanswer` avec
   `<usecase>`, num→`numerical` avec `<tolerance>`). HTML enrichi encapsulé en
-  `<![CDATA[…]]>`. Médias **non embarqués** en V1 (avertissement ; utiliser le
-  ZIP/GIFT). Import XML hors périmètre.
+  `<![CDATA[…]]>`. **Médias embarqués en `base64`** (depuis 0.19.0) :
+  `<file … encoding="base64">` placé dans `<questiontext>` (`path="/"`) → fichier
+  `.xml` **autonome**, rangé par Moodle dans la *filearea* de la question
+  (aucun répertoire à choisir). Avertissement de poids au-delà de ~10 Mo.
 
 ### 2.9 Feedback combiné (QCM / QCU)
 

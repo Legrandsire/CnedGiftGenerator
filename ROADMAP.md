@@ -23,8 +23,8 @@
 | 4 | Export lisible : PDF (impression) + RTF | n/a (export) | Moyen | 4 | `[ ]` |
 | 5 | Feedback combiné → export **Moodle XML** | ❌ GIFT / ✅ XML | Élevé | 5 | `[x]` 0.18.0 |
 | 6 | Système d'authentification | n/a | À cadrer | Plus tard | `[ ]` |
-| 7 | Import **Moodle XML** (rééditer le feedback combiné) | ❌ GIFT / ✅ XML | Moyen | 7 | `[ ]` |
-| 8 | Médias dans l'export/import **XML** (base64) | n/a (XML) | Moyen | 8 | `[ ]` |
+| 7 | Import **Moodle XML** (rééditer le feedback combiné) | ❌ GIFT / ✅ XML | Moyen | 7 | `[x]` 0.19.0 |
+| 8 | Médias dans l'export/import **XML** (base64) | n/a (XML) | Moyen | 8 | `[x]` 0.19.0 |
 | Q | Qualité continue (confirm/alert, tests) | — | Faible | continu | `[~]` |
 
 ---
@@ -220,7 +220,14 @@ CLAUDE.md.
 
 ---
 
-## 7. Import Moodle XML
+## 7. Import Moodle XML — `[x]` livré en 0.19.0
+
+> **Livré** dans la session du 2026-06-07 (0.19.0), avec le chantier n°8.
+> Nouveau module `importMoodleXml.js` (parsing `DOMParser`, mapping inverse des
+> 5 types, restitution du feedback combiné et de l'`<usecase>`). Aiguillage du
+> bouton « Importer » par extension `.xml` **et** détection du contenu `<quiz>`.
+> Types non gérés **ignorés + notifiés** (import partiel). HTML assaini via
+> `sanitizeRichHtml`. Descriptif conservé ci-dessous pour la traçabilité.
 
 **Objectif.** Permettre de **réimporter un fichier `.xml` Moodle** produit par
 l'outil (ou par Moodle) afin de le **rééditer** dans l'interface. Pendant du
@@ -261,7 +268,16 @@ round-trip XML (générer → importer → régénérer) dans `tests/`.
 
 ---
 
-## 8. Médias dans l'export / import XML (base64)
+## 8. Médias dans l'export / import XML (base64) — `[x]` livré en 0.19.0
+
+> **Livré** dans la session du 2026-06-07 (0.19.0), avec le chantier n°7.
+> Export : `<file … encoding="base64">` placé **dans `<questiontext>`**
+> (`path="/"`) + tag `@@PLUGINFILE@@` dans le texte ; l'avertissement « médias
+> non inclus » est remplacé par un avertissement de **poids** (~10 Mo). Import :
+> décodage base64 → `File` → réattachement via `mediaManager`. **Point clé** :
+> le `<file>` dans `<questiontext>` fait que Moodle range le média dans la
+> *filearea* de la question — plus de répertoire à choisir (corrige l'ambiguïté
+> du ZIP). Descriptif conservé ci-dessous pour la traçabilité.
 
 **Objectif.** Embarquer les médias **dans le fichier `.xml`** lui-même, pour un
 fichier Moodle **autonome** (sans ZIP annexe). Complète les chantiers n°5

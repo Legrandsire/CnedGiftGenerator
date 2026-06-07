@@ -141,6 +141,14 @@ function handleTextImport(file) {
 
     reader.onload = function (e) {
         try {
+            // Aiguillage de robustesse : un .txt qui est en réalité du Moodle XML
+            // (racine <quiz>) est redirigé vers l'import XML.
+            if (typeof window.looksLikeMoodleXml === 'function'
+                && window.looksLikeMoodleXml(e.target.result)
+                && typeof window.importMoodleXmlContent === 'function') {
+                window.importMoodleXmlContent(e.target.result);
+                return;
+            }
             parseGiftContent(e.target.result);
         } catch (error) {
             console.error('Erreur lors du parsing du fichier GIFT :', error);
@@ -214,18 +222,54 @@ async function handleZipImport(file) {
     }
 }
 
+/**
+ * Gère l'import d'un fichier Moodle XML (.xml) : délègue au module
+ * importMoodleXml.js (chargé après ce script).
+ * @param {File} file - Le fichier .xml sélectionné
+ */
+function handleXmlImport(file) {
+    if (typeof window.importMoodleXmlContent !== 'function') {
+        notify.error('Le module d\'import Moodle XML n\'est pas disponible.');
+        return;
+    }
+
+    importBtn.disabled = true;
+    importBtn.textContent = 'Importation XML…';
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        Promise.resolve(window.importMoodleXmlContent(e.target.result))
+            .catch(error => {
+                console.error('Erreur lors de l\'import Moodle XML :', error);
+                notify.error('Erreur lors de l\'import du fichier Moodle XML.');
+            })
+            .finally(() => {
+                importBtn.disabled = false;
+                importBtn.textContent = 'Importer';
+            });
+    };
+    reader.onerror = function () {
+        notify.error('Erreur lors de la lecture du fichier.');
+        importBtn.disabled = false;
+        importBtn.textContent = 'Importer';
+    };
+    reader.readAsText(file);
+}
+
 // Fonction pour l'importation des fichiers GIFT
     importBtn.addEventListener('click', function () {
         if (fileInput.files.length === 0) {
-            notify.error('Veuillez sélectionner un fichier GIFT (.txt) ou une archive (.zip) à importer.');
+            notify.error('Veuillez sélectionner un fichier GIFT (.txt / .zip) ou Moodle XML (.xml) à importer.');
             return;
         }
 
         const file  = fileInput.files[0];
-        const isZip = file.name.toLowerCase().endsWith('.zip');
+        const lower = file.name.toLowerCase();
 
-        if (isZip) {
+        if (lower.endsWith('.zip')) {
             handleZipImport(file);
+        } else if (lower.endsWith('.xml')) {
+            handleXmlImport(file);
         } else {
             handleTextImport(file);
         }

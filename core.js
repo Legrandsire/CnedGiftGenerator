@@ -1,5 +1,5 @@
 // Variables globales partagées entre les fichiers
-const APP_VERSION = '0.18.0';
+const APP_VERSION = '0.19.0';
 let questionCounter = 0;
 
 // ── Orchestrateur d'initialisation centralisé ([A2]) ────────────────────────

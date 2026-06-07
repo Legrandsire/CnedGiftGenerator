@@ -505,6 +505,215 @@
         });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // 4. TESTS IMPORT MOODLE XML + MÉDIAS BASE64 (chantiers n°7 et n°8)
+    // ─────────────────────────────────────────────────────────────────────────
+    async function runXmlImportTests() {
+        // PNG transparent 1×1 (base64) pour les tests de média embarqué.
+        const PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+        /** Premier id interne de question présent dans le DOM. */
+        function firstQid() {
+            const c = document.querySelector('.question-container');
+            return c ? c.dataset.id : null;
+        }
+
+        // ── Aiguillage ───────────────────────────────────────────────────────
+        await test('XML import : looksLikeMoodleXml détecte <quiz>, ignore le GIFT', () => {
+            assert(window.looksLikeMoodleXml('<?xml version="1.0"?>\n<quiz></quiz>') === true, 'XML reconnu');
+            assert(window.looksLikeMoodleXml('::Q01::Texte{T}') === false, 'GIFT non reconnu comme XML');
+        });
+
+        // ── Export média base64 (chantier n°8) ───────────────────────────────
+        await test('XML export : média embarqué en <file base64> + tag @@PLUGINFILE@@', () => {
+            resetApp();
+            window.questionMediaFiles = {};
+            const id = newQuestion('tf');
+            document.getElementById(`true-option-${id}`).checked = true;
+            setRichTextValue(`question-text-${id}`, 'Avec image');
+            window.questionMediaFiles[id] = new File([new Uint8Array([1, 2, 3])], 'photo.png', { type: 'image/png' });
+
+            const xml = generateMoodleXmlCode({ [id]: 'QUJD' }); // base64 factice « ABC »
+            assertMatch(xml, /<file name="[^"]*_media\.png" path="\/" encoding="base64">QUJD<\/file>/, '<file> base64 émis');
+            assertMatch(xml, /@@PLUGINFILE@@\/[^"]*_media\.png/, 'tag @@PLUGINFILE@@ inséré');
+            assertMatch(xml, /<img src="@@PLUGINFILE@@/, 'balise <img> HTML (sans échappement GIFT)');
+            window.questionMediaFiles = {};
+        });
+
+        await test('XML export : aucun <file> si aucun média (rétrocompatible)', () => {
+            resetApp();
+            window.questionMediaFiles = {};
+            const id = newQuestion('tf');
+            document.getElementById(`true-option-${id}`).checked = true;
+            setRichTextValue(`question-text-${id}`, 'Sans média');
+            const xml = generateMoodleXmlCode();
+            assertNoMatch(xml, /<file /, 'pas de balise <file> sans média');
+        });
+
+        // ── Import par type ──────────────────────────────────────────────────
+        await test('XML import QCM : type mc + feedback combiné restitué', async () => {
+            resetApp();
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="multichoice">
+    <name><text>ECO-Q01</text></name>
+    <questiontext format="html"><text><![CDATA[<p>Capitale ?</p>]]></text></questiontext>
+    <single>false</single>
+    <correctfeedback format="html"><text><![CDATA[<p>Bravo</p>]]></text></correctfeedback>
+    <incorrectfeedback format="html"><text><![CDATA[<p>Raté</p>]]></text></incorrectfeedback>
+    <answer fraction="100" format="html"><text><![CDATA[<p>Paris</p>]]></text></answer>
+    <answer fraction="0" format="html"><text><![CDATA[<p>Londres</p>]]></text></answer>
+  </question>
+</quiz>`;
+            await window.importMoodleXmlContent(xml);
+            const qid = firstQid();
+            assert(qid !== null, 'une question créée');
+            assert(document.getElementById(IDS.typeRadio('mc', qid)).checked === true, 'type QCM sélectionné');
+            assertMatch(gift(), /=[^\n]*Paris/, 'Paris en bonne réponse');
+            assertMatch(gift(), /~[^\n]*Londres/, 'Londres en mauvaise réponse');
+            assertMatch(getRichTextValue(IDS.correctFeedback(qid)), /Bravo/, 'feedback correct restitué');
+            assertMatch(getRichTextValue(IDS.incorrectFeedback(qid)), /Raté/, 'feedback incorrect restitué');
+        });
+
+        await test('XML import QCU : single=true → type sc', async () => {
+            resetApp();
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="multichoice">
+    <name><text>Q</text></name>
+    <questiontext format="html"><text><![CDATA[<p>Une seule</p>]]></text></questiontext>
+    <single>true</single>
+    <answer fraction="100" format="html"><text><![CDATA[<p>Vrai</p>]]></text></answer>
+    <answer fraction="0" format="html"><text><![CDATA[<p>Faux</p>]]></text></answer>
+  </question>
+</quiz>`;
+            await window.importMoodleXmlContent(xml);
+            const qid = firstQid();
+            assert(document.getElementById(IDS.typeRadio('sc', qid)).checked === true, 'type QCU sélectionné');
+            assertMatch(gift(), /=[^\n]*Vrai/, 'bonne réponse QCU');
+        });
+
+        await test('XML import Vrai/Faux : true à 100 % coche « Vrai »', async () => {
+            resetApp();
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="truefalse">
+    <name><text>Q</text></name>
+    <questiontext format="html"><text><![CDATA[<p>Affirmation</p>]]></text></questiontext>
+    <answer fraction="100" format="moodle_auto_format"><text>true</text></answer>
+    <answer fraction="0" format="moodle_auto_format"><text>false</text></answer>
+  </question>
+</quiz>`;
+            await window.importMoodleXmlContent(xml);
+            const qid = firstQid();
+            assert(document.getElementById(IDS.trueOption(qid)).checked === true, '« Vrai » coché');
+            assert(document.getElementById(IDS.falseOption(qid)).checked === false, '« Faux » décoché');
+        });
+
+        await test('XML import QRC : <usecase>1</usecase> → sélecteur sensible à la casse', async () => {
+            resetApp();
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="shortanswer">
+    <name><text>Q</text></name>
+    <questiontext format="html"><text><![CDATA[<p>Traduire</p>]]></text></questiontext>
+    <usecase>1</usecase>
+    <answer fraction="100" format="moodle_auto_format"><text>Bonjour</text></answer>
+  </question>
+</quiz>`;
+            await window.importMoodleXmlContent(xml);
+            const qid = firstQid();
+            const opt = document.querySelector(`#sa-options-list-${qid} .option-container`);
+            const oid = opt.querySelector('.remove-sa-option-btn').getAttribute('data-oid');
+            assertEqual(document.getElementById(IDS.saOptionText(qid, oid)).value, 'Bonjour', 'réponse importée');
+            assertEqual(document.getElementById(IDS.saCase(qid, oid)).value, 'case_sensitive', 'casse sensible restituée');
+        });
+
+        await test('XML import Numérique : <tolerance> → marge cochée', async () => {
+            resetApp();
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="numerical">
+    <name><text>Q</text></name>
+    <questiontext format="html"><text><![CDATA[<p>Combien</p>]]></text></questiontext>
+    <answer fraction="100" format="moodle_auto_format"><text>42</text><tolerance>2</tolerance></answer>
+  </question>
+</quiz>`;
+            await window.importMoodleXmlContent(xml);
+            const qid = firstQid();
+            assertEqual(document.getElementById(IDS.numAnswer(qid)).value, '42', 'réponse numérique');
+            assert(document.getElementById(IDS.numRange(qid)).checked === true, 'marge activée');
+            assertEqual(document.getElementById(IDS.numMargin(qid)).value, '2', 'tolérance restituée');
+        });
+
+        // ── Types non gérés : ignorés (import partiel) ───────────────────────
+        await test('XML import : type non géré ignoré, le reste est importé', async () => {
+            resetApp();
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="category"><category><text>$course$/Banque</text></category></question>
+  <question type="essay">
+    <name><text>Dissertation</text></name>
+    <questiontext format="html"><text><![CDATA[<p>Rédigez</p>]]></text></questiontext>
+  </question>
+  <question type="truefalse">
+    <name><text>Q</text></name>
+    <questiontext format="html"><text><![CDATA[<p>Vrai ?</p>]]></text></questiontext>
+    <answer fraction="100" format="moodle_auto_format"><text>true</text></answer>
+    <answer fraction="0" format="moodle_auto_format"><text>false</text></answer>
+  </question>
+</quiz>`;
+            await window.importMoodleXmlContent(xml);
+            assertEqual(document.querySelectorAll('.question-container').length, 1, 'seule la question gérée est importée');
+        });
+
+        // ── Round-trip XML complet ───────────────────────────────────────────
+        await test('Round-trip XML : générer → importer → régénérer (feedback combiné stable)', async () => {
+            resetApp();
+            const id = newQuestion('mc');
+            setRichTextValue(`option-text-${id}-1`, 'Paris');
+            setRichTextValue(`option-text-${id}-2`, 'Londres');
+            document.getElementById(`correct-option-${id}-1`).checked = true;
+            setWeight(`option-weight-${id}-1`, '100');
+            setWeight(`option-weight-${id}-2`, '0');
+            setRichTextValue(`question-text-${id}`, 'Capitale de la France ?');
+            setRichTextValue(`correct-feedback-${id}`, 'Bravo');
+            setRichTextValue(`incorrect-feedback-${id}`, 'Raté');
+            const xml1 = generateMoodleXmlCode();
+
+            resetApp();
+            await window.importMoodleXmlContent(xml1);
+            const xml2 = generateMoodleXmlCode();
+
+            assertMatch(xml2, /<single>false<\/single>/, 'QCM préservé');
+            assertMatch(xml2, /fraction="100"[\s\S]*?Paris/, 'bonne réponse Paris préservée');
+            assertMatch(xml2, /correctfeedback[\s\S]*?Bravo/, 'feedback correct préservé');
+            assertMatch(xml2, /incorrectfeedback[\s\S]*?Raté/, 'feedback incorrect préservé');
+        });
+
+        // ── Médias : round-trip d'import (chantier n°8) ──────────────────────
+        await test('XML import média : <file base64> réattaché à la question', async () => {
+            resetApp();
+            window.questionMediaFiles = {};
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="truefalse">
+    <name><text>MED-Q01</text></name>
+    <questiontext format="html"><text><![CDATA[<p>Image <img src="@@PLUGINFILE@@/MED-Q01_media.png" alt="media"></p>]]></text><file name="MED-Q01_media.png" path="/" encoding="base64">${PNG_B64}</file></questiontext>
+    <answer fraction="100" format="moodle_auto_format"><text>true</text></answer>
+    <answer fraction="0" format="moodle_auto_format"><text>false</text></answer>
+  </question>
+</quiz>`;
+            await window.importMoodleXmlContent(xml);
+            const qid = firstQid();
+            const file = window.questionMediaFiles[qid];
+            assert(!!file, 'média réattaché à la question');
+            assertEqual(file.name, 'MED-Q01_media.png', 'nom de fichier préservé');
+            assertNoMatch(getRichTextValue(IDS.questionText(qid)), /@@PLUGINFILE@@/, 'tag média retiré du texte');
+            window.questionMediaFiles = {};
+        });
+    }
+
     // ── Rendu HTML des résultats ─────────────────────────────────────────────
     function render() {
         const root = document.getElementById('results');
@@ -534,6 +743,7 @@
                 await runPureTests();
                 await runIntegrationTests();
                 await runXmlTests();
+                await runXmlImportTests();
             } catch (err) {
                 record('Initialisation de la suite', 'FAIL', String(err));
             }

@@ -22,6 +22,67 @@
 
 ---
 
+## 2026-06-07 — Import Moodle XML + médias base64 (0.19.0)
+
+- **Objectif** : chantiers ROADMAP n°7 (import Moodle XML, pour **rééditer le
+  feedback combiné** que le GIFT perd) et n°8 (médias `base64` dans
+  l'export/import XML, pour un `.xml` **autonome**), traités ensemble. Aller-retour
+  complet « éditer → exporter .xml → réimporter .xml → rééditer », médias inclus,
+  **sans toucher aux exports/imports GIFT**.
+- **Choix validés (AskUserQuestion)** : (1) **une seule version 0.19.0** (7+8 d'un
+  bloc) ; (2) **même bouton** d'import, `accept` étendu à `.xml`, aiguillage par
+  extension **et** contenu (`<quiz>`) ; (3) types non gérés → **ignorer +
+  notifier** (import partiel) ; (4) **avertissement de poids** (~10 Mo) pour le
+  base64, jamais bloquant.
+- **Livré en 0.19.0** :
+  - **Nouveau module `importMoodleXml.js`** : `importMoodleXmlContent()` (async —
+    `DOMParser`, confirmation modale avant remplacement, comme l'import GIFT) +
+    `looksLikeMoodleXml()`. Mapping inverse : multichoice `single` → QCM/QCU
+    (fraction → poids, option la plus proche), truefalse, shortanswer + `<usecase>`
+    → sélecteur de casse, numerical + `<tolerance>` → marge ; les 3 `…feedback` →
+    encart de feedback combiné. Réemploi de `addNewQuestion`, `IDS`,
+    `setRichTextValue` (qui assainit), clics sur les boutons « + option ».
+  - **`exportMoodleXml.js`** : `<file … encoding="base64">` émis **dans
+    `<questiontext>`** (`path="/"`) + `@@PLUGINFILE@@` via `buildXmlMediaTag()`
+    (sans l'échappement GIFT du `=`). `generateMoodleXmlCode([mediaBase64])` +
+    `downloadAsMoodleXml()` désormais **async** (pré-lecture via `fileToBase64`).
+    Avertissement « médias non inclus » **remplacé** par un avertissement de poids.
+  - **Aiguillage** : `index.html` (`accept=".txt,.zip,.xml"`, libellé), `importGift.js`
+    (branche `.xml` → `handleXmlImport` + sniff `<quiz>` dans l'import texte).
+  - **Médias à l'import** : base64 décodé (`atob` → `Uint8Array` → `File`) puis
+    réattaché via `attachMediaFromZip` (mediaManager), tag `@@PLUGINFILE@@` retiré
+    du texte.
+  - **Tests** : +11 (`tests/testRunner.js`, section 4) ; module chargé dans
+    `tests/tests.html`.
+- **Décisions techniques** :
+  - **Placement média = `<file>` dans `<questiontext>`** : répond directement au
+    problème historique de localisation des médias. Moodle range alors le fichier
+    dans la *filearea* propre à la question — **aucun répertoire à choisir**, à la
+    différence du ZIP. C'est l'argument décisif du base64-en-XML.
+  - **`name` de question repris verbatim** dans le champ identifiant à l'import
+    (ex. `ECO-Q01`) : `computeFinalQuestionId` le conserve tel quel (motif `-QNN`),
+    d'où un round-trip XML→XML stable. Le code matière/auteur n'est pas porté par
+    le XML : non restitué (sans objet pour la réédition).
+  - **`generateMoodleXmlCode` rétrocompatible** : `mediaBase64` optionnel → les
+    tests d'export existants (sans média) restent identiques au caractère près.
+- **Fichiers modifiés** : `core.js` (0.18.0 → 0.19.0), `exportMoodleXml.js`,
+  `importGift.js`, `index.html`, `tests/tests.html`, `tests/testRunner.js`,
+  `CHANGELOG.md`, `ROADMAP.md`, `Spec.md`, `CLAUDE.md`. **Nouveau** :
+  `importMoodleXml.js`.
+- **En suspens / à valider** :
+  - **Tests au navigateur** : ouvrir `tests/tests.html` et vérifier que les
+    **47 tests** (36 + 11) sont verts. L'agent ne peut pas lancer de navigateur ;
+    en Node ont été validés : syntaxe des fichiers, aiguillage `looksLikeMoodleXml`,
+    décodage base64 (signature PNG), normalisation nbsp. Le parsing `DOMParser` et
+    le pilotage du DOM exigent le navigateur.
+  - **Test manuel Moodle** : exporter un QCM avec média + feedback combiné en
+    `.xml`, l'importer dans Moodle (vérifier image rangée dans la question et 3
+    messages), réimporter le `.xml` dans l'outil (vérifier la réédition complète).
+- **Tag Git proposé (non exécuté)** : `v0.19.0`.
+- **Version** : 0.19.0 (MINOR — import XML + médias base64, rétrocompatible).
+
+---
+
 ## 2026-06-06 (suite) — Export Moodle XML + feedback combiné (0.18.0)
 
 - **Objectif** : chantier ROADMAP n°5 — ajouter un **export Moodle XML** (en

@@ -113,17 +113,43 @@ function computeFinalQuestionId(questionIdValue, index, courseCodeValue) {
 }
 
 /**
- * Indique si au moins une question porte un média attaché. Sert à avertir
- * l'auteur : les médias ne sont pas embarqués dans le XML en V1.
- * @returns {boolean}
+ * Construit la balise HTML média à insérer dans le texte de la question, pointant
+ * vers @@PLUGINFILE@@. Variante XML/HTML du tag GIFT (mediaManager) : ICI le « = »
+ * n'est PAS échappé par « \ » (échappement propre au GIFT, invalide en HTML).
+ * @param {string} filename — ex. "ECO-Q01_media.png"
+ * @returns {string}
  */
-function questionsHaveMedia() {
-    if (!window.questionMediaFiles) return false;
-    const questions = document.querySelectorAll('.question-container');
-    for (const question of questions) {
-        if (window.questionMediaFiles[question.dataset.id]) return true;
+function buildXmlMediaTag(filename) {
+    const cat = (typeof getMediaCategory === 'function') ? getMediaCategory(filename) : 'other';
+    if (cat === 'image') {
+        return `<img src="@@PLUGINFILE@@/${filename}" alt="media">`;
     }
-    return false;
+    if (cat === 'audio') {
+        return `<audio controls="controls"><source src="@@PLUGINFILE@@/${filename}"></source></audio>`;
+    }
+    if (cat === 'video') {
+        return `<video controls="controls"><source src="@@PLUGINFILE@@/${filename}"></source></video>`;
+    }
+    return `<a href="@@PLUGINFILE@@/${filename}">${filename}</a>`;
+}
+
+/**
+ * Lit un fichier média et renvoie son contenu encodé en base64 (sans le préfixe
+ * data: ni saut de ligne parasite). Utilisé pour embarquer les médias dans le XML.
+ * @param {File} file
+ * @returns {Promise<string>}
+ */
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = String(reader.result || '');
+            const comma = result.indexOf(',');
+            resolve(comma >= 0 ? result.slice(comma + 1) : result);
+        };
+        reader.onerror = () => reject(reader.error || new Error('Lecture du média impossible'));
+        reader.readAsDataURL(file);
+    });
 }
 
 // ── Générateurs de réponses par type ─────────────────────────────────────────
@@ -272,9 +298,10 @@ function buildCombinedFeedback(questionId) {
  * @param {HTMLElement} question        — conteneur .question-container
  * @param {number}      index           — position 0-based
  * @param {string}      courseCodeValue — code matière (pour l'identifiant)
+ * @param {Object}      [mediaBase64]   — { questionId: base64 } des médias à embarquer
  * @returns {string|null}
  */
-function buildXmlQuestion(question, index, courseCodeValue) {
+function buildXmlQuestion(question, index, courseCodeValue, mediaBase64) {
     const questionId = question.dataset.id;
     const questionType = document.querySelector(
         `input[name="question-type-${questionId}"]:checked`
@@ -347,9 +374,22 @@ function buildXmlQuestion(question, index, courseCodeValue) {
             return null;
     }
 
+    // Média embarqué (chantier n°8) : tag @@PLUGINFILE@@ dans le texte + élément
+    // <file> base64 PLACÉ DANS <questiontext> (path="/"), pour que Moodle range le
+    // fichier dans la filearea propre à la question — pas de répertoire à choisir.
+    let mediaTag = '';
+    let mediaFileXml = '';
+    if (mediaBase64 && mediaBase64[questionId] && typeof getMediaFilename === 'function') {
+        const filename = getMediaFilename(questionId, finalQuestionId);
+        if (filename) {
+            mediaTag = buildXmlMediaTag(filename);
+            mediaFileXml = `\n      <file name="${xmlEscapeText(filename)}" path="/" encoding="base64">${mediaBase64[questionId]}</file>`;
+        }
+    }
+
     let xml = `\n  <question type="${moodleType}">`;
     xml += `\n    <name>${xmlPlainText(finalQuestionId)}</name>`;
-    xml += `\n    ${xmlHtmlField('questiontext', formatXmlHtml(questionText))}`;
+    xml += `\n    <questiontext format="html"><text>${wrapCdata(formatXmlHtml(questionText) + mediaTag)}</text>${mediaFileXml}</questiontext>`;
     if (generalFeedback) {
         xml += `\n    ${xmlHtmlField('generalfeedback', formatXmlHtml(generalFeedback))}`;
     }
@@ -366,9 +406,11 @@ function buildXmlQuestion(question, index, courseCodeValue) {
 /**
  * Génère le document Moodle XML à partir des questions présentes dans le DOM.
  * N'altère pas l'export GIFT. Renvoie la chaîne XML, ou '' si rien à exporter.
+ * @param {Object} [mediaBase64] — { questionId: base64 } des médias à embarquer.
+ *                                 Omis → aucun média embarqué (rétrocompatible).
  * @returns {string}
  */
-function generateMoodleXmlCode() {
+function generateMoodleXmlCode(mediaBase64) {
     const questions = document.querySelectorAll('.question-container');
     if (questions.length === 0) {
         notify.error('Aucune question à exporter. Veuillez d\'abord ajouter des questions.');
@@ -382,7 +424,7 @@ function generateMoodleXmlCode() {
     let count = 0;
 
     questions.forEach((question, index) => {
-        const block = buildXmlQuestion(question, index, courseCodeValue);
+        const block = buildXmlQuestion(question, index, courseCodeValue, mediaBase64);
         if (block) {
             xml += block;
             count++;
@@ -399,18 +441,42 @@ function generateMoodleXmlCode() {
     return xml;
 }
 
+// Seuil indicatif d'avertissement de poids des médias embarqués (~10 Mo). Le
+// base64 gonfle le binaire d'environ +33 % : au-delà, le .xml devient lourd.
+const XML_MEDIA_SIZE_WARN = 10 * 1024 * 1024;
+
 /**
- * Génère et télécharge le fichier .xml Moodle. Avertit si des médias sont
- * présents (non embarqués en V1 — utiliser l'export ZIP/GIFT pour les médias).
+ * Génère et télécharge le fichier .xml Moodle, médias embarqués en base64
+ * (chantier n°8 — fichier autonome). Avertit si le total des médias est élevé.
  */
-function downloadAsMoodleXml() {
-    const xml = generateMoodleXmlCode();
+async function downloadAsMoodleXml() {
+    // Pré-lecture des médias en base64 (asynchrone), indexés par id de question.
+    const mediaBase64 = {};
+    let totalBytes = 0;
+    if (window.questionMediaFiles) {
+        const questions = document.querySelectorAll('.question-container');
+        for (const question of questions) {
+            const qid  = question.dataset.id;
+            const file = window.questionMediaFiles[qid];
+            if (!file) continue;
+            try {
+                mediaBase64[qid] = await fileToBase64(file);
+                totalBytes += file.size || 0;
+            } catch (err) {
+                console.error('[exportMoodleXml] Média non embarqué :', err);
+                notify.warning('Un média n\'a pas pu être embarqué dans le XML (voir la console).');
+            }
+        }
+    }
+
+    const xml = generateMoodleXmlCode(mediaBase64);
     if (!xml.trim()) return; // generateMoodleXmlCode a déjà notifié
 
-    if (questionsHaveMedia()) {
+    if (totalBytes > XML_MEDIA_SIZE_WARN) {
+        const mo = Math.round((totalBytes / (1024 * 1024)) * 10) / 10;
         notify.warning(
-            'Les médias ne sont pas inclus dans l\'export Moodle XML (V1). ' +
-            'Pour conserver les images, utilisez l\'export ZIP (GIFT).'
+            `Médias embarqués : ~${mo} Mo (le base64 ajoute environ +33 %). ` +
+            'Le fichier .xml est volumineux ; son import dans Moodle peut être plus lent.'
         );
     }
 

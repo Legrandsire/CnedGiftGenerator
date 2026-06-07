@@ -11,6 +11,53 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.19.0] — 2026-06-07
+
+### Ajouté
+- **Import Moodle XML** (nouveau module `importMoodleXml.js`) : pendant de
+  l'export XML (0.18.0). Permet de **réimporter un `.xml` Moodle** pour le
+  rééditer — seul moyen de **récupérer le feedback combiné** et l'`<usecase>`,
+  que le GIFT ne sait pas transporter. Mapping inverse des **5 types** :
+  - `multichoice` `single=false`/`true` → QCM / QCU (fractions → poids) ;
+  - `truefalse` → Vrai/Faux ;
+  - `shortanswer` (+ `<usecase>`) → QRC avec sélecteur de casse ;
+  - `numerical` (+ `<tolerance>`) → Numérique avec marge ;
+  - les 3 `…feedback` → les champs de feedback combiné repliables.
+- **Médias embarqués en base64** dans l'export **et** l'import XML
+  (chantier n°8) : un `.xml` désormais **autonome** (sans ZIP annexe). À
+  l'export, chaque média est émis en `<file … encoding="base64">` **à l'intérieur
+  de `<questiontext>`** (`path="/"`) avec le tag `@@PLUGINFILE@@` dans le texte ;
+  à l'import, le base64 est décodé et le média réattaché via `mediaManager`.
+- **Aiguillage de l'import** : le bouton « Importer » accepte aussi le `.xml`
+  (`accept=".txt,.zip,.xml"`). L'aiguillage se fait par extension **et** par
+  détection du contenu (racine `<quiz>`) — un `.txt` contenant en fait du XML est
+  redirigé automatiquement.
+- **Tests** : 11 nouveaux tests (export média base64, import des 5 types, feedback
+  combiné restitué, `<usecase>`/`<tolerance>` restitués, type non géré ignoré,
+  round-trip XML complet, réattachement média).
+
+### Modifié
+- `generateMoodleXmlCode([mediaBase64])` accepte un dictionnaire optionnel
+  `{ idQuestion: base64 }` (rétrocompatible : omis → aucun média embarqué).
+- `downloadAsMoodleXml()` devient asynchrone (pré-lecture des médias en base64).
+  L'**avertissement « médias non inclus » est supprimé** ; un avertissement de
+  **poids** le remplace au-delà d'un seuil indicatif (~10 Mo de médias, le base64
+  ajoutant ~+33 %).
+
+### Notes
+- **Placement des médias dans Moodle** : en plaçant le `<file>` dans le champ
+  `<questiontext>` (`path="/"`), Moodle range le fichier dans la *filearea* propre
+  à la question — **aucun répertoire à choisir** à l'import, ce qui corrige les
+  ambiguïtés rencontrées avec l'export ZIP.
+- **Types non gérés** (essay, matching, cloze, description…) : **ignorés** avec un
+  récapitulatif (import partiel non bloquant). Les marqueurs
+  `<question type="category">` sont sautés silencieusement.
+- **Sécurité** : tout HTML importé passe par `sanitizeRichHtml` (via
+  `setRichTextValue`), comme l'import GIFT.
+- **Export et import GIFT inchangés.**
+
+---
+
 ## [0.18.0] — 2026-06-06
 
 ### Ajouté
