@@ -137,15 +137,12 @@ body.preview-mode .question-even .preview-question-type {
     background-color: #ae2585; /* rose CNED */
 }
 
-/* Texte de la question */
+/* Texte de la question — épuré : texte simple, sans fond ni encadré. */
 .preview-question-text {
-    font-size: 1.02em;
-    margin-bottom: 10px;
-    line-height: 1.4;
-    background-color: #f7f9fb;
-    padding: 8px 12px;
-    border-left: 4px solid #00bcb4;
-    border-radius: 0 6px 6px 0;
+    font-size: 1.05em;
+    margin-bottom: 12px;
+    line-height: 1.45;
+    color: #1f2d3a;
 }
 
 /* Média en preview */
@@ -174,64 +171,61 @@ body.preview-mode .question-even .preview-question-type {
     margin-bottom: 10px;
 }
 
+/* Titre de section « Réponses » — discret, en capitales. */
 .preview-options-title, .preview-feedback-title {
-    font-size: 0.95em;
-    margin-bottom: 6px;
-    color: #2c3e50;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    color: #8a98a5;
 }
 
 .preview-options-list {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 0;
 }
 
-/* Style pour les options individuelles — plus compactes et plus contrastées.
-   Charte chantier n°10 : bonnes réponses en BLEU, mauvaises en ROUGE. */
+/* Liste épurée : AUCUNE boîte autour des réponses. Une simple ligne
+   « marque + texte », séparée par un filet fin. Charte chantier n°10 :
+   bonne réponse en BLEU, mauvaise en ROUGE (porté par la marque ✓/✗). */
 .preview-option {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     flex-wrap: wrap;
-    padding: 5px 10px;
-    border-radius: 6px;
-    background-color: #f4f6f8;
-    border: 1px solid #e3e8ec;
-    border-left: 4px solid #cfd6dc;
+    padding: 5px 2px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #eef1f4;
+}
+.preview-options-list .preview-option:last-child {
+    border-bottom: none;
 }
 
-.preview-option-correct {
-    border-color: #b6d4f0;
-    border-left-color: #005EB8; /* Bleu pour les réponses correctes */
-    background: linear-gradient(180deg, #eef5fc 0%, #dcebfa 100%);
+/* La bonne réponse se distingue par le gras + une teinte bleue (pas de fond). */
+.preview-option-correct .preview-option-text {
+    font-weight: 700;
+    color: #005EB8;
 }
 
-.preview-option-incorrect {
-    border-color: #f3c9c6;
-    border-left-color: #c62828; /* Rouge pour les réponses incorrectes */
-    background: linear-gradient(180deg, #fdeceb 0%, #fbe0de 100%);
-}
-
-/* Icône de validité (✓ ou ✗) */
+/* Marque de validité (✓ ou ✗) : glyphe coloré, sans pastille ni fond. */
 .preview-validity-icon {
     flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
+    display: inline-block;
+    width: 1.1em;
     margin-right: 9px;
-    font-weight: bold;
-    font-size: 0.8em;
-    color: #fff;
+    font-weight: 700;
+    font-size: 0.95em;
+    text-align: center;
 }
 
 .preview-option-correct .preview-validity-icon {
-    background-color: #005EB8;
+    color: #005EB8;
 }
 
 .preview-option-incorrect .preview-validity-icon {
-    background-color: #c62828;
+    color: #c62828;
 }
 
 /* Texte de l'option */
@@ -241,18 +235,14 @@ body.preview-mode .question-even .preview-question-type {
     color: #1f2d3a;
 }
 
-/* Pondération */
+/* Pondération — texte discret, sans pastille. */
 .preview-option-weight {
     flex-shrink: 0;
-    margin-left: 12px;
-    font-weight: bold;
-    color: #4a5b6b;
-    font-size: 0.85em;
+    margin-left: 10px;
+    font-weight: 600;
+    color: #8a98a5;
+    font-size: 0.82em;
     white-space: nowrap;
-    padding: 2px 8px;
-    background-color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 12px;
 }
 
 .preview-option-correct .preview-option-weight {
@@ -263,16 +253,13 @@ body.preview-mode .question-even .preview-question-type {
     color: #c62828;
 }
 
-/* Informations supplémentaires pour les options */
+/* Informations supplémentaires pour les options — texte discret, sans pastille. */
 .preview-option-case {
     display: inline-block;
     margin-left: 10px;
     font-style: italic;
-    color: #666;
-    font-size: 0.9em;
-    background-color: rgba(0, 0, 0, 0.05);
-    padding: 2px 8px;
-    border-radius: 10px;
+    color: #8a98a5;
+    font-size: 0.85em;
 }
 
 .preview-option-margin {
@@ -282,80 +269,89 @@ body.preview-mode .question-even .preview-question-type {
     color: #666;
 }
 
-/* Feedback pour les options — plus contrasté/lisible (retour utilisateur),
-   et compact (pas de double encadré volumineux). */
+/* Feedback d'une option — épuré : texte en retrait préfixé « ↳ », sans cadre
+   ni fond. */
 .preview-option-feedback {
     width: 100%;
-    margin-top: 4px;
-    margin-left: 27px; /* Aligné avec le texte de l'option */
-    color: #2f3d4a;
+    margin-top: 1px;
+    margin-left: 27px; /* aligné sous le texte de l'option */
+    color: #6b7884;
     font-size: 0.86em;
     line-height: 1.35;
-    padding: 3px 9px;
-    border-left: 3px solid rgba(0, 0, 0, 0.18);
-    background-color: rgba(255, 255, 255, 0.55);
-    border-radius: 4px;
+    font-style: italic;
 }
-.preview-option-correct .preview-option-feedback {
-    border-left-color: #005EB8;
-}
-.preview-option-incorrect .preview-option-feedback {
-    border-left-color: #c62828;
+.preview-option-feedback::before {
+    content: "↳ ";
+    font-style: normal;
+    color: #aab4bd;
 }
 
-/* Styles spécifiques pour questions Vrai/Faux */
+/* Styles spécifiques pour questions Vrai/Faux — en ligne, sans filet de
+   séparation (les deux options sont côte à côte). */
 .preview-tf-options {
     display: flex;
     flex-direction: row;
-    gap: 20px;
+    gap: 28px;
 }
 
 .preview-tf-options .preview-option {
-    flex: 1;
-    justify-content: center;
-    padding: 15px;
+    flex: 0 0 auto;
+    padding: 5px 2px;
+    border-bottom: none;
 }
 
 /* Styles spécifiques pour questions numériques */
 .preview-num-options .preview-option {
-    justify-content: center;
-    padding: 15px;
+    padding: 5px 2px;
+    border-bottom: none;
 }
 
-/* Feedback général */
+/* Feedback général — épuré : un titre discret en capitales + le texte, séparé
+   du bloc précédent par un filet fin. Sans fond ni encadré. */
 .preview-feedback,
 .preview-general-feedback {
-    margin-top: 9px;
-    padding: 6px 12px;
-    background-color: #fafafa;
-    border-radius: 0 6px 6px 0;
-    border-left: 4px solid #00bcb4;
-    font-size: 0.92em;
-    line-height: 1.4;
+    margin-top: 12px;
+    padding-top: 9px;
+    border-top: 1px solid #eef1f4;
+    font-size: 0.95em;
+    line-height: 1.45;
+    color: #2f3d4a;
+}
+.preview-general-feedback > strong {
+    display: block;
+    font-weight: 700;
+    font-size: 0.72em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a98a5;
+    margin-bottom: 3px;
 }
 
 .preview-feedback-content {
     line-height: 1.4;
 }
 
-/* Feedback combiné (QCM/QCU) — lecture seule, bien placé après le feedback
-   général. Trois variantes colorées (chantier n°10). */
+/* Feedback combiné (QCM/QCU) — lecture seule. Épuré : pas de boîtes ; chaque
+   ligne = une étiquette colorée discrète + le texte. */
 .preview-combined-feedback {
-    margin-top: 9px;
+    margin-top: 12px;
+    padding-top: 9px;
+    border-top: 1px solid #eef1f4;
 }
 .preview-combined-title {
     font-weight: 700;
-    color: #2c3e50;
-    font-size: 0.9em;
+    font-size: 0.72em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a98a5;
     margin-bottom: 5px;
 }
 .preview-combined-item {
-    padding: 5px 11px;
-    margin-bottom: 4px;
-    border-radius: 0 6px 6px 0;
-    background-color: #fafafa;
-    font-size: 0.9em;
-    line-height: 1.35;
+    padding: 2px 0;
+    margin-bottom: 2px;
+    background: none;
+    font-size: 0.92em;
+    line-height: 1.4;
 }
 .preview-combined-label {
     display: inline-block;
@@ -366,11 +362,8 @@ body.preview-mode .question-even .preview-question-type {
     margin-right: 0.5em;
 }
 .preview-combined-content { color: #2f3d4a; }
-.preview-combined-ok      { border-left: 4px solid #005EB8; }
 .preview-combined-ok      .preview-combined-label { color: #005EB8; }
-.preview-combined-partial { border-left: 4px solid #c47f00; }
 .preview-combined-partial .preview-combined-label { color: #c47f00; }
-.preview-combined-ko      { border-left: 4px solid #c62828; }
 .preview-combined-ko      .preview-combined-label { color: #c62828; }
 
 /* Style pour les éléments manquants */
@@ -385,12 +378,18 @@ body.preview-mode .question-container {
     transition: all 0.3s ease;
 }
 
-body.preview-mode .question-odd {
-    background-color: rgba(230, 247, 246, 0.7); /* Version plus légère pour le mode preview */
+/* Épure : cartes quasi blanches, identité de parité portée par un FIN accent
+   latéral (au lieu d'un aplat de couleur sur toute la carte). */
+body.preview-mode .question-container {
+    background-color: #ffffff;
+    border: 1px solid #e7ecf0;
+    border-left-width: 3px;
 }
-
+body.preview-mode .question-odd {
+    border-left-color: #2da288; /* turquoise CNED */
+}
 body.preview-mode .question-even {
-    background-color: rgba(252, 238, 243, 0.7); /* Version plus légère pour le mode preview */
+    border-left-color: #ae2585; /* rose CNED */
 }
 
 /* Optimisations pour petits écrans */
