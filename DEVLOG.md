@@ -22,6 +22,92 @@
 
 ---
 
+## 2026-06-07 (suite) — Export lisible PDF + RTF + HTML (0.20.0)
+
+- **Objectif** : chantier ROADMAP n°4 — produire un document **lisible par un
+  humain** (relecture), soigné aux couleurs CNED, **sans dépendance nouvelle**
+  (donc pas de jsPDF) et **sans toucher** aux exports/imports GIFT et Moodle XML.
+- **Choix validés (AskUserQuestion)** : (1) **une seule version 0.20.0** —
+  PDF + RTF + HTML ensemble ; (2) fonction partagée `readQuestionState()`
+  **nouvelle, consommée par l'imprimable seul** (GIFT/XML intacts → zéro risque
+  sur les tests ; unification des 3 lecteurs DOM = amélioration future) ;
+  (3) PDF via **`window.open` + `window.print()`**, images en **base64 inline** ;
+  (4) **HTML autonome livré** en V1 (coût marginal nul, même générateur) ;
+  (5) CSS dans **`printStyles.css` source unique**, inlinée à la génération via
+  `document.styleSheets` (fallback `FALLBACK_PRINT_CSS` si `cssRules` bloqué en
+  `file://`).
+- **Livré en 0.20.0** :
+  - **Nouveau module `exportPrintable.js`** : `readQuestionState()` (lecture
+    normalisée d'une question, neutre vis-à-vis du format) ; 3 points d'entrée
+    `openPrintableView()` (PDF), `downloadAsHtml()`, `downloadAsRtf()`. Helpers :
+    `richHtmlToRtf()` (DOMParser → sous-ensemble RTF : b/i/u/sup/sub/blocs),
+    `rtfEscape()` (accents `\uN?`, `{ } \`), `getPrintCss()`, `buildPrintableHtml()`,
+    `buildRtf()`. Réutilise `computeFinalQuestionId`/`fileToBase64` (exportMoodleXml),
+    `getMediaFilename`/`getMediaCategory` (mediaManager), `buildExportFilename`
+    (downloadManager), `IDS`, `getRichTextValue`, `addNonBreakingSpaces`.
+  - **Nouveau `printStyles.css`** (charte CNED, règles scopées `.printable-*`),
+    lié dans `index.html` (sans effet sur l'app) et inliné dans le document généré.
+  - **`index.html`** : 3 boutons (`📄 PDF (impression)`, `📝 RTF (.rtf)`,
+    `🌐 HTML (.html)`) dans `.action-group-secondary` ; `<link>` printStyles.css ;
+    `<script src="exportPrintable.js">` après downloadManager. **`styles.css`** :
+    classe `.btn-print` (contour turquoise, pour distinguer des exports Moodle).
+  - **Tests** : +14 (`tests/testRunner.js`, section 5) ; module + lien CSS +
+    boutons ajoutés à `tests/tests.html`.
+- **Décisions techniques** :
+  - **Médias** : images embarquées en base64 inline (PDF/HTML), pour survivre au
+    document d'impression séparé / au `.html` autonome. Audio/vidéo/PDF et tout le
+    RTF → **mention** « voir l'export ZIP/XML » (embarquement binaire RTF trop
+    complexe pour le bénéfice).
+  - **PDF par nouvelle fenêtre** : isole `printStyles.css`, évite les `@media print`
+    intrusifs sur l'app, auto-impression via un petit script `window.onload`.
+  - **Contenu lisible** : bonne(s) réponse(s) en évidence (✓ + gras + turquoise),
+    poids si ≠ 100 %, casse QRC, marge numérique, feedbacks (option/général/
+    combiné), en-tête métadonnées.
+- **Fichiers modifiés** : `core.js` (0.19.0 → 0.20.0), `index.html`, `styles.css`,
+  `tests/tests.html`, `tests/testRunner.js`, `CHANGELOG.md`, `ROADMAP.md`,
+  `Spec.md`, `CLAUDE.md`. **Nouveaux** : `exportPrintable.js`, `printStyles.css`.
+- **Itération de raffinement (même session, après 1ʳᵉ relecture utilisateur)** :
+  - **Correctifs de tests** : (1) caractères **nbsp** (U+00A0) parasites dans la
+    source de `exportPrintable.js` (espaces insécables saisis dans les libellés)
+    → tous remplacés par des espaces normaux (le nbsp d'affichage est désormais
+    produit par le code via `&nbsp;`/`nbspHtml`) ; (2) l'énoncé n'était pas
+    enveloppé en `<p>` → nouveau helper `formatBlock` (= `addHtmlTags ∘
+    addNonBreakingSpaces`, comme GIFT/XML) appliqué à l'énoncé, aux feedbacks et
+    aux réponses.
+  - **Mise en page** (retours « pas assez compact, coches non alignées ») :
+    réponses en **flexbox** (`.pq-answer` flex, coche `.pq-mark` à largeur fixe,
+    `.pq-answer-body` en colonne) → coche alignée même si le texte est un bloc ;
+    blocs resserrés ; en-tête de question soulignée ; titres RTF soulignés d'un
+    filet, réponses RTF indentées.
+  - **RTF avec images** (demande « format éditable Word contenant les images ») :
+    le RTF embarque désormais les **images PNG/JPEG** via `\pict\pngblip`/
+    `\jpegblip` (hex), avec dimensions en twips plafonnées. `downloadAsRtf`
+    devient **async** (préchargement média partagé `attachPrintableMedia`, qui
+    remplace `attachPrintableImages` et alimente aussi le data-URL HTML/PDF).
+  - **+2 tests** (image RTF `\pict`, image HTML data-URL) → **16** au total
+    pour la section 5.
+- **En suspens / à valider** :
+  - **Tests au navigateur** : ouvrir `tests/tests.html` et vérifier que les
+    **63 tests** (47 + 16) sont verts. Validé en Node : syntaxe des fichiers,
+    logique de `rtfEscape` (accents, `{ } \`), absence de nbsp résiduel.
+    `richHtmlToRtf`, l'embarquement `\pict` et le pilotage du DOM exigent le
+    navigateur.
+  - **Test manuel** : générer un quiz des 5 types (avec image, feedbacks combinés),
+    puis : PDF (vérifier l'aperçu d'impression + image visible), `.html` (ouvrir le
+    fichier téléchargé → autonome), `.rtf` (ouvrir dans Word/LibreOffice → accents
+    corrects, bonnes réponses en gras). Vérifier que GIFT/ZIP/XML sont inchangés.
+  - **Nuance file:// (Chrome)** : la lecture des `cssRules` de printStyles.css peut
+    être bloquée → le fallback CSS s'applique (rendu CNED correct mais moins riche).
+    Servir l'app en http(s) donne le rendu complet.
+  - **Hors périmètre, consigné** : la relecture a aussi relevé que les flèches
+    ↑/↓ se superposent à l'ID de question et que le mode prévisualisation est
+    perfectible → **nouveau chantier ROADMAP n°9** (refonte prévisualisation +
+    correctif flèches/ID), traité dans une session ultérieure (choix validé).
+- **Tag Git proposé (non exécuté)** : `v0.20.0`.
+- **Version** : 0.20.0 (MINOR — export lisible PDF/RTF/HTML, rétrocompatible).
+
+---
+
 ## 2026-06-07 — Import Moodle XML + médias base64 (0.19.0)
 
 - **Objectif** : chantiers ROADMAP n°7 (import Moodle XML, pour **rééditer le

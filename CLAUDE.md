@@ -58,6 +58,7 @@ domaine fonctionnel précis.
 | `importGift.js` | Import et parsing de fichiers `.txt` / `.zip` GIFT ; aiguillage `.xml` |
 | `importMoodleXml.js` | Import **Moodle XML** (`DOMParser`) : mapping inverse des 5 types, feedback combiné, `<usecase>`/`<tolerance>`, médias base64 |
 | `downloadManager.js` | Téléchargement `.txt` et `.zip` |
+| `exportPrintable.js` | Export **lisible** pour relecture humaine : **PDF** (impression `window.print()`), **RTF** (.rtf) et **HTML** autonome. Fonction partagée `readQuestionState()`. N'altère ni le GIFT ni le XML |
 | `helpManager.js` | Panneau d'aide, tooltips, tour guidé |
 | `advancedTourFeatures.js` | Fonctionnalités avancées du tour guidé |
 | `summaryManager.js` | Résumé des questions et navigation |
@@ -66,8 +67,9 @@ domaine fonctionnel précis.
 
 **Fichiers CSS** : `styles.css` (principal), `rteStyles.css`, `helpStyles.css`,
 `summaryStyles.css`, `previewStyles.css`, `mediaStyles.css`, `notifyStyles.css`,
-`confirmDialogStyles.css` — un fichier par domaine, en cohérence avec le
-découpage JS.
+`confirmDialogStyles.css`, `printStyles.css` (export lisible — règles scopées
+sous `.printable-doc`, inlinées dans le document généré par `exportPrintable.js`)
+— un fichier par domaine, en cohérence avec le découpage JS.
 
 **Règle d'or** : une nouvelle fonctionnalité va dans le fichier dont c'est la
 responsabilité. Si elle ne rentre dans aucun, proposer un nouveau fichier dédié

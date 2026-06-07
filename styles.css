@@ -934,6 +934,29 @@ textarea {
     transform: translateY(-1px);
 }
 
+/* Boutons d'export lisible (PDF / RTF / HTML) — chantier ROADMAP n°4.
+   Style « contour turquoise » pour les distinguer des exports Moodle (GIFT
+   turquoise plein, XML rose plein) : ce sont des sorties de relecture humaine. */
+.btn-print {
+    background-color: #ffffff;
+    color: #1c6b58;
+    border: 1.5px solid #2da288;
+    border-radius: 6px;
+    padding: 9px 15px;
+    font-size: 0.88em;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    white-space: nowrap;
+}
+.btn-print:hover {
+    background-color: #e3f6f0;
+    transform: translateY(-1px);
+}
+
 /* Bloc de feedback combiné (QCM/QCU) — export Moodle XML uniquement.
    Replié par défaut (<details>) ; couleur dérivée de la parité de la question
    (turquoise pour les impaires, rose pour les paires), comme le fond de question. */

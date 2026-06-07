@@ -15,6 +15,9 @@
     <link rel="stylesheet" href="mediaStyles.css">
     <link rel="stylesheet" href="notifyStyles.css">
     <link rel="stylesheet" href="confirmDialogStyles.css">
+    <!-- Styles de l'export lisible (PDF / HTML). Règles scopées sous .printable-doc :
+         sans effet sur l'app ; inlinées dans le document généré par exportPrintable.js. -->
+    <link rel="stylesheet" href="printStyles.css">
 
 </head>
 <body>
@@ -121,6 +124,15 @@
             <button id="download-xml-btn" class="btn-download-xml" title="Export Moodle XML : supporte le feedback combiné (correct / partiellement correct / incorrect), impossible en GIFT.">
                 🎓 Moodle XML (.xml)
             </button>
+            <button id="print-pdf-btn" class="btn-print" title="Document lisible mis en forme (charte CNED). Ouvre la fenêtre d'impression : choisissez « Enregistrer au format PDF ».">
+                📄 PDF (impression)
+            </button>
+            <button id="download-rtf-btn" class="btn-print" title="Document lisible éditable, ouvrable dans Word/LibreOffice.">
+                📝 RTF (.rtf)
+            </button>
+            <button id="download-html-btn" class="btn-print" title="Page HTML autonome, lisible et ouvrable partout.">
+                🌐 HTML (.html)
+            </button>
         </div>
 
         <!-- ACTION DESTRUCTIVE -->
@@ -169,6 +181,7 @@
     <script src="importGift.js"></script>
     <script src="importMoodleXml.js"></script>
     <script src="downloadManager.js"></script>
+    <script src="exportPrintable.js"></script>
     <!-- Ajout des scripts d'aide -->
     <script src="helpManager.js"></script>
     <script src="advancedTourFeatures.js"></script>

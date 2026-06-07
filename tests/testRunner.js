@@ -714,6 +714,202 @@
         });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // 5. TESTS EXPORT LISIBLE : PDF (HTML) + RTF (chantier n°4)
+    // ─────────────────────────────────────────────────────────────────────────
+    async function runPrintableTests() {
+        const META = { author: '', courseCode: '', date: '01/01/2026', title: 'Test' };
+
+        // ── readQuestionState : lecture normalisée ───────────────────────────
+        await test('Imprimable : readQuestionState QCM (bonne réponse, poids, feedback)', () => {
+            resetApp();
+            const id = newQuestion('mc');
+            setRichTextValue(`option-text-${id}-1`, 'Paris');
+            setRichTextValue(`option-text-${id}-2`, 'Londres');
+            document.getElementById(`correct-option-${id}-1`).checked = true;
+            setWeight(`option-weight-${id}-1`, '100');
+            setRichTextValue(`option-feedback-${id}-1`, 'Exact');
+            setRichTextValue(`question-text-${id}`, 'Capitale de la France ?');
+
+            const el = document.querySelector(`.question-container[data-id="${id}"]`);
+            const st = readQuestionState(el, 0, '');
+            assertEqual(st.typeCode, 'mc', 'type mc');
+            assertEqual(st.answers.length, 2, 'deux réponses lues');
+            assertEqual(st.answers[0].isCorrect, true, 'Paris correcte');
+            assertEqual(st.answers[1].isCorrect, false, 'Londres incorrecte');
+            assertMatch(st.answers[0].feedbackHtml, /Exact/, 'feedback option lu');
+        });
+
+        await test('Imprimable : readQuestionState QRC (sensibilité à la casse, réponses acceptées)', () => {
+            resetApp();
+            const id = newQuestion('sa');
+            document.getElementById(`sa-option-text-${id}-1`).value = 'Bonjour';
+            document.getElementById(`sa-case-${id}-1`).value = 'case_sensitive';
+            setRichTextValue(`question-text-${id}`, 'Traduire hello');
+
+            const el = document.querySelector(`.question-container[data-id="${id}"]`);
+            const st = readQuestionState(el, 0, '');
+            assertEqual(st.answers[0].isCorrect, true, 'réponse acceptée marquée correcte');
+            assertEqual(st.answers[0].caseLabel, 'sensible à la casse', 'casse honorée');
+        });
+
+        await test('Imprimable : readQuestionState Numérique (valeur + marge)', () => {
+            resetApp();
+            const id = newQuestion('num');
+            document.getElementById(`num-answer-${id}`).value = '42';
+            document.getElementById(`num-range-${id}`).checked = true;
+            document.getElementById(`num-margin-${id}`).value = '2';
+            setRichTextValue(`question-text-${id}`, 'Combien ?');
+
+            const el = document.querySelector(`.question-container[data-id="${id}"]`);
+            const st = readQuestionState(el, 0, '');
+            assertEqual(st.numeric.value, '42', 'valeur 42');
+            assertEqual(st.numeric.margin, '2', 'marge 2');
+        });
+
+        await test('Imprimable : question sans texte ignorée (null)', () => {
+            resetApp();
+            const id = newQuestion('mc');
+            const el = document.querySelector(`.question-container[data-id="${id}"]`);
+            const st = readQuestionState(el, 0, '');
+            assertEqual(st, null, 'question sans énoncé → null');
+        });
+
+        // ── RTF : fonctions pures ────────────────────────────────────────────
+        await test('RTF : rtfEscape échappe les accents en \\uN?', () => {
+            assertEqual(rtfEscape('é'), '\\u233?', 'é → \\u233?');
+            assertEqual(rtfEscape('à'), '\\u224?', 'à → \\u224?');
+        });
+
+        await test('RTF : rtfEscape protège { } \\ et les ASCII restent intacts', () => {
+            assertEqual(rtfEscape('{a}'), '\\{a\\}', 'accolades échappées');
+            assertEqual(rtfEscape('a\\b'), 'a\\\\b', 'antislash doublé');
+            assertEqual(rtfEscape('Paris'), 'Paris', 'ASCII inchangé');
+        });
+
+        await test('RTF : richHtmlToRtf convertit gras et exposant', () => {
+            assertMatch(richHtmlToRtf('<b>gras</b>'), /\{\\b gras\}/, '<b> → {\\b …}');
+            assertMatch(richHtmlToRtf('x<sup>2</sup>'), /x\{\\super 2\}/, '<sup> → {\\super …}');
+        });
+
+        await test('RTF : bonne réponse en gras/turquoise (cf1), mauvaise neutre', () => {
+            resetApp();
+            const id = newQuestion('mc');
+            setRichTextValue(`option-text-${id}-1`, 'Paris');
+            setRichTextValue(`option-text-${id}-2`, 'Londres');
+            document.getElementById(`correct-option-${id}-1`).checked = true;
+            setWeight(`option-weight-${id}-1`, '100');
+            setRichTextValue(`question-text-${id}`, 'Capitale ?');
+
+            const states = buildPrintableStates();
+            const rtf = buildRtf(states, META);
+            assertMatch(rtf, /\{\\b\\cf1 [^{}]*Paris/, 'Paris en gras + couleur correcte');
+            assertNoMatch(rtf, /\\cf1[^{}]*Londres/, 'Londres sans la couleur « correcte »');
+        });
+
+        await test('RTF : en-tête {\\rtf1 et table de couleurs CNED', () => {
+            resetApp();
+            const id = newQuestion('tf');
+            document.getElementById(`true-option-${id}`).checked = true;
+            setRichTextValue(`question-text-${id}`, 'Vrai ?');
+            const rtf = buildRtf(buildPrintableStates(), META);
+            assertMatch(rtf, /^\{\\rtf1\\ansi/, 'en-tête RTF');
+            assertMatch(rtf, /\\red45\\green162\\blue136/, 'turquoise CNED dans la colortbl');
+            assertMatch(rtf, /\}$/, 'document refermé');
+        });
+
+        // ── HTML / PDF : génération de la chaîne ──────────────────────────────
+        await test('HTML imprimable : structure + bonne réponse mise en évidence', () => {
+            resetApp();
+            const id = newQuestion('mc');
+            setRichTextValue(`option-text-${id}-1`, 'Paris');
+            setRichTextValue(`option-text-${id}-2`, 'Londres');
+            document.getElementById(`correct-option-${id}-1`).checked = true;
+            setWeight(`option-weight-${id}-1`, '100');
+            setRichTextValue(`question-text-${id}`, 'Capitale ?');
+
+            const html = buildPrintableHtml(buildPrintableStates(), META, { autoPrint: false });
+            assertMatch(html, /class="printable-question"/, 'bloc question présent');
+            assertMatch(html, /class="pq-answer correct"[\s\S]*?Paris/, 'Paris en réponse correcte');
+            assertMatch(html, /✓/, 'marque visuelle de bonne réponse');
+            assertMatch(html, /Londres/, 'option incorrecte présente');
+        });
+
+        await test('HTML imprimable : énoncé HTML enrichi conservé (balises littérales)', () => {
+            resetApp();
+            const id = newQuestion('tf');
+            document.getElementById(`true-option-${id}`).checked = true;
+            setRichTextValue(`question-text-${id}`, '<p>Bonjour</p>');
+            const html = buildPrintableHtml(buildPrintableStates(), META, { autoPrint: false });
+            assertMatch(html, /<div class="pq-statement"><p>Bonjour<\/p>/, 'énoncé HTML littéral');
+        });
+
+        await test('HTML imprimable : en-tête métadonnées (auteur + code article)', () => {
+            resetApp();
+            const id = newQuestion('tf');
+            document.getElementById(`true-option-${id}`).checked = true;
+            setRichTextValue(`question-text-${id}`, 'Ok');
+            const meta = { author: 'Dupont', courseCode: 'ECO101', date: '01/01/2026', title: 'Questions — ECO101' };
+            const html = buildPrintableHtml(buildPrintableStates(), meta, { autoPrint: false });
+            assertMatch(html, /Auteur : Dupont/, 'auteur dans l\'en-tête');
+            assertMatch(html, /Code article : ECO101/, 'code article dans l\'en-tête');
+        });
+
+        await test('HTML imprimable : numérique affiche « valeur ± marge »', () => {
+            resetApp();
+            const id = newQuestion('num');
+            document.getElementById(`num-answer-${id}`).value = '42';
+            document.getElementById(`num-range-${id}`).checked = true;
+            document.getElementById(`num-margin-${id}`).value = '2';
+            setRichTextValue(`question-text-${id}`, 'Combien ?');
+            const html = buildPrintableHtml(buildPrintableStates(), META, { autoPrint: false });
+            assertMatch(html, /42 ± 2/, 'valeur et marge affichées');
+        });
+
+        // ── Médias ───────────────────────────────────────────────────────────
+        await test('RTF : image PNG embarquée (\\pict\\pngblip + hex)', async () => {
+            resetApp();
+            window.questionMediaFiles = {};
+            const id = newQuestion('tf');
+            document.getElementById(`true-option-${id}`).checked = true;
+            setRichTextValue(`question-text-${id}`, 'Avec image');
+            window.questionMediaFiles[id] = new File([new Uint8Array([1, 2, 3])], 'photo.png', { type: 'image/png' });
+
+            const states = buildPrintableStates();
+            await attachPrintableMedia(states);
+            const rtf = buildRtf(states, META);
+            assertMatch(rtf, /\{\\pict\\pngblip[\s\S]*?010203\}/, 'image embarquée en \\pict\\pngblip (hex 010203)');
+            window.questionMediaFiles = {};
+        });
+
+        await test('HTML imprimable : image embarquée en data-URL inline', async () => {
+            resetApp();
+            window.questionMediaFiles = {};
+            const id = newQuestion('tf');
+            document.getElementById(`true-option-${id}`).checked = true;
+            setRichTextValue(`question-text-${id}`, 'Avec image');
+            window.questionMediaFiles[id] = new File([new Uint8Array([1, 2, 3])], 'photo.png', { type: 'image/png' });
+
+            const states = buildPrintableStates();
+            await attachPrintableMedia(states);
+            const html = buildPrintableHtml(states, META, { autoPrint: false });
+            assertMatch(html, /<img src="data:image\/png;base64,/, 'image inline en data-URL');
+            window.questionMediaFiles = {};
+        });
+
+        await test('Imprimable : GIFT et XML restent intacts (non-régression)', () => {
+            resetApp();
+            const id = newQuestion('mc');
+            setRichTextValue(`option-text-${id}-1`, 'Paris');
+            document.getElementById(`correct-option-${id}-1`).checked = true;
+            setWeight(`option-weight-${id}-1`, '100');
+            setRichTextValue(`question-text-${id}`, 'Capitale ?');
+            generateGIFTCode();
+            assertMatch(gift(), /\n=[^\n]*Paris/, 'export GIFT toujours fonctionnel');
+            assertMatch(generateMoodleXmlCode(), /<question type="multichoice">/, 'export XML toujours fonctionnel');
+        });
+    }
+
     // ── Rendu HTML des résultats ─────────────────────────────────────────────
     function render() {
         const root = document.getElementById('results');
@@ -744,6 +940,7 @@
                 await runIntegrationTests();
                 await runXmlTests();
                 await runXmlImportTests();
+                await runPrintableTests();
             } catch (err) {
                 record('Initialisation de la suite', 'FAIL', String(err));
             }

@@ -20,11 +20,12 @@
 | 1 | Déplacer les questions (flèches ↑/↓) | ✅ (sans impact) | Faible | **1** | `[x]` 0.16.0 |
 | 2 | Banque de questions (catégories `$CATEGORY`) | ✅ Nativement | Moyen | 2 | `[ ]` |
 | 3 | Sauvegarde native (localStorage / IndexedDB) | n/a (local) | Moyen | 3 | `[ ]` |
-| 4 | Export lisible : PDF (impression) + RTF | n/a (export) | Moyen | 4 | `[ ]` |
+| 4 | Export lisible : PDF (impression) + RTF | n/a (export) | Moyen | 4 | `[x]` 0.20.0 |
 | 5 | Feedback combiné → export **Moodle XML** | ❌ GIFT / ✅ XML | Élevé | 5 | `[x]` 0.18.0 |
 | 6 | Système d'authentification | n/a | À cadrer | Plus tard | `[ ]` |
 | 7 | Import **Moodle XML** (rééditer le feedback combiné) | ❌ GIFT / ✅ XML | Moyen | 7 | `[x]` 0.19.0 |
 | 8 | Médias dans l'export/import **XML** (base64) | n/a (XML) | Moyen | 8 | `[x]` 0.19.0 |
+| 9 | Refonte du mode prévisualisation + correctif chevauchement flèches/ID | n/a (UI) | Faible | 6 | `[ ]` |
 | Q | Qualité continue (confirm/alert, tests) | — | Faible | continu | `[~]` |
 
 ---
@@ -115,7 +116,20 @@ l'état (questions, options, médias) pour déclencher l'autosave.
 
 ---
 
-## 4. Export lisible : PDF + RTF
+## 4. Export lisible : PDF + RTF — `[x]` livré en 0.20.0
+
+> **Livré** dans la session du 2026-06-07 (0.20.0). Nouveau module
+> `exportPrintable.js` + `printStyles.css`. Trois sorties sur une **source
+> unique** (`readQuestionState()`) : **📄 PDF** (fenêtre `window.open` +
+> `window.print()`, images en base64 inline), **🌐 HTML** autonome (même
+> document, CSS/images inlinées) et **📝 RTF** (.rtf éditable, gras des bonnes
+> réponses, accents en `\uN?`, médias renvoyés vers ZIP/XML). **Aucune
+> dépendance** (pas de jsPDF). Les exports GIFT et Moodle XML restent intacts.
+> Choix validés : version unique 0.20.0 (PDF+RTF+HTML ensemble) ;
+> `readQuestionState()` consommée par l'imprimable seul (unification des 3
+> lecteurs DOM = amélioration future) ; CSS source unique inlinée depuis
+> `document.styleSheets` (fallback si bloqué en `file://`). +14 tests (section 5).
+> Descriptif conservé ci-dessous pour la traçabilité.
 
 **Objectif.** Exporter un document plus lisible par un humain que le code GIFT,
 visuellement soigné (charte CNED). Validé : **PDF** et **RTF**.
@@ -304,6 +318,31 @@ fichier Moodle **autonome** (sans ZIP annexe). Complète les chantiers n°5
 - Cohérence des noms de fichiers avec la convention `{finalQuestionId}_media.{ext}`
   déjà utilisée par l'export ZIP.
 - Encodage : produire le base64 sans saut de ligne parasite hors CDATA.
+
+---
+
+## 9. Refonte du mode prévisualisation + correctif flèches/ID
+
+**Objectif.** Améliorer la lisibilité du **mode prévisualisation** (rendu jugé
+peu convaincant) et corriger un **bug d'UI** : en mode édition, les **flèches de
+déplacement ↑/↓** se **superposent à l'identifiant** de la question.
+
+**Compatibilité.** Sans objet (purement interface, aucun impact sur les exports).
+
+**Pistes techniques.**
+- **Correctif flèches/ID** : revoir le positionnement (probablement `position:
+  absolute` des flèches vs marge du champ identifiant) dans `styles.css` /
+  `questionManager.js` — réserver un espace dédié aux flèches (flex/gap) plutôt
+  qu'un chevauchement.
+- **Prévisualisation** : harmoniser le rendu lecture seule (`previewMode.js` /
+  `previewStyles.css`) avec la charte CNED ; envisager de **réutiliser le rendu
+  de l'export lisible** (`exportPrintable.js` / `printStyles.css`, chantier n°4)
+  pour une prévisualisation fidèle au document imprimable.
+
+**Fichiers impactés.** `styles.css`, `questionManager.js`, `previewMode.js`,
+`previewStyles.css` ; éventuellement réemploi de `printStyles.css`.
+
+**Origine.** Signalé lors de la relecture du chantier n°4 (session 2026-06-07).
 
 ---
 

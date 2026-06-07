@@ -11,6 +11,54 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.20.0] — 2026-06-07
+
+### Ajouté
+- **Export lisible** (nouveau module `exportPrintable.js` + `printStyles.css`),
+  destiné à la **lecture/relecture humaine** (charte CNED), pas à Moodle.
+  Chantier ROADMAP n°4. Trois sorties bâties sur une **source unique** :
+  - **📄 PDF (impression)** : ouvre une fenêtre contenant un document mis en
+    forme et déclenche l'impression — l'auteur choisit « Enregistrer au format
+    PDF ». Les **images** sont embarquées en **base64 inline** pour survivre au
+    document d'impression (les autres médias sont mentionnés en texte).
+  - **🌐 HTML (.html)** : le **même document**, téléchargé en page **autonome**
+    (CSS et images inlinées), lisible et ouvrable partout.
+  - **📝 RTF (.rtf)** : document **éditable** dans Word/LibreOffice. Mise en
+    forme : titre souligné d'un filet, **gras + couleur** pour les bonnes
+    réponses, réponses indentées, et conversion du sous-ensemble RTE (gras,
+    italique, exposant `\super`, indice `\sub`). Accents échappés en `\uN?`.
+    **Images PNG/JPEG embarquées directement** (`\pict\pngblip`/`\jpegblip` en
+    hexadécimal) → `.rtf` **autonome avec ses images** ; les autres médias
+    (audio/vidéo/PDF, GIF/WebP/SVG) renvoient vers l'export ZIP/XML.
+- **Contenu par type** : QCM/QCU (bonne(s) réponse(s) en évidence, poids si
+  ≠ 100 %, feedback par option), QRC (réponses acceptées + sensibilité à la
+  casse), Numérique (valeur ± marge), Vrai/Faux. Avec énoncé, rétroaction
+  générale, feedback combiné et en-tête de métadonnées (auteur, code article,
+  date, identifiants `CODE-QNN`).
+- **Mise en page** : disposition **flex** des réponses (la coche reste alignée
+  même quand le texte est un bloc `<p>`), contenu enveloppé en paragraphes
+  (`formatBlock` = typographie CNED + `addHtmlTags`), blocs plus **compacts**,
+  en-tête de question soulignée — en réponse aux retours de relecture.
+- **Tests** : 16 nouveaux tests (section 5 du harnais) — `readQuestionState` par
+  type, échappement RTF des accents/caractères de contrôle, gras des bonnes
+  réponses, conversion RTE→RTF, **image embarquée RTF (`\pict`) et HTML
+  (data-URL)**, structure HTML d'impression, non-régression GIFT/XML.
+
+### Notes techniques
+- **Aucune dépendance nouvelle** (contrainte CLAUDE.md §2) : pas de jsPDF, le PDF
+  passe par `window.print()`.
+- **Fonction partagée `readQuestionState()`** introduite pour lire l'état
+  normalisé d'une question, consommée par l'export lisible **seul** ;
+  `giftGenerator.js` et `exportMoodleXml.js` restent **intacts** (les exports
+  GIFT et Moodle XML sont inchangés). L'unification des trois lecteurs de DOM est
+  notée comme amélioration future.
+- `printStyles.css` est la **source unique** des styles, scopée sous
+  `.printable-doc` (sans effet sur l'app) ; `exportPrintable.js` l'inline dans le
+  document généré via `document.styleSheets`, avec un fallback compact si la
+  lecture des `cssRules` est bloquée (cas Chrome en `file://`).
+
+---
+
 ## [0.19.0] — 2026-06-07
 
 ### Ajouté

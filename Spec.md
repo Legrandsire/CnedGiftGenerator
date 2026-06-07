@@ -109,6 +109,28 @@ fonctionnalité est **propre à Moodle** : exportée uniquement en XML
 (`<correctfeedback>`, `<partiallycorrectfeedback>`, `<incorrectfeedback>`) et
 **ignorée à l'export GIFT** (aucune syntaxe GIFT ne l'exprime).
 
+### 2.11 Export lisible (PDF / RTF / HTML)
+
+Sorties destinées à la **lecture/relecture humaine** (charte CNED), distinctes
+des exports Moodle (module `exportPrintable.js` + `printStyles.css`, depuis
+0.20.0). **Aucune dépendance** (pas de jsPDF) :
+
+- **PDF (impression)** : un document HTML mis en forme est ouvert dans une
+  fenêtre dédiée et l'impression est déclenchée (`window.print()`) ; l'auteur
+  choisit « Enregistrer au format PDF ». Les **images** sont embarquées en
+  base64 inline (les autres médias sont mentionnés en texte).
+- **HTML autonome** : le même document, téléchargé en `.html` self-contained.
+- **RTF** : document `.rtf` éditable (Word/LibreOffice) — titres, **gras +
+  couleur** pour les bonnes réponses, listes, sous-ensemble RTE (gras, italique,
+  exposant, indice). Accents échappés en `\uN?` ; médias renvoyés vers l'export
+  ZIP/XML.
+
+Le contenu met en évidence la/les **bonne(s) réponse(s)** par type (QCM/QCU avec
+poids, QRC avec sensibilité à la casse, Numérique avec marge, Vrai/Faux), avec
+énoncé, rétroactions (par option, générale, combinée) et en-tête de métadonnées.
+Une fonction partagée `readQuestionState()` lit l'état normalisé de chaque
+question ; les exports GIFT et Moodle XML restent inchangés.
+
 ### 2.10 Fonctions d'assistance
 
 - **Panneau d'aide** latéral à onglets, **tooltips**, **tour guidé** au premier
@@ -130,7 +152,8 @@ fonctionnalité est **propre à Moodle** : exportée uniquement en XML
 - [ ] **Déplacer des questions** (réordonnancement dans la liste).
 - [ ] **Banques de questions** : classer les questions par banque.
 - [ ] **Nombre de questions par page** : paramétrage à l'export.
-- [ ] **Export RTF** ou format à mise en page simplifiée.
+- [x] **Export lisible : PDF (impression) + RTF + HTML autonome** — livré en
+  0.20.0 (cf. 2.11).
 
 ### Infrastructure (objet de la présente mise en place)
 

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tests — Générateur de code GIFT</title>
+    <link rel="stylesheet" href="../printStyles.css">
+
 
     <!-- Neutraliser les boîtes de dialogue bloquantes AVANT le chargement des
          scripts applicatifs (alert/confirm/prompt apparaissent dans la console). -->
@@ -58,6 +60,10 @@
         <button id="download-btn"></button>
         <button id="download-zip-btn"></button>
         <span id="media-count-badge"></span>
+        <button id="download-xml-btn"></button>
+        <button id="print-pdf-btn"></button>
+        <button id="download-rtf-btn"></button>
+        <button id="download-html-btn"></button>
         <button id="clear-btn"></button>
 
         <textarea id="gift-output" readonly></textarea>
@@ -78,6 +84,7 @@
     <script src="../importGift.js"></script>
     <script src="../importMoodleXml.js"></script>
     <script src="../downloadManager.js"></script>
+    <script src="../exportPrintable.js"></script>
 
     <!-- ── Harnais de tests ──────────────────────────────────────────────── -->
     <script src="testRunner.js"></script>
