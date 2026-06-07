@@ -1,52 +1,61 @@
+/**
+ * Construit le nom de base des fichiers exportés à partir des métadonnées
+ * (code article, nom d'auteur) et de l'horodatage courant. Logique partagée
+ * entre le téléchargement .txt et le téléchargement .zip — cf. [D4].
+ *
+ * @param {string} [extension] - Extension à ajouter (sans point). Si omise,
+ *                               renvoie le nom de base sans extension.
+ * @param {string} [baseLabel='questions_gift'] - Préfixe du nom (ex.
+ *                               'questions_moodle' pour l'export XML).
+ * @returns {string} Nom de fichier, ex. "questions_gift_ECO101_Dupont_20260605_153353[.txt]".
+ */
+function buildExportFilename(extension, baseLabel) {
+    const courseCodeEl     = document.getElementById('course-code');
+    const authorLastnameEl = document.getElementById('author-lastname');
+
+    const courseCodeValue     = courseCodeEl     ? courseCodeEl.value.trim()     : '';
+    const authorLastnameValue = authorLastnameEl ? authorLastnameEl.value.trim() : '';
+
+    const date          = new Date();
+    const formattedDate = date.toISOString().slice(0, 10).replace(/-/g, '');
+    const formattedTime = date.toTimeString().slice(0, 8).replace(/:/g, '');
+
+    let baseName = baseLabel || 'questions_gift';
+    if (courseCodeValue)     baseName += `_${courseCodeValue}`;
+    if (authorLastnameValue) baseName += `_${authorLastnameValue}`;
+    baseName += `_${formattedDate}_${formattedTime}`;
+
+    return extension ? `${baseName}.${extension}` : baseName;
+}
+
 async function downloadAsZip() {
     // ── 1. Générer le code GIFT (met aussi à jour window.generatedQuestionIds) ──
     const giftOutput = document.getElementById('gift-output');
  
-    if (typeof generateGIFTCode === 'function') {
-        generateGIFTCode();
-    } else if (typeof window.generateGIFTCode === 'function') {
-        window.generateGIFTCode();
-    } else {
-        alert('Impossible de générer le code GIFT. Veuillez cliquer sur "Générer le code GIFT" manuellement.');
-        return;
-    }
- 
+    generateGIFTCode();
+
     const giftContent = giftOutput ? giftOutput.value : '';
     if (!giftContent.trim()) {
-        alert('Aucun code GIFT à télécharger. Veuillez d\'abord ajouter des questions.');
+        notify.error('Aucun code GIFT à télécharger. Veuillez d\'abord ajouter des questions.');
         return;
     }
  
-    // ── 2. Construire le nom de base du fichier (même logique que downloadBtn) ──
-    const authorLastname  = document.getElementById('author-lastname');
-    const authorFirstname = document.getElementById('author-firstname');
-    const courseCode      = document.getElementById('course-code');
- 
-    const authorLastnameValue  = authorLastname  ? authorLastname.value.trim()  : '';
-    const courseCodeValue      = courseCode      ? courseCode.value.trim()      : '';
- 
-    const date          = new Date();
-    const formattedDate = date.toISOString().slice(0, 10).replace(/-/g, '');
-    const formattedTime = date.toTimeString().slice(0, 8).replace(/:/g, '');
- 
-    let baseName = 'questions_gift';
-    if (courseCodeValue)     baseName += `_${courseCodeValue}`;
-    if (authorLastnameValue) baseName += `_${authorLastnameValue}`;
-    baseName += `_${formattedDate}_${formattedTime}`;
- 
+    // ── 2. Construire le nom de base du fichier (logique partagée — cf. [D4]) ──
+    const baseName = buildExportFilename();
+
     // ── 3. Créer le ZIP avec JSZip ───────────────────────────────────────────
     if (typeof JSZip === 'undefined') {
-        alert('La bibliothèque JSZip n\'est pas chargée. Vérifiez que la balise <script> JSZip est présente dans index.html.');
+        notify.error('La bibliothèque JSZip n\'est pas chargée. Vérifiez que la balise <script> JSZip est présente dans index.html.');
         return;
     }
  
     const zip = new JSZip();
  
-    // Ajouter le fichier GIFT
-    zip.file(`${baseName}.txt`, giftContent);
+    // Ajouter le fichier GIFT (BOM UTF-8 en tête pour Windows/Notepad — cf. [B1])
+    zip.file(`${baseName}.txt`, '﻿' + giftContent);
  
     // Ajouter les médias (renommés avec le finalQuestionId)
-    const mediaList = (typeof getMediaList === 'function') ? getMediaList() : [];
+    const mediaList = getMediaList();
     for (const { file, filename } of mediaList) {
         const arrayBuffer = await file.arrayBuffer();
         zip.file(filename, arrayBuffer);
@@ -65,11 +74,11 @@ async function downloadAsZip() {
         document.body.removeChild(link);
     } catch (err) {
         console.error('[downloadAsZip] Erreur lors de la génération du ZIP :', err);
-        alert('Une erreur s\'est produite lors de la création du ZIP.');
+        notify.error('Une erreur s\'est produite lors de la création du ZIP.');
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+APP_INIT.push(function initDownload() {
     // Récupérer les éléments nécessaires
     const giftOutput = document.getElementById('gift-output');
     const downloadBtn = document.getElementById('download-btn');
@@ -81,16 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
     downloadBtn.addEventListener('click', function() {
         // Générer d'abord le code GIFT s'il est vide
         if (!giftOutput.value.trim()) {
-            // Vérifier si la fonction generateGIFTCode existe dans la portée globale
-            if (typeof generateGIFTCode === 'function') {
-                generateGIFTCode();
-            } else if (typeof window.generateGIFTCode === 'function') {
-                window.generateGIFTCode();
-            } else {
-                console.error('La fonction generateGIFTCode n\'est pas disponible');
-                alert('Impossible de générer le code GIFT automatiquement. Veuillez cliquer sur "Générer le code GIFT" avant de télécharger.');
-                return;
-            }
+            generateGIFTCode();
         }
         
         // Récupérer le contenu GIFT (qui vient d'être généré si nécessaire)
@@ -98,42 +98,20 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Vérifier si le contenu est toujours vide après génération (cas où il n'y a pas de questions)
         if (!giftContent.trim()) {
-            alert('Aucun code GIFT à télécharger. Veuillez d\'abord ajouter des questions.');
+            notify.error('Aucun code GIFT à télécharger. Veuillez d\'abord ajouter des questions.');
             return;
         }
         
-        // Récupérer les informations d'auteur et de code matière pour le nom du fichier
-        const authorLastnameValue = authorLastname.value.trim();
-        const authorFirstnameValue = authorFirstname.value.trim();
-        const courseCodeValue = courseCode.value.trim();
-        
         // Créer un objet Blob avec le contenu GIFT
-        const blob = new Blob([giftContent], { type: 'text/plain;charset=utf-8' });
-        
+        // BOM UTF-8 en tête pour que Notepad/Windows-1252 affiche les accents (cf. [B1])
+        const blob = new Blob(['﻿' + giftContent], { type: 'text/plain;charset=utf-8' });
+
         // Créer un élément <a> pour le téléchargement
         const link = document.createElement('a');
-        
-        // Générer un nom de fichier basé sur les métadonnées et la date actuelle
-        const date = new Date();
-        const formattedDate = date.toISOString().slice(0, 10).replace(/-/g, '');
-        const formattedTime = date.toTimeString().slice(0, 8).replace(/:/g, '');
-        
-        // Construire le nom du fichier
-        let fileName = `questions_gift`;
-        
-        // Ajouter le code matière s'il existe
-        if (courseCodeValue) {
-            fileName += `_${courseCodeValue}`;
-        }
-        
-        // Ajouter le nom de l'auteur s'il existe
-        if (authorLastnameValue) {
-            fileName += `_${authorLastnameValue}`;
-        }
-        
-        // Ajouter la date et l'heure
-        fileName += `_${formattedDate}_${formattedTime}.txt`;
-        
+
+        // Nom de fichier basé sur les métadonnées et l'horodatage (logique partagée — cf. [D4])
+        const fileName = buildExportFilename('txt');
+
         // Configurer l'élément <a> avec l'URL du Blob et le nom du fichier
         link.href = URL.createObjectURL(blob);
         link.download = fileName;

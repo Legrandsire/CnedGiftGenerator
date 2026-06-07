@@ -1,23 +1,57 @@
-// Fonction pour ajouter une option QCM
-function addOption(questionId, optionsListElement) {
+// ── Options à choix (QCM / QCU) ─────────────────────────────────────────────
+// QCM et QCU partagent la même structure (éditeurs RTE texte + feedback,
+// détection de doublons) ; ils ne diffèrent que par case à cocher vs bouton
+// radio et par la présence d'un sélecteur de pondération (QCM seulement). On les
+// factorise via addChoiceOption() piloté par une config — cf. [D1]. La QRC
+// (addSAOption), structurellement différente, reste une fonction dédiée.
+
+const MC_OPTION_CONFIG = {
+    type: 'mc',
+    correctInputHtml: (qid, oid) => `<input type="checkbox" class="correct-option" id="${IDS.correctOption(qid, oid)}">`,
+    textId:          (qid, oid) => IDS.optionText(qid, oid),
+    feedbackId:      (qid, oid) => IDS.optionFeedback(qid, oid),
+    removeClass:     'remove-option-btn',
+    correctSelector: '.correct-option',
+    hasWeight:       true
+};
+
+const SC_OPTION_CONFIG = {
+    type: 'sc',
+    correctInputHtml: (qid, oid) => `<input type="radio" class="correct-sc-option" name="sc-correct-${qid}" id="${IDS.scCorrect(qid, oid)}">`,
+    textId:          (qid, oid) => IDS.scOptionText(qid, oid),
+    feedbackId:      (qid, oid) => IDS.scOptionFeedback(qid, oid),
+    removeClass:     'remove-sc-option-btn',
+    correctSelector: '.correct-sc-option',
+    hasWeight:       false
+};
+
+/**
+ * Ajoute une option à choix (QCM ou QCU) selon la configuration fournie.
+ * @param {string|number} questionId         - Identifiant de la question.
+ * @param {HTMLElement}   optionsListElement  - Conteneur des options.
+ * @param {Object}        config              - MC_OPTION_CONFIG ou SC_OPTION_CONFIG.
+ */
+function addChoiceOption(questionId, optionsListElement, config) {
     const optionId = optionsListElement.children.length + 1;
  
-    // Rappel de pondération (inchangé)
-    const isFirstOptionAddedToQuestion = document.getElementById(`mc-options-reminder-${questionId}`) === null;
-    if (isFirstOptionAddedToQuestion) {
-        const reminderDiv = document.createElement('div');
-        reminderDiv.id = `mc-options-reminder-${questionId}`;
-        reminderDiv.className = 'weight-reminder';
-        reminderDiv.innerHTML = '<p class="info-text"><strong>Rappel :</strong> Le total des coefficients des bonnes réponses ne doit pas dépasser 100%.</p>';
-        const mcOptionsDiv = document.getElementById(`mc-options-${questionId}`);
-        mcOptionsDiv.insertBefore(reminderDiv, mcOptionsDiv.firstChild);
+    // Rappel de pondération (QCM uniquement) à la première option ajoutée
+    if (config.hasWeight) {
+        const isFirstOptionAddedToQuestion = document.getElementById(IDS.mcOptionsReminder(questionId)) === null;
+        if (isFirstOptionAddedToQuestion) {
+            const reminderDiv = document.createElement('div');
+            reminderDiv.id = IDS.mcOptionsReminder(questionId);
+            reminderDiv.className = 'weight-reminder';
+            reminderDiv.innerHTML = '<p class="info-text"><strong>Rappel :</strong> Le total des coefficients des bonnes réponses ne doit pas dépasser 100%.</p>';
+            const mcOptionsDiv = document.getElementById(IDS.typeOptions('mc', questionId));
+            mcOptionsDiv.insertBefore(reminderDiv, mcOptionsDiv.firstChild);
+        }
     }
  
     const optionDiv = document.createElement('div');
     optionDiv.className = 'option-container';
  
     // Construction du select de pondération (inchangé)
-    let selectHtml = `<select id="option-weight-${questionId}-${optionId}" class="weight-input" title="Pondération en pourcentage">`;
+    let selectHtml = `<select id="${IDS.optionWeight(questionId, optionId)}" class="weight-input" title="Pondération en pourcentage">`;
     const weightOptions = [
         { value: "0",          display: "0%"      },
         { value: "100",        display: "100%"    },
@@ -62,21 +96,28 @@ function addOption(questionId, optionsListElement) {
         { value: "-100",       display: "-100%"   }
     ];
     for (const option of weightOptions) {
-        const valueClass = parseFloat(option.value) > 0 ? 'positive-weight'
-                         : parseFloat(option.value) < 0 ? 'negative-weight' : '';
-        selectHtml += `<option value="${option.value}" data-full-value="${option.value}" class="${valueClass}">${option.display}</option>`;
+        const num = parseFloat(option.value);
+        const valueClass = num > 0 ? 'positive-weight'
+                         : num < 0 ? 'negative-weight' : '';
+        // [U3] Préfixe de signe explicite (accessibilité : la couleur n'est plus
+        // le seul indicateur). Les valeurs négatives portent déjà « - ».
+        const display = num > 0 ? `+${option.display}` : option.display;
+        selectHtml += `<option value="${option.value}" data-full-value="${option.value}" class="${valueClass}">${display}</option>`;
     }
     selectHtml += `</select>`;
  
+    // Bloc de pondération uniquement pour les types qui en ont (QCM)
+    const weightHtml = config.hasWeight
+        ? `<div class="weight-container">${selectHtml}</div>`
+        : '';
+
     // Champs RTE pour le texte et le feedback de l'option
     optionDiv.innerHTML = `
-        <input type="checkbox" class="correct-option" id="correct-option-${questionId}-${optionId}">
-        ${createRichTextEditor(`option-text-${questionId}-${optionId}`, "Texte de l'option", true)}
-        <div class="weight-container">
-            ${selectHtml}
-        </div>
-        ${createRichTextEditor(`option-feedback-${questionId}-${optionId}`, "Feedback pour cette option (optionnel)", true)}
-        <button class="remove-btn remove-option-btn" data-qid="${questionId}" data-oid="${optionId}">×</button>
+        ${config.correctInputHtml(questionId, optionId)}
+        ${createRichTextEditor(config.textId(questionId, optionId), "Texte de l'option", true)}
+        ${weightHtml}
+        ${createRichTextEditor(config.feedbackId(questionId, optionId), "Feedback pour cette option (optionnel)", true)}
+        <button class="remove-btn ${config.removeClass}" data-qid="${questionId}" data-oid="${optionId}">×</button>
     `;
  
     optionsListElement.appendChild(optionDiv);
@@ -84,125 +125,90 @@ function addOption(questionId, optionsListElement) {
     // Initialiser les éditeurs RTE de cette option après injection dans le DOM
     initRichTextEditors(optionDiv);
  
-    // Références aux éléments
-    const correctCheckbox = optionDiv.querySelector('.correct-option');
-    const weightSelect    = optionDiv.querySelector('.weight-input');
- 
-    // Couleur initiale du sélecteur
-    updateWeightColor(weightSelect);
- 
-    // ── CORRECTION : listener complet avec autoAdjustWeights ────────────────
-    correctCheckbox.addEventListener('change', function () {
-        if (this.checked) {
-            weightSelect.classList.add('active-weight');
-            // Si la valeur est négative ou nulle, passer à 100 %
-            const currentValue = parseFloat(weightSelect.value);
-            if (currentValue <= 0) {
-                weightSelect.value = '100';
+    // Pondération (QCM uniquement) : couleur initiale + écouteurs
+    if (config.hasWeight) {
+        const correctCheckbox = optionDiv.querySelector(config.correctSelector);
+        const weightSelect    = optionDiv.querySelector('.weight-input');
+
+        // Couleur initiale du sélecteur
+        updateWeightColor(weightSelect);
+
+        // Listener de coche : (dé)activation du poids + réajustement automatique
+        correctCheckbox.addEventListener('change', function () {
+            if (this.checked) {
+                weightSelect.classList.add('active-weight');
+                // Si la valeur est négative ou nulle, passer à 100 %
+                const currentValue = parseFloat(weightSelect.value);
+                if (currentValue <= 0) {
+                    weightSelect.value = '100';
+                    updateWeightColor(weightSelect);
+                }
+            } else {
+                weightSelect.classList.remove('active-weight');
+                // Remettre à 0 lors de la décoche
+                weightSelect.value = '0';
                 updateWeightColor(weightSelect);
             }
-        } else {
-            weightSelect.classList.remove('active-weight');
-            // Remettre à 0 lors de la décoche
-            weightSelect.value = '0';
-            updateWeightColor(weightSelect);
-        }
-        // Recalculer automatiquement les pondérations de toutes les options
-        autoAdjustWeights(questionId);
-    });
-    // ── FIN CORRECTION ───────────────────────────────────────────────────────
- 
-    // Mise à jour de la couleur lors d'un changement manuel du sélecteur
-    weightSelect.addEventListener('change', function () {
-        updateWeightColor(this);
-        this.setAttribute('data-full-value', this.value);
-    });
- 
-    // ── CORRECTION : suppression avec autoAdjustWeights ──────────────────────
-    const removeOptionBtn = optionDiv.querySelector('.remove-option-btn');
+            // Recalculer automatiquement les pondérations de toutes les options
+            autoAdjustWeights(questionId);
+        });
+
+        // Mise à jour de la couleur lors d'un changement manuel du sélecteur
+        weightSelect.addEventListener('change', function () {
+            updateWeightColor(this);
+            this.setAttribute('data-full-value', this.value);
+        });
+    }
+
+    // Suppression de l'option (+ réajustement des poids en QCM)
+    const removeOptionBtn = optionDiv.querySelector(`.${config.removeClass}`);
     removeOptionBtn.addEventListener('click', function () {
         optionsListElement.removeChild(optionDiv);
-        setTimeout(() => autoAdjustWeights(questionId), 0);
-        setTimeout(() => checkDuplicateOptions(questionId, 'mc'), 0);
+        if (config.hasWeight) {
+            queueMicrotask(() => autoAdjustWeights(questionId));
+        }
+        queueMicrotask(() => checkDuplicateOptions(questionId, config.type));
     });
-    // ── FIN CORRECTION ───────────────────────────────────────────────────────
- 
+
     // Vérification des doublons à la saisie (sur le div contenteditable RTE)
-    const optionTextEditor = document.getElementById(`option-text-${questionId}-${optionId}`);
+    const optionTextEditor = document.getElementById(config.textId(questionId, optionId));
     if (optionTextEditor) {
         optionTextEditor.addEventListener('input', function () {
             clearTimeout(this.duplicateCheckTimeout);
             this.duplicateCheckTimeout = setTimeout(() => {
-                checkDuplicateOptions(questionId, 'mc');
+                checkDuplicateOptions(questionId, config.type);
             }, 300);
         });
     }
- 
-    setTimeout(() => checkDuplicateOptions(questionId, 'mc'), 0);
+
+    queueMicrotask(() => checkDuplicateOptions(questionId, config.type));
+}
+
+// Ajoute une option QCM (case à cocher + pondération). Délègue à addChoiceOption [D1].
+function addOption(questionId, optionsListElement) {
+    addChoiceOption(questionId, optionsListElement, MC_OPTION_CONFIG);
 }
 
 // Fonction utilitaire pour mettre à jour la couleur de fond du sélecteur en fonction de la valeur
-function updateWeightColor(selectElement) {
-    // Réinitialiser les classes
-    selectElement.classList.remove('positive-weight-bg', 'negative-weight-bg', 'zero-weight-bg');
-    
-    // Appliquer la classe appropriée
-    const value = parseFloat(selectElement.value);
+// Met à jour la couleur de fond d'un élément de pondération selon le signe de
+// sa valeur. Accepte indifféremment un <select> (QCM/QCU) ou un <input> (QRC).
+// Fusion de l'ancienne paire updateWeightColor / updateSAWeightColor — cf. [D3].
+function updateWeightColor(element) {
+    element.classList.remove('positive-weight-bg', 'negative-weight-bg', 'zero-weight-bg');
+
+    const value = parseFloat(element.value) || 0;
     if (value > 0) {
-        selectElement.classList.add('positive-weight-bg');
+        element.classList.add('positive-weight-bg');
     } else if (value < 0) {
-        selectElement.classList.add('negative-weight-bg');
+        element.classList.add('negative-weight-bg');
     } else {
-        selectElement.classList.add('zero-weight-bg');
+        element.classList.add('zero-weight-bg');
     }
 }
 
-// Fonction pour ajouter une option QCU
+// Ajoute une option QCU (bouton radio, sans pondération). Délègue à addChoiceOption [D1].
 function addSCOption(questionId, optionsListElement) {
-    const optionId = optionsListElement.children.length + 1;
- 
-    const optionDiv = document.createElement('div');
-    optionDiv.className = 'option-container';
- 
-    // ── CHANGEMENT ──────────────────────────────────────────────────────────
-    // Les deux <input type="text"> remplacés par des éditeurs RTE.
-    // Les IDs sc-option-text-... et sc-option-feedback-... sont conservés.
-    optionDiv.innerHTML = `
-        <input type="radio" class="correct-sc-option" name="sc-correct-${questionId}" id="sc-correct-${questionId}-${optionId}">
-        ${createRichTextEditor(`sc-option-text-${questionId}-${optionId}`, "Texte de l'option", true)}
-        ${createRichTextEditor(`sc-option-feedback-${questionId}-${optionId}`, "Feedback pour cette option (optionnel)", true)}
-        <button class="remove-btn remove-sc-option-btn" data-qid="${questionId}" data-oid="${optionId}">×</button>
-    `;
-    // ── FIN CHANGEMENT ───────────────────────────────────────────────────────
- 
-    optionsListElement.appendChild(optionDiv);
- 
-    // ── CHANGEMENT ──────────────────────────────────────────────────────────
-    // Initialiser les éditeurs RTE de cette option après injection dans le DOM
-    initRichTextEditors(optionDiv);
-    // ── FIN CHANGEMENT ───────────────────────────────────────────────────────
- 
-    // Suppression de l'option (inchangé)
-    const removeOptionBtn = optionDiv.querySelector('.remove-sc-option-btn');
-    removeOptionBtn.addEventListener('click', function () {
-        optionsListElement.removeChild(optionDiv);
-        setTimeout(() => checkDuplicateOptions(questionId, 'sc'), 0);
-    });
- 
-    // Vérification des doublons (inchangé, sauf le sélecteur)
-    // ── CHANGEMENT ──────────────────────────────────────────────────────────
-    const optionTextEditor = document.getElementById(`sc-option-text-${questionId}-${optionId}`);
-    if (optionTextEditor) {
-        optionTextEditor.addEventListener('input', function () {
-            clearTimeout(this.duplicateCheckTimeout);
-            this.duplicateCheckTimeout = setTimeout(() => {
-                checkDuplicateOptions(questionId, 'sc');
-            }, 300);
-        });
-    }
-    // ── FIN CHANGEMENT ───────────────────────────────────────────────────────
- 
-    setTimeout(() => checkDuplicateOptions(questionId, 'sc'), 0);
+    addChoiceOption(questionId, optionsListElement, SC_OPTION_CONFIG);
 }
 
 // Fonction pour ajouter une réponse QRC
@@ -212,15 +218,16 @@ function addSAOption(questionId, optionsListElement) {
     const optionDiv = document.createElement('div');
     optionDiv.className = 'option-container';
     optionDiv.innerHTML = `
-        <select id="sa-case-${questionId}-${optionId}" class="case-select">
+        <select id="${IDS.saCase(questionId, optionId)}" class="case-select"
+            title="Information : le format GIFT ne gère pas la sensibilité à la casse pour les réponses courtes. Ce choix est conservé pour mémoire mais ignoré à l'export (cf. [B3]).">
             <option value="">Sensibilité à la casse</option>
             <option value="case_sensitive">Sensible à la casse</option>
             <option value="case_insensitive">Insensible à la casse</option>
         </select>
-        <input type="text" placeholder="Réponse acceptée" id="sa-option-text-${questionId}-${optionId}" class="sa-option-text">
+        <input type="text" placeholder="Réponse acceptée" id="${IDS.saOptionText(questionId, optionId)}" class="sa-option-text">
         <div class="sa-weight-container">
             <input type="number" min="0" max="100" step="1" value="100" 
-                id="sa-option-weight-${questionId}-${optionId}" 
+                id="${IDS.saOptionWeight(questionId, optionId)}"
                 class="sa-weight-input positive-weight-bg" 
                 data-full-value="100"
                 onchange="this.setAttribute('data-full-value', this.value)">
@@ -241,29 +248,14 @@ function addSAOption(questionId, optionsListElement) {
     const weightInput = optionDiv.querySelector('.sa-weight-input');
     weightInput.addEventListener('input', function() {
         this.setAttribute('data-full-value', this.value);
-        updateSAWeightColor(this);
+        updateWeightColor(this);
     });
 }
 
-// Fonction utilitaire pour mettre à jour la couleur de fond de l'input en fonction de la valeur
-function updateSAWeightColor(inputElement) {
-    // Réinitialiser les classes
-    inputElement.classList.remove('positive-weight-bg', 'negative-weight-bg', 'zero-weight-bg');
-    
-    // Appliquer la classe appropriée
-    const value = parseFloat(inputElement.value) || 0;
-    if (value > 0) {
-        inputElement.classList.add('positive-weight-bg');
-    } else if (value < 0) {
-        inputElement.classList.add('negative-weight-bg');
-    } else {
-        inputElement.classList.add('zero-weight-bg');
-    }
-}
 
 // Fonction pour ajuster automatiquement les pondérations des options cochées
 function autoAdjustWeights(questionId) {
-    const optionsContainer = document.getElementById(`options-list-${questionId}`);
+    const optionsContainer = document.getElementById(IDS.optionsList(questionId));
     const options = optionsContainer.querySelectorAll('.option-container');
     
     // Compter le nombre d'options cochées
@@ -282,42 +274,15 @@ function autoAdjustWeights(questionId) {
     // Si aucune option n'est cochée, pas besoin d'ajuster
     if (checkedCount === 0) return;
     
-    // Calculer la pondération par option en fonction du nombre d'options cochées
-    // Utiliser des valeurs prédéfinies pour les fractions courantes
-    let weightPerOption;
-    
-    switch (checkedCount) {
-        case 1:
-            weightPerOption = "100";
-            break;
-        case 2:
-            weightPerOption = "50";
-            break;
-        case 3:
-            weightPerOption = "33.33333";
-            break;
-        case 4:
-            weightPerOption = "25";
-            break;
-        case 5:
-            weightPerOption = "20";
-            break;
-        case 6:
-            weightPerOption = "16.66667";
-            break;
-        case 7:
-            weightPerOption = "14.28571";
-            break;
-        case 8:
-            weightPerOption = "12.5";
-            break;
-        case 9:
-            weightPerOption = "11.11111";
-            break;
-        default:
-            // Pour 10 options ou plus, calculer une valeur approximative
-            weightPerOption = (100 / checkedCount).toFixed(5);
-    }
+    // [P3] Pondération canonique par nombre d'options cochées. Pour 1 à 9 on
+    // utilise les valeurs exactes attendues par le <select> ; au-delà, calcul
+    // direct (100/n). Un Map remplace l'ancien switch à neuf branches.
+    const CANONICAL_WEIGHTS = new Map([
+        [1, '100'], [2, '50'], [3, '33.33333'], [4, '25'], [5, '20'],
+        [6, '16.66667'], [7, '14.28571'], [8, '12.5'], [9, '11.11111']
+    ]);
+    const weightPerOption = CANONICAL_WEIGHTS.get(checkedCount)
+                            || (100 / checkedCount).toFixed(5);
     
     // Appliquer la pondération à chaque option cochée
     checkedOptions.forEach(weightSelect => {
@@ -341,8 +306,8 @@ function autoAdjustWeights(questionId) {
  */
 function checkDuplicateOptions(questionId, questionType) {
     const listId      = questionType === 'sc'
-                        ? `sc-options-list-${questionId}`
-                        : `options-list-${questionId}`;
+                        ? IDS.scOptionsList(questionId)
+                        : IDS.optionsList(questionId);
     const optionsList = document.getElementById(listId);
     if (!optionsList) return [];
  

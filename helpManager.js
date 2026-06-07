@@ -3,7 +3,7 @@
  * Gestion des fonctionnalités d'aide du générateur de code GIFT
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+APP_INIT.push(function initHelp() {
     // Initialisation des composants d'aide
     initHelpPanel();
     initTooltips();

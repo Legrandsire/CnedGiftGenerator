@@ -51,6 +51,99 @@ function createRichTextEditor(id, placeholder, compact = false) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MISE EN FORME (API Selection/Range — sans execCommand) [M2]
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Correspondance commande de la barre d'outils → balise HTML.
+const RTE_CMD_TAGS = {
+    bold:        'B',
+    italic:      'I',
+    underline:   'U',
+    superscript: 'SUP',
+    subscript:   'SUB'
+};
+
+/** Retourne la sélection courante si elle est bien à l'intérieur de l'éditeur. */
+function _rteRange(editor) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const range = sel.getRangeAt(0);
+    return editor.contains(range.commonAncestorContainer) ? range : null;
+}
+
+/** Remonte depuis un nœud jusqu'à trouver un ancêtre de balise `tagName` (sous `root`). */
+function _rteAncestorWithTag(node, tagName, root) {
+    if (node && node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+    while (node && node !== root) {
+        if (node.nodeName === tagName) return node;
+        node = node.parentNode;
+    }
+    return null;
+}
+
+/** Indique si la sélection courante est déjà dans une balise `tagName`. */
+function rteIsFormatActive(editor, tagName) {
+    const range = _rteRange(editor);
+    if (!range) return false;
+    return !!_rteAncestorWithTag(range.commonAncestorContainer, tagName, editor);
+}
+
+/** Remplace un élément par ses enfants (déballage). */
+function _rteUnwrap(element) {
+    const parent = element.parentNode;
+    if (!parent) return;
+    while (element.firstChild) parent.insertBefore(element.firstChild, element);
+    parent.removeChild(element);
+    parent.normalize();
+}
+
+/**
+ * Applique (ou retire si déjà active) une mise en forme inline à la sélection.
+ * Remplace document.execCommand('bold'|'italic'|…). [M2]
+ * @param {HTMLElement} editor
+ * @param {string}      tagName - 'B' | 'I' | 'U' | 'SUP' | 'SUB'
+ */
+function rteApplyFormat(editor, tagName) {
+    const range = _rteRange(editor);
+    if (!range || range.collapsed) return; // pas de sélection : rien à formater
+
+    // Déjà formaté → on retire la balise englobante.
+    const existing = _rteAncestorWithTag(range.commonAncestorContainer, tagName, editor);
+    if (existing) {
+        _rteUnwrap(existing);
+        return;
+    }
+
+    // Sinon on enveloppe la sélection dans la balise voulue.
+    const wrapper = document.createElement(tagName.toLowerCase());
+    try {
+        range.surroundContents(wrapper);
+    } catch (_) {
+        // La sélection traverse des frontières d'éléments : extraire puis envelopper.
+        wrapper.appendChild(range.extractContents());
+        range.insertNode(wrapper);
+    }
+    editor.normalize();
+
+    // Restaurer la sélection sur le contenu fraîchement formaté.
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    const restored = document.createRange();
+    restored.selectNodeContents(wrapper);
+    sel.addRange(restored);
+}
+
+/**
+ * Retire toute mise en forme inline du contenu de l'éditeur (déballe b/i/u/sup/sub),
+ * en conservant le texte et les sauts de ligne. Remplace selectAll+removeFormat. [M2]
+ * @param {HTMLElement} editor
+ */
+function rteClearFormatting(editor) {
+    editor.querySelectorAll('b, strong, i, em, u, sup, sub').forEach(_rteUnwrap);
+    editor.normalize();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INITIALISATION DES ÉVÉNEMENTS
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -62,30 +155,29 @@ function createRichTextEditor(id, placeholder, compact = false) {
  */
 function initRichTextEditors(container = document) {
 
-    // Boutons de formatage (bold, italic, underline, super/sub-script)
+    // Boutons de formatage (bold, italic, underline, super/sub-script) — [M2]
     container.querySelectorAll('.rte-toolbar .rte-btn:not(.rte-remove-fmt)').forEach(btn => {
         btn.addEventListener('mousedown', function (e) {
-            e.preventDefault(); // Préserver le focus sur l'éditeur
-            const cmd = this.dataset.cmd;
-            if (cmd) {
-                document.execCommand(cmd, false, null);
+            e.preventDefault(); // Préserver la sélection dans l'éditeur
+            const tag = RTE_CMD_TAGS[this.dataset.cmd];
+            const editor = _getEditor(this);
+            if (tag && editor) {
+                rteApplyFormat(editor, tag);
                 _refreshToolbar(_getToolbar(this));
+                _updatePlaceholder(editor);
             }
         });
     });
 
-    // Bouton "Effacer la mise en forme"
+    // Bouton "Effacer la mise en forme" — [M2]
     container.querySelectorAll('.rte-remove-fmt').forEach(btn => {
         btn.addEventListener('mousedown', function (e) {
             e.preventDefault();
             const editor = _getEditor(this);
             if (editor) {
-                editor.focus();
-                document.execCommand('selectAll', false, null);
-                document.execCommand('removeFormat', false, null);
-                const sel = window.getSelection();
-                if (sel) sel.collapseToEnd();
+                rteClearFormatting(editor);
                 _refreshToolbar(_getToolbar(this));
+                _updatePlaceholder(editor);
             }
         });
     });
@@ -143,7 +235,8 @@ function setRichTextValue(id, content) {
     if (!el) return;
 
     if (el.getAttribute('contenteditable') === 'true') {
-        el.innerHTML = content || '';
+        // [S1] Assainir le HTML avant insertion (import GIFT potentiellement piégé).
+        el.innerHTML = sanitizeRichHtml(content);
         _updatePlaceholder(el);
     } else {
         el.value = content || '';
@@ -172,10 +265,12 @@ function _getEditor(btn) {
  */
 function _refreshToolbar(toolbar) {
     if (!toolbar) return;
+    const container = toolbar.closest('.rte-container');
+    const editor = container ? container.querySelector('.rte-editor') : null;
+    if (!editor) return;
     toolbar.querySelectorAll('.rte-btn[data-cmd]').forEach(btn => {
-        try {
-            btn.classList.toggle('rte-active', !!document.queryCommandState(btn.dataset.cmd));
-        } catch (_) { /* commande non supportée */ }
+        const tag = RTE_CMD_TAGS[btn.dataset.cmd];
+        btn.classList.toggle('rte-active', tag ? rteIsFormatActive(editor, tag) : false);
     });
 }
 

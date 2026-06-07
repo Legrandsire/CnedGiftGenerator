@@ -10,9 +10,7 @@
 function buildQuestionLine(finalQuestionId, questionId, formattedText) {
     let mediaTag = '';
  
-    if (typeof getPluginfileTag === 'function'
-        && window.questionMediaFiles
-        && window.questionMediaFiles[questionId]) {
+    if (window.questionMediaFiles && window.questionMediaFiles[questionId]) {
         mediaTag = getPluginfileTag(questionId, finalQuestionId);
     }
  
@@ -26,7 +24,7 @@ function generateGIFTCode() {
     const questions = document.querySelectorAll('.question-container');
  
     if (questions.length === 0) {
-        alert('Aucune question à générer. Veuillez d\'abord ajouter des questions.');
+        notify.error('Aucune question à générer. Veuillez d\'abord ajouter des questions.');
         return;
     }
  
@@ -52,10 +50,15 @@ function generateGIFTCode() {
     });
  
     if (hasDuplicates) {
-        let message = 'Des options dupliquées ont été détectées dans les questions suivantes :\n';
-        duplicateQuestionNumbers.forEach(num => { message += `- Question ${num}\n`; });
-        message += '\nLes options dupliquées sont mises en évidence en rouge.\nVoulez-vous continuer quand même ?';
-        if (!confirm(message)) return;
+        // Avertissement non bloquant : les doublons restent du GIFT valide, la
+        // génération se poursuit. Ils sont surlignés en rouge dans l'interface ;
+        // l'auteur peut corriger puis régénérer. (Remplace l'ancien confirm()
+        // bloquant — cf. ROADMAP « Qualité continue ».)
+        const liste = duplicateQuestionNumbers.map(num => `question ${num}`).join(', ');
+        notify.warning(
+            `Des options dupliquées ont été détectées (${liste}) et sont surlignées ` +
+            `en rouge. Le code a tout de même été généré : vérifiez ces questions si nécessaire.`
+        );
     }
  
     // ── 2. Récupération des métadonnées ──────────────────────────────────────
@@ -79,7 +82,7 @@ function generateGIFTCode() {
     questions.forEach((question, index) => {
         const questionId = question.dataset.id;
  
-        const questionIdField = document.getElementById(`question-id-${questionId}`);
+        const questionIdField = document.getElementById(IDS.questionId(questionId));
         const questionIdValue = questionIdField ? questionIdField.value.trim() : '';
  
         // Construction de l'identifiant GIFT
@@ -99,14 +102,14 @@ function generateGIFTCode() {
         }
  
         // Lecture via getRichTextValue (compatible RTE et input classique)
-        const questionText    = getRichTextValue(`question-text-${questionId}`);
-        const generalFeedback = getRichTextValue(`general-feedback-${questionId}`);
+        const questionText    = getRichTextValue(IDS.questionText(questionId));
+        const generalFeedback = getRichTextValue(IDS.generalFeedback(questionId));
         const questionType    = document.querySelector(
             `input[name="question-type-${questionId}"]:checked`
         ).value;
  
         if (!questionText) {
-            alert(`La question ${index + 1} n'a pas de texte. Veuillez remplir tous les champs.`);
+            notify.error(`La question ${index + 1} n'a pas de texte. Veuillez remplir tous les champs.`);
             return;
         }
  
@@ -128,7 +131,7 @@ function generateGIFTCode() {
                 giftCode = generateSCQuestionCode(giftCode, questionId, questionText);
                 break;
             case 'tf':
-                const isTrueCorrect = document.getElementById(`true-option-${questionId}`).checked;
+                const isTrueCorrect = document.getElementById(IDS.trueOption(questionId)).checked;
                 giftCode += isTrueCorrect ? 'T' : 'F';
                 break;
             case 'sa':
@@ -202,7 +205,7 @@ function generateMCQuestionCode(giftCode, questionId, questionText) {
     });
  
     if (!hasCorrectOption && mcOptions.length > 0) {
-        alert(`La question "${questionText}" n'a pas de réponse correcte sélectionnée.`);
+        notify.error(`La question "${questionText}" n'a pas de réponse correcte sélectionnée.`);
         return giftCode;
     }
  
@@ -211,8 +214,8 @@ function generateMCQuestionCode(giftCode, questionId, questionText) {
         const isCorrect  = option.querySelector('.correct-option').checked;
  
         // ── IDs CORRECTS (option-text-... et option-feedback-...) ────────────
-        const optionText   = getRichTextValue(`option-text-${questionId}-${optionId}`);
-        const feedbackText = getRichTextValue(`option-feedback-${questionId}-${optionId}`);
+        const optionText   = getRichTextValue(IDS.optionText(questionId, optionId));
+        const feedbackText = getRichTextValue(IDS.optionFeedback(questionId, optionId));
         // ─────────────────────────────────────────────────────────────────────
  
         if (!optionText) return;
@@ -220,14 +223,34 @@ function generateMCQuestionCode(giftCode, questionId, questionText) {
         const formattedOptionText = addHtmlTags(addNonBreakingSpaces(optionText));
  
         if (isCorrect) {
-            const weightSelect    = document.getElementById(`option-weight-${questionId}-${optionId}`);
-            const weight          = weightSelect
-                                    ? (weightSelect.getAttribute('data-full-value') || weightSelect.value)
-                                    : '100';
-            const formattedWeight = parseFloat(weight).toFixed(5);
-            giftCode += `\n~%${formattedWeight}%${formattedOptionText}`;
+            const weightSelect = document.getElementById(IDS.optionWeight(questionId, optionId));
+            const weightRaw    = weightSelect
+                                 ? (weightSelect.getAttribute('data-full-value') || weightSelect.value)
+                                 : '100';
+            const weightNum    = parseFloat(weightRaw);
+
+            // Pour 100 % : syntaxe canonique GIFT (=texte) — évite que
+            // Moodle affiche "100%" en regard de la réponse. Pour les
+            // pondérations partielles ou négatives : syntaxe ~%X% sans
+            // trailing zeros (ex. ~%-50% plutôt que ~%-50.00000%).
+            if (weightNum === 100) {
+                giftCode += `\n=${formattedOptionText}`;
+            } else {
+                giftCode += `\n~%${weightNum}%${formattedOptionText}`;
+            }
         } else {
-            giftCode += `\n~${formattedOptionText}`;
+            // [B4] Option non cochée : si l'auteur a malgré tout fixé un poids
+            // non nul (ex. malus -50 %), on le respecte via ~%X% ; sinon ~texte.
+            const uncheckedWeightSelect = document.getElementById(IDS.optionWeight(questionId, optionId));
+            const uncheckedWeightRaw    = uncheckedWeightSelect
+                                          ? (uncheckedWeightSelect.getAttribute('data-full-value') || uncheckedWeightSelect.value)
+                                          : '0';
+            const uncheckedWeightNum    = parseFloat(uncheckedWeightRaw);
+            if (uncheckedWeightNum) {
+                giftCode += `\n~%${uncheckedWeightNum}%${formattedOptionText}`;
+            } else {
+                giftCode += `\n~${formattedOptionText}`;
+            }
         }
  
         if (feedbackText) {
@@ -249,7 +272,7 @@ function generateSCQuestionCode(giftCode, questionId, questionText) {
     });
  
     if (!hasScCorrectOption && scOptions.length > 0) {
-        alert(`La question "${questionText}" n'a pas de réponse correcte sélectionnée.`);
+        notify.error(`La question "${questionText}" n'a pas de réponse correcte sélectionnée.`);
         return giftCode;
     }
  
@@ -258,8 +281,8 @@ function generateSCQuestionCode(giftCode, questionId, questionText) {
         const isCorrect  = option.querySelector('.correct-sc-option').checked;
  
         // Lecture via getRichTextValue (compatible RTE et input)
-        const optionText   = getRichTextValue(`sc-option-text-${questionId}-${optionId}`);
-        const feedbackText = getRichTextValue(`sc-option-feedback-${questionId}-${optionId}`);
+        const optionText   = getRichTextValue(IDS.scOptionText(questionId, optionId));
+        const feedbackText = getRichTextValue(IDS.scOptionFeedback(questionId, optionId));
  
         if (!optionText) return;
  
@@ -289,9 +312,9 @@ function generateSAQuestionCode(giftCode, questionId, questionText) {
         const optionId = option.querySelector('.remove-sa-option-btn').getAttribute('data-oid');
         
         // Récupérer les éléments avec vérification de leur existence
-        const caseTypeElement = document.getElementById(`sa-case-${questionId}-${optionId}`);
-        const optionTextElement = document.getElementById(`sa-option-text-${questionId}-${optionId}`);
-        const weightInput = document.getElementById(`sa-option-weight-${questionId}-${optionId}`);
+        const caseTypeElement = document.getElementById(IDS.saCase(questionId, optionId));
+        const optionTextElement = document.getElementById(IDS.saOptionText(questionId, optionId));
+        const weightInput = document.getElementById(IDS.saOptionWeight(questionId, optionId));
         
         // Vérifier que les éléments nécessaires existent
         if (!caseTypeElement || !optionTextElement || !weightInput) {
@@ -308,23 +331,26 @@ function generateSAQuestionCode(giftCode, questionId, questionText) {
         if (!optionText) return;
         hasSaOption = true;
         
-        // Modifier le format pour toujours inclure le pourcentage
-        let prefix = `=%${weight}%`;
-        
+        // [B2] Pour 100 % : syntaxe canonique GIFT (=texte) — évite que Moodle
+        // affiche « 100 % » en regard de la réponse (même logique qu'en QCM).
+        // Sinon : =%X%texte sans décimales superflues (parseFloat retire les
+        // trailing zeros : =%50% plutôt que =%50.00000%).
+        const weightNum = parseFloat(weight);
+        const prefix = (weightNum === 100) ? '=' : `=%${weightNum}%`;
+
         // Ajouter seulement les espaces insécables au texte de la réponse sans balises HTML
         const formattedOptionText = addNonBreakingSpaces(optionText);
-        
-        // Gérer la sensibilité à la casse et ajouter un saut de ligne
-        if (caseType === 'case_sensitive') {
-            giftCode += `\n${prefix}${formattedOptionText}`;
-        } else if (caseType === 'case_insensitive') {
-            giftCode += `\n${prefix}${formattedOptionText}`;
-        } else {
-            giftCode += `\n${prefix}${formattedOptionText}`;
-        }
+
+        // [B3] Le format GIFT standard n'a pas de syntaxe de sensibilité à la
+        // casse pour les réponses courtes (QRC). Le sélecteur `caseType` est
+        // donc volontairement ignoré à l'export : les trois valeurs produisent
+        // le même code. Le sélecteur est conservé à titre informatif côté UI
+        // (cf. tooltip explicatif sur le <select>, addSAOption).
+        void caseType;
+        giftCode += `\n${prefix}${formattedOptionText}`;
         
         // Ajouter feedback spécifique à l'option si présent
-        const feedbackElement = document.getElementById(`sa-option-feedback-${questionId}-${optionId}`);
+        const feedbackElement = document.getElementById(IDS.saOptionFeedback(questionId, optionId));
         if (feedbackElement) {
             const feedbackText = feedbackElement.value.trim();
             if (feedbackText) {
@@ -336,7 +362,7 @@ function generateSAQuestionCode(giftCode, questionId, questionText) {
     });
     
     if (!hasSaOption) {
-        alert(`La question "${questionText}" n'a pas de réponse définie.`);
+        notify.error(`La question "${questionText}" n'a pas de réponse définie.`);
         return giftCode;
     }
     
@@ -345,18 +371,18 @@ function generateSAQuestionCode(giftCode, questionId, questionText) {
 
 // Fonction pour générer le code des questions numériques
 function generateNumQuestionCode(giftCode, questionId, questionText) {
-    const numAnswer = document.getElementById(`num-answer-${questionId}`).value.trim();
-    const useRange = document.getElementById(`num-range-${questionId}`).checked;
+    const numAnswer = document.getElementById(IDS.numAnswer(questionId)).value.trim();
+    const useRange = document.getElementById(IDS.numRange(questionId)).checked;
     
     if (!numAnswer) {
-        alert(`La question "${questionText}" n'a pas de réponse numérique définie.`);
+        notify.error(`La question "${questionText}" n'a pas de réponse numérique définie.`);
         return giftCode;
     }
     
     if (useRange) {
-        const margin = document.getElementById(`num-margin-${questionId}`).value.trim();
+        const margin = document.getElementById(IDS.numMargin(questionId)).value.trim();
         if (!margin) {
-            alert(`La question "${questionText}" utilise une marge d'erreur mais celle-ci n'est pas définie.`);
+            notify.error(`La question "${questionText}" utilise une marge d'erreur mais celle-ci n'est pas définie.`);
             return giftCode;
         }
         giftCode += `#${numAnswer}:${margin}`;

@@ -104,8 +104,9 @@
 }
 
 .summary-actions {
-    width: 80px;
+    width: 120px;
     text-align: center;
+    white-space: nowrap;
 }
 
 /* Styles pour les ID auto-générés */
@@ -132,6 +133,27 @@
 
 .goto-icon {
     font-size: 16px;
+    color: #005EB8;
+}
+
+/* Flèches de déplacement dans le sommaire — v0.16.0 */
+.summary-move-btn {
+    padding: 4px 6px;
+    margin: 0 1px;
+}
+
+.summary-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.summary-btn:disabled:hover {
+    background-color: transparent;
+    border-color: #ddd;
+}
+
+.move-icon {
+    font-size: 13px;
     color: #005EB8;
 }
 

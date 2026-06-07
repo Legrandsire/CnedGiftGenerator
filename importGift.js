@@ -1,4 +1,9 @@
-document.addEventListener('DOMContentLoaded', function() {
+APP_INIT.push(function initImport() {
+    // ── Débogage [D5] : logs d'import désactivés par défaut. Passer DEBUG à
+    //    true pour réafficher la trace détaillée du parsing dans la console. ──
+    const DEBUG = false;
+    function dlog(...args) { if (DEBUG) console.log(...args); }
+
     const importBtn = document.getElementById('import-btn');
     const fileInput = document.getElementById('gift-import');
     const fileDisplay = document.getElementById('file-display');
@@ -42,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
  * @returns {string} - Le code article extrait (ou une chaîne vide)
  */
 function extractMetadata(giftContent) {
-    console.log('Début de l\'extraction des métadonnées');
+    dlog('Début de l\'extraction des métadonnées');
     
     // Tableau pour collecter toutes les lignes de métadonnées
     const metadataLines = [];
@@ -58,7 +63,7 @@ function extractMetadata(giftContent) {
         metadataLines.push(line);
     }
     
-    console.log('Lignes de métadonnées trouvées:', metadataLines);
+    dlog('Lignes de métadonnées trouvées:', metadataLines);
     
     // Extraire le code article
     let courseCode = '';
@@ -71,7 +76,7 @@ function extractMetadata(giftContent) {
             // Mettre à jour le champ dans l'interface
             if (window.courseCode) {
                 window.courseCode.value = courseCode;
-                console.log('Code article importé:', courseCode);
+                dlog('Code article importé:', courseCode);
             }
             break;
         }
@@ -85,7 +90,7 @@ function extractMetadata(giftContent) {
             courseCode = oldFormatMatch[1].trim();
             if (window.courseCode) {
                 window.courseCode.value = courseCode;
-                console.log('Code article importé (ancien format):', courseCode);
+                dlog('Code article importé (ancien format):', courseCode);
             }
             break;
         }
@@ -108,19 +113,19 @@ function extractMetadata(giftContent) {
                 
                 if (window.authorFirstname) {
                     window.authorFirstname.value = firstName;
-                    console.log('Prénom de l\'auteur importé:', firstName);
+                    dlog('Prénom de l\'auteur importé:', firstName);
                 }
                 
                 if (window.authorLastname) {
                     window.authorLastname.value = lastName;
-                    console.log('Nom de l\'auteur importé:', lastName);
+                    dlog('Nom de l\'auteur importé:', lastName);
                 }
             }
             break;
         }
     }
     
-    console.log('Extraction des métadonnées terminée. Code article trouvé:', courseCode);
+    dlog('Extraction des métadonnées terminée. Code article trouvé:', courseCode);
     return courseCode;  // Retourner le code article pour l'utilisation dans les questions
 }
 
@@ -139,7 +144,7 @@ function handleTextImport(file) {
             parseGiftContent(e.target.result);
         } catch (error) {
             console.error('Erreur lors du parsing du fichier GIFT :', error);
-            alert('Erreur lors du parsing du fichier GIFT. Vérifiez le format de votre fichier.');
+            notify.error('Erreur lors du parsing du fichier GIFT. Vérifiez le format de votre fichier.');
         } finally {
             importBtn.disabled = false;
             importBtn.textContent = 'Importer';
@@ -147,7 +152,7 @@ function handleTextImport(file) {
     };
 
     reader.onerror = function () {
-        alert('Erreur lors de la lecture du fichier.');
+        notify.error('Erreur lors de la lecture du fichier.');
         importBtn.disabled = false;
         importBtn.textContent = 'Importer';
     };
@@ -161,7 +166,7 @@ function handleTextImport(file) {
  */
 async function handleZipImport(file) {
     if (typeof JSZip === 'undefined') {
-        alert('La bibliothèque JSZip est requise pour importer des fichiers ZIP.');
+        notify.error('La bibliothèque JSZip est requise pour importer des fichiers ZIP.');
         return;
     }
 
@@ -185,7 +190,7 @@ async function handleZipImport(file) {
         });
 
         if (!giftEntry) {
-            alert('Aucun fichier GIFT (.txt) trouvé dans l\'archive ZIP.');
+            notify.error('Aucun fichier GIFT (.txt) trouvé dans l\'archive ZIP.');
             return;
         }
 
@@ -197,12 +202,12 @@ async function handleZipImport(file) {
             mediaFiles[basename] = new File([arrayBuffer], basename);
         }
 
-        console.log(`[handleZipImport] ${Object.keys(mediaFiles).length} média(s) détecté(s).`);
+        dlog(`[handleZipImport] ${Object.keys(mediaFiles).length} média(s) détecté(s).`);
         parseGiftContent(giftContent, mediaFiles);
 
     } catch (error) {
         console.error('[handleZipImport] Erreur :', error);
-        alert('Erreur lors de l\'extraction du fichier ZIP.');
+        notify.error('Erreur lors de l\'extraction du fichier ZIP.');
     } finally {
         importBtn.disabled    = false;
         importBtn.textContent = 'Importer';
@@ -212,7 +217,7 @@ async function handleZipImport(file) {
 // Fonction pour l'importation des fichiers GIFT
     importBtn.addEventListener('click', function () {
         if (fileInput.files.length === 0) {
-            alert('Veuillez sélectionner un fichier GIFT (.txt) ou une archive (.zip) à importer.');
+            notify.error('Veuillez sélectionner un fichier GIFT (.txt) ou une archive (.zip) à importer.');
             return;
         }
 
@@ -281,29 +286,36 @@ async function handleZipImport(file) {
  * Parse le contenu GIFT et crée les questions correspondantes dans l'interface
  * @param {string} giftContent - Le contenu du fichier GIFT
  */
-function parseGiftContent(giftContent, mediaFiles = {}) {
-    console.log("Début du parsing du contenu GIFT");
-    
+async function parseGiftContent(giftContent, mediaFiles = {}) {
+    dlog("Début du parsing du contenu GIFT");
+
+    // Retirer un éventuel BOM UTF-8 en tête (ajouté à l'export, ou par un outil tiers) — cf. [B1]
+    giftContent = giftContent.replace(/^﻿/, '');
+
     // Valider le format GIFT
     if (!validateGiftFormat(giftContent)) {
-        alert('Le fichier ne semble pas être au format GIFT valide. Vérifiez le contenu du fichier.');
+        notify.error('Le fichier ne semble pas être au format GIFT valide. Vérifiez le contenu du fichier.');
         return;
     }
-    
-    // Ajouter une classe pour indiquer le chargement en cours
-    document.body.classList.add('importing');
-    
-    // Confirmer avant de remplacer les questions existantes
+
+    // Confirmer avant de remplacer les questions existantes (modale non bloquante).
+    // La confirmation a lieu AVANT d'afficher l'overlay d'import.
     if (questionsContainer.children.length > 0) {
-        if (!confirm('Cet import remplacera toutes les questions actuelles. Voulez-vous continuer?')) {
-            document.body.classList.remove('importing');
-            return;
-        }
-        // Vider le conteneur de questions
+        const proceed = await confirmDialog({
+            title: 'Remplacer les questions',
+            message: 'Cet import remplacera toutes les questions actuelles. Voulez-vous continuer ?',
+            confirmLabel: 'Importer',
+            cancelLabel: 'Annuler',
+            danger: true
+        });
+        if (!proceed) return;
+        // Vider le conteneur de questions et la zone de sortie GIFT
         questionsContainer.innerHTML = '';
-        // Vider aussi la zone de sortie GIFT
         giftOutput.value = '';
     }
+
+    // Ajouter une classe pour indiquer le chargement en cours
+    document.body.classList.add('importing');
     
     // Afficher un message de traitement
     const processingElement = document.createElement('div');
@@ -329,7 +341,7 @@ function parseGiftContent(giftContent, mediaFiles = {}) {
             const questions = splitGiftQuestions(preprocessedContent);
             
             if (questions.length === 0) {
-                alert('Aucune question n\'a été trouvée dans le fichier GIFT.');
+                notify.error('Aucune question n\'a été trouvée dans le fichier GIFT.');
                 document.body.classList.remove('importing');
                 document.body.removeChild(processingElement);
                 return;
@@ -348,7 +360,7 @@ function parseGiftContent(giftContent, mediaFiles = {}) {
                     successCount++;
                 } catch (error) {
                     console.error(`Erreur lors du parsing de la question ${index + 1}:`, error);
-                    console.log('Texte de la question problématique:', questionText);
+                    dlog('Texte de la question problématique:', questionText);
                     errorCount++;
                 }
             });
@@ -363,7 +375,9 @@ if (Object.keys(mediaFiles).length > 0) {
                 resultMessage += `\n${Object.keys(mediaFiles).length} média(s) associé(s) aux questions.`;
             }
 
-            alert(resultMessage);
+            // Succès de l'import : toast vert (le détail des erreurs éventuelles
+            // est inclus dans resultMessage).
+            notify.success(resultMessage);
             
             // Regénérer le code GIFT pour montrer le résultat
             const generateBtn = document.getElementById('generate-btn');
@@ -372,7 +386,7 @@ if (Object.keys(mediaFiles).length > 0) {
             }
         } catch (error) {
             console.error('Erreur lors de l\'import:', error);
-            alert('Une erreur s\'est produite lors de l\'importation du fichier GIFT.');
+            notify.error('Une erreur s\'est produite lors de l\'importation du fichier GIFT.');
         } finally {
             // Supprimer le message de traitement et la classe d'importation
             document.body.classList.remove('importing');
@@ -471,12 +485,12 @@ function cleanQuestionId(questionId, courseCode) {
         };
     }
     
-    console.log(`Nettoyage de l'ID: "${questionId}" avec le code article: "${courseCode}"`);
+    dlog(`Nettoyage de l'ID: "${questionId}" avec le code article: "${courseCode}"`);
     
     // Si le code article est défini et que l'ID commence par ce code article
     if (courseCode && questionId.startsWith(courseCode + '-Q')) {
         // C'est un ID auto-généré, retourner une chaîne vide
-        console.log(`ID auto-généré détecté: ${questionId}`);
+        dlog(`ID auto-généré détecté: ${questionId}`);
         return {
             id: '',
             isAuto: true
@@ -488,7 +502,7 @@ function cleanQuestionId(questionId, courseCode) {
     if (qSuffixPattern.test(questionId)) {
         // Supprimer le suffixe -Q et les chiffres
         const cleanedId = questionId.replace(qSuffixPattern, '');
-        console.log(`ID manuel avec suffixe détecté, nettoyé en: ${cleanedId}`);
+        dlog(`ID manuel avec suffixe détecté, nettoyé en: ${cleanedId}`);
         return {
             id: cleanedId,
             isAuto: false
@@ -496,7 +510,7 @@ function cleanQuestionId(questionId, courseCode) {
     }
     
     // Si c'est un ID sans motif -Q, le considérer comme manuel
-    console.log(`ID manuel sans suffixe: ${questionId}`);
+    dlog(`ID manuel sans suffixe: ${questionId}`);
     return {
         id: questionId,
         isAuto: false
@@ -531,8 +545,8 @@ function extractOptionsWithFeedback(answersContent, isSingleChoice) {
         if (line === '') continue;
         
         // Si c'est le début d'une option (= ou ~)
-        if ((isSingleChoice && (line.startsWith('=') || line.startsWith('~'))) || 
-            (!isSingleChoice && line.startsWith('~'))) {
+        // En QCM, on accepte aussi `=` (bonne réponse à 100 %, syntaxe canonique)
+        if (line.startsWith('=') || line.startsWith('~')) {
             
             // Si on a déjà une option en cours, l'ajouter à la liste
             if (currentOption !== null) {
@@ -569,7 +583,7 @@ function extractOptionsWithFeedback(answersContent, isSingleChoice) {
         options.push(parseOptionWithFeedback(optionLines.join(' '), isSingleChoice));
     }
     
-    console.log("Extracted options:", options);
+    dlog("Extracted options:", options);
     return options;
 }
     
@@ -602,41 +616,41 @@ function parseOptionWithFeedback(optionLine, isSingleChoice) {
         option.text = optionLine.substring(1).trim();
         option.weight = option.isCorrect ? '100' : '0';
     } else {
-        // Pour QCM (~)
+        // Pour QCM (~ ou = pour les bonnes réponses à 100 %)
+        const startsWithEquals = optionLine.startsWith('=');
         option.text = optionLine.substring(1).trim();
-        
-        // Extraire la pondération si elle existe
+
+        // Extraire la pondération si elle existe (format ~%X% ou =%X%)
         const weightMatch = option.text.match(/^%([+-]?\d+(?:\.\d+)?)%(.*)/);
         if (weightMatch) {
             // Stocker la valeur originale non formatée pour utilisation ultérieure
             let weightValue = parseFloat(weightMatch[1]);
-            
-            // Liste des valeurs fractionnaires nécessitant un traitement spécial
-            const fractionValues = [
-                83.33333, -83.33333, 
-                66.66667, -66.66667, 
-                33.33333, -33.33333, 
-                16.66667, -16.66667, 
-                14.28571, -14.28571, 
-                12.5, -12.5, 
-                11.11111, -11.11111
-            ];
-            
-            // Vérifier si le poids est proche d'une des valeurs fractionnaires
-            // Utilisation d'une petite tolérance pour gérer les erreurs d'arrondi
-            for (const fractionValue of fractionValues) {
-                if (Math.abs(weightValue - fractionValue) < 0.0001) {
-                    weightValue = fractionValue;
-                    break;
+
+            // [B5] Reconnaître automatiquement toute fraction 1/n (ex. 33.33333
+            // = 100/3, 16.66667 = 100/6), quelle que soit la précision exportée
+            // par Moodle, au lieu d'une liste figée. On aligne alors la valeur
+            // sur la forme canonique à 5 décimales attendue par le <select>.
+            // (Les valeurs hors 1/n sont de toute façon raccrochées à l'option
+            //  la plus proche plus bas dans le code d'import.)
+            const absWeight = Math.abs(weightValue);
+            if (absWeight > 0) {
+                const n = Math.round(100 / absWeight);
+                if (n > 0 && Math.abs(absWeight - 100 / n) < 0.05) {
+                    const sign = weightValue < 0 ? -1 : 1;
+                    weightValue = parseFloat((sign * (100 / n)).toFixed(5));
                 }
             }
-            
+
             option.weight = weightValue.toString();
             option.text = weightMatch[2].trim();
             option.isCorrect = parseFloat(option.weight) > 0;
+        } else if (startsWithEquals) {
+            // `=texte` sans pourcentage explicite → bonne réponse à 100 %
+            option.isCorrect = true;
+            option.weight = '100';
         }
     }
-    
+
     return option;
 }
     function splitGiftQuestions(giftContent) {
@@ -645,7 +659,7 @@ function parseOptionWithFeedback(optionLine, isSingleChoice) {
             .replace(/^\/\/.*$/gm, '') // Supprimer les commentaires de ligne
             .replace(/\n\s*\n/g, '\n\n'); // Normaliser les sauts de ligne
         
-        console.log("Clean content for parsing:", cleanContent);
+        dlog("Clean content for parsing:", cleanContent);
         
         // Array pour stocker les questions
         const questions = [];
@@ -691,7 +705,7 @@ function parseOptionWithFeedback(optionLine, isSingleChoice) {
                    q.includes('{') && q.includes('}');
         });
         
-        console.log("Questions extracted:", filteredQuestions);
+        dlog("Questions extracted:", filteredQuestions);
         return filteredQuestions;
     }
     
@@ -743,7 +757,7 @@ function parseGiftQuestion(questionText, courseCode, mediaFiles = {}) {
         }
     }
     
-    console.log('Parsing question:', {
+    dlog('Parsing question:', {
         id: questionId, // ID nettoyé (vide si auto-généré)
         content: questionContent,
         answers: answersContent
@@ -751,16 +765,10 @@ function parseGiftQuestion(questionText, courseCode, mediaFiles = {}) {
     
     // Déterminer le type de question
     let questionType = determineQuestionType(answersContent);
-    console.log('Question type determined:', questionType);
+    dlog('Question type determined:', questionType);
     
-// Supprimer les tags @@PLUGINFILE@@ déjà présents dans le texte importé
-    // (ils seront rajoutés automatiquement à la génération via mediaManager)
-    questionContent = questionContent
-        .replace(/<img\s[^>]*@@PLUGINFILE@@[^>]*>/gi, '')
-        .replace(/<audio[\s\S]*?@@PLUGINFILE@@[\s\S]*?<\/audio>/gi, '')
-        .replace(/<video[\s\S]*?@@PLUGINFILE@@[\s\S]*?<\/video>/gi, '')
-        .replace(/<a[^>]*@@PLUGINFILE@@[^>]*>[\s\S]*?<\/a>/gi, '')
-        .trim();
+    // Retirer les tags @@PLUGINFILE@@ déjà présents (réinjectés à la génération) — [M3]
+    questionContent = stripImportedPluginfileTags(questionContent);
 
     // Créer une nouvelle question dans l'interface
     const newQuestionId = addNewQuestionFromImport(questionId, questionContent, questionType);
@@ -769,23 +777,49 @@ function parseGiftQuestion(questionText, courseCode, mediaFiles = {}) {
     if (newQuestionId) {
         fillQuestionAnswers(newQuestionId, questionType, answersContent);
     }
-    // ── Association du média issu d'un ZIP ───────────────────────────────────
-    if (newQuestionId && Object.keys(mediaFiles).length > 0) {
-        const rawGiftId = originalGiftId.trim();
+    // Association du média éventuel issu d'un ZIP — [M3]
+    if (newQuestionId) {
+        associateZipMedia(newQuestionId, originalGiftId, mediaFiles);
+    }
+}
 
-        for (const [basename, file] of Object.entries(mediaFiles)) {
-            const prefixMatch = basename.match(/^(.+?)_media\.[^.]+$/i);
-            if (!prefixMatch) continue;
+/**
+ * Retire les balises média @@PLUGINFILE@@ déjà présentes dans un texte importé
+ * (elles sont réinjectées automatiquement à la génération via mediaManager).
+ * @param {string} content
+ * @returns {string}
+ */
+function stripImportedPluginfileTags(content) {
+    return content
+        .replace(/<img\s[^>]*@@PLUGINFILE@@[^>]*>/gi, '')
+        .replace(/<audio[\s\S]*?@@PLUGINFILE@@[\s\S]*?<\/audio>/gi, '')
+        .replace(/<video[\s\S]*?@@PLUGINFILE@@[\s\S]*?<\/video>/gi, '')
+        .replace(/<a[^>]*@@PLUGINFILE@@[^>]*>[\s\S]*?<\/a>/gi, '')
+        .trim();
+}
 
-            const mediaPrefix = prefixMatch[1];
+/**
+ * Associe, le cas échéant, un fichier média issu d'une archive ZIP à la question
+ * importée, par correspondance entre le préfixe du fichier et l'identifiant GIFT.
+ * @param {string|number} newQuestionId
+ * @param {string}        originalGiftId
+ * @param {Object}        mediaFiles - { basename: File }
+ */
+function associateZipMedia(newQuestionId, originalGiftId, mediaFiles) {
+    if (!mediaFiles || Object.keys(mediaFiles).length === 0) return;
 
-            if (mediaPrefix === rawGiftId || basename.startsWith(rawGiftId + '_')) {
-                if (typeof attachMediaFromZip === 'function') {
-                    attachMediaFromZip(newQuestionId, file);
-                    console.log(`[parseGiftQuestion] Média associé : ${basename} → question ${newQuestionId}`);
-                }
-                break;
-            }
+    const rawGiftId = originalGiftId.trim();
+
+    for (const [basename, file] of Object.entries(mediaFiles)) {
+        const prefixMatch = basename.match(/^(.+?)_media\.[^.]+$/i);
+        if (!prefixMatch) continue;
+
+        const mediaPrefix = prefixMatch[1];
+
+        if (mediaPrefix === rawGiftId || basename.startsWith(rawGiftId + '_')) {
+            attachMediaFromZip(newQuestionId, file);
+            dlog(`[associateZipMedia] Média associé : ${basename} → question ${newQuestionId}`);
+            break;
         }
     }
 }
@@ -816,7 +850,7 @@ function cleanHtmlTags(text) {
             cleanContent = cleanContent.substring(0, feedbackIndex).trim();
         }
         
-        console.log('Determining question type from:', cleanContent);
+        dlog('Determining question type from:', cleanContent);
         
         // Question Vrai/Faux
         if (cleanContent === 'T' || cleanContent === 'F') {
@@ -863,7 +897,7 @@ function cleanHtmlTags(text) {
         }
         
         // Si on ne peut pas déterminer le type, par défaut QCM
-        console.log('Could not determine type, defaulting to mc');
+        dlog('Could not determine type, defaulting to mc');
         return 'mc';
     }
 /**
@@ -880,7 +914,7 @@ function addNewQuestionFromImport(questionId, questionContent, questionType) {
         return null;
     }
  
-    console.log(`Adding new question: ${questionId}, type: ${questionType}`);
+    dlog(`Adding new question: ${questionId}, type: ${questionType}`);
  
     // Créer la question via la fonction globale existante
     addNewQuestion();
@@ -895,15 +929,15 @@ function addNewQuestionFromImport(questionId, questionContent, questionType) {
     const newQuestionId = questionContainer.dataset.id;
  
     // Remplir l'identifiant (champ input classique, inchangé)
-    const questionIdField = document.getElementById(`question-id-${newQuestionId}`);
+    const questionIdField = document.getElementById(IDS.questionId(newQuestionId));
     if (questionIdField) questionIdField.value = questionId;
  
     // CORRECTION : setRichTextValue() au lieu de .value =
     // (le champ question-text est désormais un div contenteditable)
-    setRichTextValue(`question-text-${newQuestionId}`, questionContent);
+    setRichTextValue(IDS.questionText(newQuestionId), questionContent);
  
     // Sélectionner le type de question et déclencher l'affichage des bons champs
-    const questionTypeRadio = document.getElementById(`${questionType}-type-${newQuestionId}`);
+    const questionTypeRadio = document.getElementById(IDS.typeRadio(questionType, newQuestionId));
     if (questionTypeRadio) {
         questionTypeRadio.checked = true;
         questionTypeRadio.dispatchEvent(new Event('change'));
@@ -919,8 +953,8 @@ function addNewQuestionFromImport(questionId, questionContent, questionType) {
  * @param {string} answersContent - Le contenu des réponses
  */
 function fillQuestionAnswers(questionId, questionType, answersContent) {
-    console.log(`Filling answers for question ${questionId} of type ${questionType}`);
-    console.log('Answers content:', answersContent);
+    dlog(`Filling answers for question ${questionId} of type ${questionType}`);
+    dlog('Answers content:', answersContent);
     
     // Extraire le feedback général s'il existe
     let generalFeedback = '';
@@ -928,7 +962,7 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
     if (feedbackMatch) {
         generalFeedback = feedbackMatch[1].trim();
         // Mettre à jour le champ de feedback
-        setRichTextValue(`general-feedback-${questionId}`, generalFeedback);
+        setRichTextValue(IDS.generalFeedback(questionId), generalFeedback);
     }
     
     // Nettoyer le contenu des réponses (retirer le feedback général)
@@ -945,8 +979,8 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
     switch (questionType) {
         case 'tf': // Vrai/Faux
             const isTrueChecked = cleanAnswers.trim().startsWith('T');
-            document.getElementById(`true-option-${questionId}`).checked = isTrueChecked;
-            document.getElementById(`false-option-${questionId}`).checked = !isTrueChecked;
+            document.getElementById(IDS.trueOption(questionId)).checked = isTrueChecked;
+            document.getElementById(IDS.falseOption(questionId)).checked = !isTrueChecked;
             break;
             
         case 'num': // Numérique
@@ -955,13 +989,13 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
                 const numValue = numMatch[1];
                 const numMargin = numMatch[2];
                 
-                document.getElementById(`num-answer-${questionId}`).value = numValue;
+                document.getElementById(IDS.numAnswer(questionId)).value = numValue;
                 
                 if (numMargin) {
-                    document.getElementById(`num-range-${questionId}`).checked = true;
-                    document.getElementById(`num-margin-${questionId}`).value = numMargin;
+                    document.getElementById(IDS.numRange(questionId)).checked = true;
+                    document.getElementById(IDS.numMargin(questionId)).value = numMargin;
                     // Afficher les options de marge
-                    const numRangeOptions = document.getElementById(`num-range-options-${questionId}`);
+                    const numRangeOptions = document.getElementById(IDS.numRangeOptions(questionId));
                     if (numRangeOptions) {
                         numRangeOptions.classList.remove('hidden');
                     }
@@ -970,7 +1004,7 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
             break;
             
         case 'sa': // QRC
-            const saOptionsList = document.getElementById(`sa-options-list-${questionId}`);
+            const saOptionsList = document.getElementById(IDS.saOptionsList(questionId));
             if (!saOptionsList) {
                 console.error(`Could not find sa-options-list-${questionId}`);
                 break;
@@ -1003,7 +1037,7 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
                 });
             }
             
-            console.log('SA responses extracted:', saResponses);
+            dlog('SA responses extracted:', saResponses);
             
             if (saResponses.length === 0) {
                 console.error('No SA responses found in:', cleanAnswers);
@@ -1021,15 +1055,15 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
                     
                     if (lastOption) {
                         const optionId = lastOption.querySelector('.remove-sa-option-btn').getAttribute('data-oid');
-                        const textInput = document.getElementById(`sa-option-text-${questionId}-${optionId}`);
-                        const weightInput = document.getElementById(`sa-option-weight-${questionId}-${optionId}`);
-                        const feedbackInput = document.getElementById(`sa-option-feedback-${questionId}-${optionId}`);
+                        const textInput = document.getElementById(IDS.saOptionText(questionId, optionId));
+                        const weightInput = document.getElementById(IDS.saOptionWeight(questionId, optionId));
+                        const feedbackInput = document.getElementById(IDS.saOptionFeedback(questionId, optionId));
                         
                         if (textInput) textInput.value = response.text;
                         if (weightInput) {
                             weightInput.value = response.weight;
                             weightInput.setAttribute('data-full-value', response.weight);
-                            updateSAWeightColor(weightInput);
+                            updateWeightColor(weightInput);
                         }
                         if (feedbackInput && response.feedback) feedbackInput.value = response.feedback;
                     }
@@ -1038,7 +1072,7 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
             break;
             
         case 'sc': // QCU
-            const scOptionsList = document.getElementById(`sc-options-list-${questionId}`);
+            const scOptionsList = document.getElementById(IDS.scOptionsList(questionId));
             if (!scOptionsList) {
                 console.error(`Could not find sc-options-list-${questionId}`);
                 break;
@@ -1051,7 +1085,7 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
             
             // Traiter proprement les options et leurs feedbacks
             const scOptionsWithFeedback = extractOptionsWithFeedback(cleanAnswers, true);
-            console.log('SC options with feedback:', scOptionsWithFeedback);
+            dlog('SC options with feedback:', scOptionsWithFeedback);
             
             // Ajouter chaque option
             scOptionsWithFeedback.forEach((option) => {
@@ -1069,16 +1103,16 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
                         
                         if (radioInput) radioInput.checked = option.isCorrect;
                         
-                        setRichTextValue(`sc-option-text-${questionId}-${optionId}`, option.text);
+                        setRichTextValue(IDS.scOptionText(questionId, optionId), option.text);
                         
-                        if (option.feedback) setRichTextValue(`sc-option-feedback-${questionId}-${optionId}`, option.feedback);
+                        if (option.feedback) setRichTextValue(IDS.scOptionFeedback(questionId, optionId), option.feedback);
                     }
                 }
             });
             break;
             
         case 'mc': // QCM
-            const mcOptionsList = document.getElementById(`options-list-${questionId}`);
+            const mcOptionsList = document.getElementById(IDS.optionsList(questionId));
             if (!mcOptionsList) {
                 console.error(`Could not find options-list-${questionId}`);
                 break;
@@ -1091,7 +1125,7 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
             
             // Traiter proprement les options et leurs feedbacks
             const mcOptionsWithFeedback = extractOptionsWithFeedback(cleanAnswers, false);
-            console.log('MC options with feedback:', mcOptionsWithFeedback);
+            dlog('MC options with feedback:', mcOptionsWithFeedback);
             
             // Ajouter chaque option
             mcOptionsWithFeedback.forEach((option) => {
@@ -1109,10 +1143,10 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
                         
                         if (checkbox) checkbox.checked = option.isCorrect;
                         
-                        setRichTextValue(`option-text-${questionId}-${optionId}`, option.text);
+                        setRichTextValue(IDS.optionText(questionId, optionId), option.text);
                         
                         // Sélectionner la valeur du poids dans le select
-                        const weightSelect = document.getElementById(`option-weight-${questionId}-${optionId}`);
+                        const weightSelect = document.getElementById(IDS.optionWeight(questionId, optionId));
                         if (weightSelect) {
                             // Trouver l'option la plus proche dans le select
                             let closestOption = null;
@@ -1144,11 +1178,17 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
                         }
                         
                         // Ajouter le feedback s'il existe
-                        if (option.feedback) setRichTextValue(`option-feedback-${questionId}-${optionId}`, option.feedback);
+                        if (option.feedback) setRichTextValue(IDS.optionFeedback(questionId, optionId), option.feedback);
                     }
                 }
             });
             break;
         }
     }
+
+    // ── Exposition du point d'entrée d'import sur window ─────────────────────
+    // Permet aux tests ([M1]) d'appeler l'import sans simuler un FileReader, et
+    // prépare le futur orchestrateur central ([A2]). Aucun changement de
+    // comportement pour l'application.
+    window.parseGiftContent = parseGiftContent;
 });

@@ -913,6 +913,68 @@ textarea {
     transform: none;
 }
 
+/* Export Moodle XML (rose CNED plein — distinct des exports GIFT verts) */
+.btn-download-xml {
+    background-color: #ae2585;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 15px;
+    font-size: 0.88em;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    white-space: nowrap;
+}
+.btn-download-xml:hover {
+    background-color: #8e1e6c;
+    transform: translateY(-1px);
+}
+
+/* Bloc de feedback combiné (QCM/QCU) — export Moodle XML uniquement.
+   Replié par défaut (<details>) ; couleur dérivée de la parité de la question
+   (turquoise pour les impaires, rose pour les paires), comme le fond de question. */
+.combined-feedback-block {
+    border-left: 3px solid #2da288;
+    background-color: #d3efec;
+    border-radius: 4px;
+    padding: 10px 14px;
+}
+.combined-feedback-block > summary {
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #1c6b58;
+    user-select: none;
+}
+.combined-feedback-hint {
+    font-weight: 400;
+}
+.combined-feedback-body {
+    margin-top: 10px;
+}
+
+/* Questions impaires (fond turquoise) → encadré turquoise un peu plus soutenu */
+.question-odd .combined-feedback-block {
+    border-left-color: #2da288;
+    background-color: #d3efec;
+}
+.question-odd .combined-feedback-block > summary {
+    color: #1c6b58;
+}
+
+/* Questions paires (fond rose) → encadré rose un peu plus soutenu */
+.question-even .combined-feedback-block {
+    border-left-color: #ae2585;
+    background-color: #f8dde9;
+}
+.question-even .combined-feedback-block > summary {
+    color: #6b2050;
+}
+
 /* Tout effacer (rouge, texte blanc) */
 .btn-danger {
     background-color: #c62828;
@@ -930,3 +992,47 @@ textarea {
     white-space: nowrap;
 }
 .btn-danger:hover { background-color: #b71c1c; }
+
+/* ── Déplacement des questions (flèches ↑/↓) — v0.16.0 ─────────────────── */
+
+/* En-tête de question : titre à gauche, flèches de déplacement à droite */
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.question-header h2 {
+    margin: 0;
+}
+
+.question-move-controls {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.move-btn {
+    background-color: #ffffff;
+    color: #005EB8;
+    border: 1px solid #AED6F1;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.move-btn:hover:not(:disabled) {
+    background-color: #EBF5FB;
+    border-color: #005EB8;
+}
+
+.move-btn:disabled {
+    color: #c8c8c8;
+    border-color: #e8e8e8;
+    cursor: not-allowed;
+}

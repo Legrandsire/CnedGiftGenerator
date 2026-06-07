@@ -264,7 +264,7 @@ function initMediaEvents(questionId) {
  * @param {string|number} questionId
  */
 function attachMediaToQuestion(questionId) {
-    const idField    = document.getElementById(`question-id-${questionId}`);
+    const idField    = document.getElementById(IDS.questionId(questionId));
     const formGroup  = idField ? idField.closest('.form-group') : null;
     const questionDiv = document.querySelector(`.question-container[data-id="${questionId}"]`);
 

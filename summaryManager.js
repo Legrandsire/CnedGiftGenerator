@@ -7,7 +7,7 @@
  * identifiant, type et texte.
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+APP_INIT.push(function initSummary() {
     // Créer la section de résumé dans le DOM
     createSummarySection();
     
@@ -78,6 +78,21 @@ function initSummaryEvents() {
             }
         }
     });
+
+    // Délégation d'événements pour les flèches ▲/▼ de déplacement du sommaire.
+    document.addEventListener('click', function (event) {
+        const moveButton = event.target.closest('.summary-move-btn');
+        if (!moveButton || moveButton.disabled) return;
+
+        const questionId = moveButton.getAttribute('data-qid');
+        if (!questionId || typeof window.moveQuestion !== 'function') return;
+
+        const direction = moveButton.classList.contains('summary-move-up-btn') ? 'up' : 'down';
+        window.moveQuestion(questionId, direction);
+        // moveQuestion rappelle updateQuestionsSummary : la table est reconstruite.
+        event.preventDefault();
+        event.stopPropagation();
+    });
 }
 
 /**
@@ -124,7 +139,7 @@ function updateQuestionsSummary() {
         const questionId = question.dataset.id;
         if (!questionId) return;
 
-        const questionIdField = document.getElementById(`question-id-${questionId}`);
+        const questionIdField = document.getElementById(IDS.questionId(questionId));
         const questionIdValue = questionIdField ? questionIdField.value : '';
 
         const questionTypeRadio = question.querySelector(
@@ -143,7 +158,7 @@ function updateQuestionsSummary() {
             }
         }
 
-        const rawText    = getRichTextValue(`question-text-${questionId}`);
+        const rawText    = getRichTextValue(IDS.questionText(questionId));
         const plainText  = rawText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
         const questionText = truncateText(plainText, 80);
 
@@ -157,19 +172,54 @@ function updateQuestionsSummary() {
         row.className  = 'summary-row';
         row.dataset.qid = questionId;
 
-        // ── CORRECTION BUG 1 : ${questionType} et non ${questionTypeLabel} ──
-        row.innerHTML = `
-            <td class="summary-number">${index + 1}</td>
-            <td class="summary-id">${questionIdValue || `<span class="auto-id">Auto</span>`}</td>
-            <td class="summary-type">${questionType}${mediaIconHtml}</td>
-            <td class="summary-text">${questionText}</td>
-            <td class="summary-actions">
-                <button class="summary-btn goto-question-btn" data-qid="${questionId}" title="Aller à cette question">
-                    <span class="goto-icon">⮞</span>
-                </button>
-            </td>
+        // [S2] Construction en DOM-API : l'identifiant et le texte (saisis par
+        // l'utilisateur) sont injectés via textContent et ne peuvent donc pas
+        // exécuter de HTML/JS. Les fragments de confiance (icône média, bouton)
+        // restent en HTML.
+        const numTd = document.createElement('td');
+        numTd.className = 'summary-number';
+        numTd.textContent = index + 1;
+
+        const idTd = document.createElement('td');
+        idTd.className = 'summary-id';
+        if (questionIdValue) {
+            idTd.textContent = questionIdValue;
+        } else {
+            const autoSpan = document.createElement('span');
+            autoSpan.className = 'auto-id';
+            autoSpan.textContent = 'Auto';
+            idTd.appendChild(autoSpan);
+        }
+
+        const typeTd = document.createElement('td');
+        typeTd.className = 'summary-type';
+        typeTd.textContent = questionType; // libellé interne (QCM, QCU…), sûr
+        if (mediaIconHtml) {
+            typeTd.insertAdjacentHTML('beforeend', mediaIconHtml);
+        }
+
+        const textTd = document.createElement('td');
+        textTd.className = 'summary-text';
+        textTd.textContent = questionText; // déjà détaggé + tronqué en amont
+
+        const isFirst = index === 0;
+        const isLast  = index === questions.length - 1;
+
+        const actionsTd = document.createElement('td');
+        actionsTd.className = 'summary-actions';
+        actionsTd.innerHTML = `
+            <button class="summary-btn summary-move-btn summary-move-up-btn" data-qid="${questionId}" title="Monter cette question" ${isFirst ? 'disabled' : ''}>
+                <span class="move-icon">▲</span>
+            </button>
+            <button class="summary-btn summary-move-btn summary-move-down-btn" data-qid="${questionId}" title="Descendre cette question" ${isLast ? 'disabled' : ''}>
+                <span class="move-icon">▼</span>
+            </button>
+            <button class="summary-btn goto-question-btn" data-qid="${questionId}" title="Aller à cette question">
+                <span class="goto-icon">⮞</span>
+            </button>
         `;
 
+        row.append(numTd, idTd, typeTd, textTd, actionsTd);
         summaryTableBody.appendChild(row);
     });
 }

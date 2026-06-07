@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests — Générateur de code GIFT</title>
+
+    <!-- Neutraliser les boîtes de dialogue bloquantes AVANT le chargement des
+         scripts applicatifs (alert/confirm/prompt apparaissent dans la console). -->
+    <script>
+        window.alert   = function (m) { console.log('[alert ignoré]', m); };
+        window.confirm = function (m) { console.log('[confirm → true]', m); return true; };
+        window.prompt  = function (m) { console.log('[prompt → ""]', m); return ''; };
+    </script>
+
+    <style>
+        body { font-family: system-ui, Arial, sans-serif; margin: 2rem; color: #222; }
+        h1 { color: #2da288; }
+        .note { background: #f3f3f3; border-left: 4px solid #00bcb4; padding: .6rem .9rem; margin-bottom: 1rem; }
+        .summary { font-weight: bold; padding: .6rem .9rem; margin: 1rem 0; border-radius: 4px; }
+        .summary.ok { background: #e3f6f0; color: #1c6b58; }
+        .summary.ko { background: #fde7ef; color: #ae2585; }
+        .result { padding: .25rem .5rem; font-family: ui-monospace, Consolas, monospace; font-size: .9rem; white-space: pre-wrap; }
+        .result.fail { background: #fde7ef; color: #ae2585; }
+        .result.skip { color: #8a6d00; }
+        /* L'application est pilotée hors écran : seul le rapport de tests compte. */
+        #app-scaffold { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; overflow: hidden; }
+    </style>
+</head>
+<body>
+    <h1>Tests — Générateur de code GIFT</h1>
+    <div class="note">
+        Ouvrir cette page dans un navigateur exécute automatiquement la suite
+        de tests (<code>[M1]</code>). Les résultats s'affichent ci-dessous et
+        dans la console (F12).
+    </div>
+    <div id="results"></div>
+
+    <!-- ── Échafaudage DOM minimal requis par les scripts applicatifs ────── -->
+    <div id="app-scaffold">
+        <p id="app-version"></p>
+
+        <input type="text" id="author-lastname">
+        <input type="text" id="author-firstname">
+        <input type="text" id="course-code">
+
+        <!-- Import (référencé par importGift.js / core.js) -->
+        <div id="file-display" class="hidden"><span id="file-name"></span></div>
+        <button id="remove-file-btn"></button>
+        <input type="file" id="gift-import">
+        <button id="import-btn"></button>
+
+        <div id="questions-container"></div>
+
+        <button id="add-question-btn"></button>
+        <button id="generate-btn"></button>
+        <button id="copy-btn"></button>
+        <button id="download-btn"></button>
+        <button id="download-zip-btn"></button>
+        <span id="media-count-badge"></span>
+        <button id="clear-btn"></button>
+
+        <textarea id="gift-output" readonly></textarea>
+    </div>
+
+    <!-- ── Scripts applicatifs (même ordre significatif qu'index.html) ───── -->
+    <script src="../sanitize.js"></script>
+    <script src="../domIds.js"></script>
+    <script src="../notify.js"></script>
+    <script src="../confirmDialog.js"></script>
+    <script src="../richTextEditor.js"></script>
+    <script src="../core.js"></script>
+    <script src="../mediaManager.js"></script>
+    <script src="../optionManager.js"></script>
+    <script src="../questionManager.js"></script>
+    <script src="../giftGenerator.js"></script>
+    <script src="../exportMoodleXml.js"></script>
+    <script src="../importGift.js"></script>
+    <script src="../downloadManager.js"></script>
+
+    <!-- ── Harnais de tests ──────────────────────────────────────────────── -->
+    <script src="testRunner.js"></script>
+</body>
+</html>

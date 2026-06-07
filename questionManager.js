@@ -7,48 +7,54 @@ questionDiv.className = 'question-container';
 questionDiv.dataset.id = window.questionCounter;
     
     questionDiv.innerHTML = `
-<h2>Question ${document.querySelectorAll('.question-container').length + 1}</h2>
+        <div class="question-header">
+            <h2>Question ${document.querySelectorAll('.question-container').length + 1}</h2>
+            <div class="question-move-controls">
+                <button type="button" class="move-btn move-up-btn" data-qid="${window.questionCounter}" title="Monter cette question">▲</button>
+                <button type="button" class="move-btn move-down-btn" data-qid="${window.questionCounter}" title="Descendre cette question">▼</button>
+            </div>
+        </div>
         <div class="form-group">
-            <label for="question-id-${window.questionCounter}">Identifiant/Numéro de question: <span class="optional-field">(facultatif)</span></label>
-            <input type="text" id="question-id-${window.questionCounter}" placeholder="Laissez vide pour générer automatiquement">
+            <label for="${IDS.questionId(window.questionCounter)}">Identifiant/Numéro de question: <span class="optional-field">(facultatif)</span></label>
+            <input type="text" id="${IDS.questionId(window.questionCounter)}" placeholder="Laissez vide pour générer automatiquement">
             <p class="info-text">Si non renseigné, un identifiant sera généré avec le format: [Code matière]-Q${window.questionCounter}</p>
         </div>
         <div class="form-group">
             <label for="question-type-${window.questionCounter}">Type de question:</label>
             <div class="radio-group">
                 <div class="radio-option">
-                    <input type="radio" id="mc-type-${window.questionCounter}" name="question-type-${window.questionCounter}" value="mc" checked>
-                    <label for="mc-type-${window.questionCounter}">QCM</label>
+                    <input type="radio" id="${IDS.typeRadio('mc', window.questionCounter)}" name="question-type-${window.questionCounter}" value="mc" checked>
+                    <label for="${IDS.typeRadio('mc', window.questionCounter)}">QCM</label>
                 </div>
                 <div class="radio-option">
-                    <input type="radio" id="sc-type-${window.questionCounter}" name="question-type-${window.questionCounter}" value="sc">
-                    <label for="sc-type-${window.questionCounter}">QCU</label>
+                    <input type="radio" id="${IDS.typeRadio('sc', window.questionCounter)}" name="question-type-${window.questionCounter}" value="sc">
+                    <label for="${IDS.typeRadio('sc', window.questionCounter)}">QCU</label>
                 </div>
                 <div class="radio-option">
-                    <input type="radio" id="tf-type-${window.questionCounter}" name="question-type-${window.questionCounter}" value="tf">
-                    <label for="tf-type-${window.questionCounter}">Vrai/Faux</label>
+                    <input type="radio" id="${IDS.typeRadio('tf', window.questionCounter)}" name="question-type-${window.questionCounter}" value="tf">
+                    <label for="${IDS.typeRadio('tf', window.questionCounter)}">Vrai/Faux</label>
                 </div>
                 <div class="radio-option">
-                    <input type="radio" id="sa-type-${window.questionCounter}" name="question-type-${window.questionCounter}" value="sa">
-                    <label for="sa-type-${window.questionCounter}">QRC</label>
+                    <input type="radio" id="${IDS.typeRadio('sa', window.questionCounter)}" name="question-type-${window.questionCounter}" value="sa">
+                    <label for="${IDS.typeRadio('sa', window.questionCounter)}">QRC</label>
                 </div>
                 <div class="radio-option">
-                    <input type="radio" id="num-type-${window.questionCounter}" name="question-type-${window.questionCounter}" value="num">
-                    <label for="num-type-${window.questionCounter}">Numérique</label>
+                    <input type="radio" id="${IDS.typeRadio('num', window.questionCounter)}" name="question-type-${window.questionCounter}" value="num">
+                    <label for="${IDS.typeRadio('num', window.questionCounter)}">Numérique</label>
                 </div>
             </div>
         </div>
         
         <div class="form-group">
-            <label for="question-text-${window.questionCounter}">Texte de la question:</label>
-        ${createRichTextEditor(`question-text-${window.questionCounter}`, 'Entrez le texte de la question')}
+            <label for="${IDS.questionText(window.questionCounter)}">Texte de la question:</label>
+        ${createRichTextEditor(`${IDS.questionText(window.questionCounter)}`, 'Entrez le texte de la question')}
         </div>
         
         <!-- Options QCM -->
-        <div id="mc-options-${window.questionCounter}">
+        <div id="${IDS.typeOptions('mc', window.questionCounter)}">
             <div class="form-group">
                 <label>Options (cochez toutes les réponses correctes):</label>
-                <div class="options-list" id="options-list-${window.questionCounter}">
+                <div class="options-list" id="${IDS.optionsList(window.questionCounter)}">
                     <!-- Les options seront ajoutées ici dynamiquement -->
                 </div>
                 <button class="add-btn add-option-btn" data-qid="${window.questionCounter}">Ajouter une option</button>
@@ -56,10 +62,10 @@ questionDiv.dataset.id = window.questionCounter;
         </div>
         
         <!-- Options QCU -->
-        <div id="sc-options-${window.questionCounter}" class="hidden">
+        <div id="${IDS.typeOptions('sc', window.questionCounter)}" class="hidden">
             <div class="form-group">
                 <label>Options (cochez la réponse correcte):</label>
-                <div class="options-list-radio" id="sc-options-list-${window.questionCounter}">
+                <div class="options-list-radio" id="${IDS.scOptionsList(window.questionCounter)}">
                     <!-- Les options seront ajoutées ici dynamiquement -->
                 </div>
                 <button class="add-btn add-sc-option-btn" data-qid="${window.questionCounter}">Ajouter une option</button>
@@ -67,27 +73,27 @@ questionDiv.dataset.id = window.questionCounter;
         </div>
         
         <!-- Options Vrai/Faux -->
-        <div id="tf-options-${window.questionCounter}" class="hidden">
+        <div id="${IDS.typeOptions('tf', window.questionCounter)}" class="hidden">
             <div class="form-group">
                 <label>Réponse correcte:</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="true-option-${window.questionCounter}" name="tf-answer-${window.questionCounter}" value="true" checked>
-                        <label for="true-option-${window.questionCounter}">Vrai</label>
+                        <input type="radio" id="${IDS.trueOption(window.questionCounter)}" name="tf-answer-${window.questionCounter}" value="true" checked>
+                        <label for="${IDS.trueOption(window.questionCounter)}">Vrai</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="false-option-${window.questionCounter}" name="tf-answer-${window.questionCounter}" value="false">
-                        <label for="false-option-${window.questionCounter}">Faux</label>
+                        <input type="radio" id="${IDS.falseOption(window.questionCounter)}" name="tf-answer-${window.questionCounter}" value="false">
+                        <label for="${IDS.falseOption(window.questionCounter)}">Faux</label>
                     </div>
                 </div>
             </div>
         </div>
         
         <!-- Options QRC -->
-        <div id="sa-options-${window.questionCounter}" class="hidden">
+        <div id="${IDS.typeOptions('sa', window.questionCounter)}" class="hidden">
             <div class="form-group">
                 <label>Réponses acceptées:</label>
-                <div class="sa-options-list" id="sa-options-list-${window.questionCounter}">
+                <div class="sa-options-list" id="${IDS.saOptionsList(window.questionCounter)}">
                     <!-- Les réponses seront ajoutées ici dynamiquement -->
                 </div>
                 <button class="add-btn add-sa-option-btn" data-qid="${window.questionCounter}">Ajouter une réponse</button>
@@ -96,28 +102,48 @@ questionDiv.dataset.id = window.questionCounter;
         </div>
         
         <!-- Options Numérique -->
-        <div id="num-options-${window.questionCounter}" class="hidden">
+        <div id="${IDS.typeOptions('num', window.questionCounter)}" class="hidden">
             <div class="form-group">
-                <label for="num-answer-${window.questionCounter}">Réponse exacte:</label>
-                <input type="number" step="any" id="num-answer-${window.questionCounter}" placeholder="Valeur numérique">
+                <label for="${IDS.numAnswer(window.questionCounter)}">Réponse exacte:</label>
+                <input type="number" step="any" id="${IDS.numAnswer(window.questionCounter)}" placeholder="Valeur numérique">
             </div>
             <div class="form-group">
-                <input type="checkbox" id="num-range-${window.questionCounter}">
-                <label for="num-range-${window.questionCounter}">Définir une marge d'erreur</label>
+                <input type="checkbox" id="${IDS.numRange(window.questionCounter)}">
+                <label for="${IDS.numRange(window.questionCounter)}">Définir une marge d'erreur</label>
             </div>
-            <div id="num-range-options-${window.questionCounter}" class="hidden">
+            <div id="${IDS.numRangeOptions(window.questionCounter)}" class="hidden">
                 <div class="form-group">
-                    <label for="num-margin-${window.questionCounter}">Marge d'erreur:</label>
-                    <input type="number" step="any" id="num-margin-${window.questionCounter}" placeholder="± valeur">
+                    <label for="${IDS.numMargin(window.questionCounter)}">Marge d'erreur:</label>
+                    <input type="number" step="any" id="${IDS.numMargin(window.questionCounter)}" placeholder="± valeur">
                 </div>
             </div>
         </div>
         
         <div class="form-group">
-            <label for="general-feedback-${window.questionCounter}">Feedback général:</label>
-        ${createRichTextEditor(`general-feedback-${window.questionCounter}`, 'Entrez le feedback général (optionnel)')}
+            <label for="${IDS.generalFeedback(window.questionCounter)}">Feedback général:</label>
+        ${createRichTextEditor(`${IDS.generalFeedback(window.questionCounter)}`, 'Entrez le feedback général (optionnel)')}
         </div>
-        
+
+        <!-- Feedback combiné (QCM/QCU) — export Moodle XML uniquement.
+             Replié par défaut : cliquer le résumé (ou sa flèche) pour déplier. -->
+        <details id="${IDS.combinedFeedbackBlock(window.questionCounter)}" class="form-group combined-feedback-block">
+            <summary class="combined-feedback-note">💬 <strong>Feedback combiné</strong> <span class="combined-feedback-hint">— facultatif, export Moodle&nbsp;XML uniquement (cliquez pour déplier)</span></summary>
+            <div class="combined-feedback-body">
+                <div class="form-group">
+                    <label for="${IDS.correctFeedback(window.questionCounter)}">Si la réponse est correcte&nbsp;:</label>
+                ${createRichTextEditor(`${IDS.correctFeedback(window.questionCounter)}`, 'Message en cas de réponse correcte (optionnel)', true)}
+                </div>
+                <div class="form-group">
+                    <label for="${IDS.partiallyCorrectFeedback(window.questionCounter)}">Si la réponse est partiellement correcte&nbsp;:</label>
+                ${createRichTextEditor(`${IDS.partiallyCorrectFeedback(window.questionCounter)}`, 'Message en cas de réponse partiellement correcte (optionnel)', true)}
+                </div>
+                <div class="form-group">
+                    <label for="${IDS.incorrectFeedback(window.questionCounter)}">Si la réponse est incorrecte&nbsp;:</label>
+                ${createRichTextEditor(`${IDS.incorrectFeedback(window.questionCounter)}`, 'Message en cas de réponse incorrecte (optionnel)', true)}
+                </div>
+            </div>
+        </details>
+
         <button class="remove-btn remove-question-btn" data-qid="${window.questionCounter}">Supprimer cette question</button>
     `;
     
@@ -128,139 +154,135 @@ questionDiv.dataset.id = window.questionCounter;
     const newQuestion = window.questionsContainer.lastElementChild;
     initRichTextEditors(newQuestion);
  
-    // ── AJOUT : Attacher le bloc média à la nouvelle question ────────────────
-    if (typeof attachMediaToQuestion === 'function') {
-        attachMediaToQuestion(window.questionCounter);
-    }
+    // Attacher le bloc média à la nouvelle question (mediaManager garanti chargé — [A3])
+    attachMediaToQuestion(window.questionCounter);
 
-    // Ajouter deux options par défaut pour QCM
-    const optionsList = document.getElementById(`options-list-${window.questionCounter}`);
-    addOption(window.questionCounter, optionsList);
-    addOption(window.questionCounter, optionsList);
-    
-    // Ajouter deux options par défaut pour QCU
-    const scOptionsList = document.getElementById(`sc-options-list-${window.questionCounter}`);
-    addSCOption(window.questionCounter, scOptionsList);
-    addSCOption(window.questionCounter, scOptionsList);
-    
-    // Ajouter une réponse par défaut pour QRC
-    const saOptionsList = document.getElementById(`sa-options-list-${window.questionCounter}`);
-    addSAOption(window.questionCounter, saOptionsList);
-    
-    // Événements pour le type de question
-    setupQuestionTypeHandlers(window.questionCounter);
-    
-    // Gestion de la marge d'erreur pour les questions numériques
-    setupNumericQuestionHandlers(window.questionCounter);
-    
-    // Événement pour ajouter une option QCM
-    const addOptionBtn = questionDiv.querySelector('.add-option-btn');
-    addOptionBtn.addEventListener('click', function() {
+    // Options par défaut + câblage des événements (sous-fonctions — [M3])
+    addDefaultOptions(window.questionCounter);
+    wireQuestionEvents(questionDiv, window.questionCounter);
+}
+
+// ── Sous-fonctions de addNewQuestion ([M3]) ─────────────────────────────────
+
+/**
+ * Ajoute les options par défaut d'une nouvelle question (2 QCM, 2 QCU, 1 QRC).
+ * @param {string|number} questionId
+ */
+function addDefaultOptions(questionId) {
+    const optionsList = document.getElementById(IDS.optionsList(questionId));
+    addOption(questionId, optionsList);
+    addOption(questionId, optionsList);
+
+    const scOptionsList = document.getElementById(IDS.scOptionsList(questionId));
+    addSCOption(questionId, scOptionsList);
+    addSCOption(questionId, scOptionsList);
+
+    const saOptionsList = document.getElementById(IDS.saOptionsList(questionId));
+    addSAOption(questionId, saOptionsList);
+}
+
+/**
+ * Câble les écouteurs d'une question : bascule de type, marge numérique,
+ * ajout d'options (QCM/QCU/QRC) et suppression de la question.
+ * @param {HTMLElement}   questionDiv
+ * @param {string|number} questionId
+ */
+function wireQuestionEvents(questionDiv, questionId) {
+    setupQuestionTypeHandlers(questionId);
+    setupNumericQuestionHandlers(questionId);
+
+    questionDiv.querySelector('.add-option-btn').addEventListener('click', function () {
         const qid = this.getAttribute('data-qid');
-        const optionsListElement = document.getElementById(`options-list-${qid}`);
-        addOption(qid, optionsListElement);
+        addOption(qid, document.getElementById(IDS.optionsList(qid)));
     });
-    
-    // Événement pour ajouter une option QCU
-    const addSCOptionBtn = questionDiv.querySelector('.add-sc-option-btn');
-    addSCOptionBtn.addEventListener('click', function() {
+
+    questionDiv.querySelector('.add-sc-option-btn').addEventListener('click', function () {
         const qid = this.getAttribute('data-qid');
-        const optionsListElement = document.getElementById(`sc-options-list-${qid}`);
-        addSCOption(qid, optionsListElement);
+        addSCOption(qid, document.getElementById(IDS.scOptionsList(qid)));
     });
-    
-    // Événement pour ajouter une réponse QRC
-    const addSAOptionBtn = questionDiv.querySelector('.add-sa-option-btn');
-    addSAOptionBtn.addEventListener('click', function() {
+
+    questionDiv.querySelector('.add-sa-option-btn').addEventListener('click', function () {
         const qid = this.getAttribute('data-qid');
-        const optionsListElement = document.getElementById(`sa-options-list-${qid}`);
-        addSAOption(qid, optionsListElement);
+        addSAOption(qid, document.getElementById(IDS.saOptionsList(qid)));
     });
-    
-    // Événement pour supprimer une question
-    const removeQuestionBtn = questionDiv.querySelector('.remove-question-btn');
-    removeQuestionBtn.addEventListener('click', function() {
+
+    questionDiv.querySelector('.move-up-btn').addEventListener('click', function () {
+        moveQuestion(this.getAttribute('data-qid'), 'up');
+    });
+
+    questionDiv.querySelector('.move-down-btn').addEventListener('click', function () {
+        moveQuestion(this.getAttribute('data-qid'), 'down');
+    });
+
+    questionDiv.querySelector('.remove-question-btn').addEventListener('click', function () {
         const qid = this.getAttribute('data-qid');
         const questionElement = document.querySelector(`.question-container[data-id="${qid}"]`);
-
-        if (typeof cleanupMediaForQuestion === 'function') {
-            cleanupMediaForQuestion(qid);
-        }
-
+        cleanupMediaForQuestion(qid);
         window.questionsContainer.removeChild(questionElement);
-            renumberQuestions();
+        renumberQuestions();
     });
 }
 
+/**
+ * Déplace une question d'un cran vers le haut ou le bas dans la liste, puis
+ * renumérote et rafraîchit le sommaire. Les médias étant indexés par l'id
+ * interne (dataset.id) et non par la position, le déplacement n'a aucun effet
+ * sur eux. L'identifiant GIFT auto (CODE-QNN) suit le nouvel ordre.
+ * @param {string|number} questionId - dataset.id de la question à déplacer
+ * @param {'up'|'down'}   direction
+ */
+function moveQuestion(questionId, direction) {
+    const question = document.querySelector(`.question-container[data-id="${questionId}"]`);
+    if (!question) return;
+
+    if (direction === 'up') {
+        const prev = question.previousElementSibling;
+        if (prev) question.parentNode.insertBefore(question, prev);
+    } else if (direction === 'down') {
+        const next = question.nextElementSibling;
+        if (next) question.parentNode.insertBefore(next, question);
+    }
+
+    renumberQuestions();
+
+    // Rafraîchir le sommaire s'il est chargé (module périphérique facultatif).
+    if (typeof window.updateQuestionsSummary === 'function') {
+        window.updateQuestionsSummary();
+    }
+}
+window.moveQuestion = moveQuestion;
+
 // Configurer les gestionnaires d'événements pour les types de questions
 function setupQuestionTypeHandlers(questionId) {
-    const mcRadio = document.getElementById(`mc-type-${questionId}`);
-    const scRadio = document.getElementById(`sc-type-${questionId}`);
-    const tfRadio = document.getElementById(`tf-type-${questionId}`);
-    const saRadio = document.getElementById(`sa-type-${questionId}`);
-    const numRadio = document.getElementById(`num-type-${questionId}`);
-    
-    const mcOptions = document.getElementById(`mc-options-${questionId}`);
-    const scOptions = document.getElementById(`sc-options-${questionId}`);
-    const tfOptions = document.getElementById(`tf-options-${questionId}`);
-    const saOptions = document.getElementById(`sa-options-${questionId}`);
-    const numOptions = document.getElementById(`num-options-${questionId}`);
-    
-    mcRadio.addEventListener('change', function() {
-        if (this.checked) {
-            mcOptions.classList.remove('hidden');
-            scOptions.classList.add('hidden');
-            tfOptions.classList.add('hidden');
-            saOptions.classList.add('hidden');
-            numOptions.classList.add('hidden');
-        }
-    });
-    
-    scRadio.addEventListener('change', function() {
-        if (this.checked) {
-            mcOptions.classList.add('hidden');
-            scOptions.classList.remove('hidden');
-            tfOptions.classList.add('hidden');
-            saOptions.classList.add('hidden');
-            numOptions.classList.add('hidden');
-        }
-    });
-    
-    tfRadio.addEventListener('change', function() {
-        if (this.checked) {
-            mcOptions.classList.add('hidden');
-            scOptions.classList.add('hidden');
-            tfOptions.classList.remove('hidden');
-            saOptions.classList.add('hidden');
-            numOptions.classList.add('hidden');
-        }
-    });
-    
-    saRadio.addEventListener('change', function() {
-        if (this.checked) {
-            mcOptions.classList.add('hidden');
-            scOptions.classList.add('hidden');
-            tfOptions.classList.add('hidden');
-            saOptions.classList.remove('hidden');
-            numOptions.classList.add('hidden');
-        }
-    });
-    
-    numRadio.addEventListener('change', function() {
-        if (this.checked) {
-            mcOptions.classList.add('hidden');
-            scOptions.classList.add('hidden');
-            tfOptions.classList.add('hidden');
-            saOptions.classList.add('hidden');
-            numOptions.classList.remove('hidden');
-        }
+    // Les cinq types partagent exactement la même logique : à la sélection d'un
+    // type, on affiche son panneau d'options et on masque les autres. On boucle
+    // donc au lieu de dupliquer cinq écouteurs identiques — cf. [D2].
+    const TYPES = ['mc', 'sc', 'tf', 'sa', 'num'];
+
+    TYPES.forEach(type => {
+        const radio = document.getElementById(IDS.typeRadio(type, questionId));
+        if (!radio) return;
+
+        radio.addEventListener('change', function () {
+            if (!this.checked) return;
+            TYPES.forEach(t => {
+                const panel = document.getElementById(IDS.typeOptions(t, questionId));
+                if (panel) panel.classList.toggle('hidden', t !== type);
+            });
+            // Le feedback combiné n'a de sens que pour les questions multichoice
+            // (QCM/QCU) → on l'affiche pour ces types seulement.
+            const combinedBlock = document.getElementById(IDS.combinedFeedbackBlock(questionId));
+            if (combinedBlock) {
+                combinedBlock.classList.toggle('hidden', !(type === 'mc' || type === 'sc'));
+            }
+        });
     });
 }
 
 // Configurer les gestionnaires d'événements pour les questions numériques
 function setupNumericQuestionHandlers(questionId) {
-    const numRange = document.getElementById(`num-range-${questionId}`);
-    const numRangeOptions = document.getElementById(`num-range-options-${questionId}`);
+    const numRange = document.getElementById(IDS.numRange(questionId));
+    const numRangeOptions = document.getElementById(IDS.numRangeOptions(questionId));
     
     numRange.addEventListener('change', function() {
         if (this.checked) {
@@ -273,19 +295,33 @@ function setupNumericQuestionHandlers(questionId) {
 
 function renumberQuestions() {
     const questions = document.querySelectorAll('.question-container');
+    const lastIndex = questions.length - 1;
     questions.forEach((question, index) => {
-        // Renumérotation du titre
+        const expectedTitle = `Question ${index + 1}`;
+        const expectedClass = (index + 1) % 2 === 0 ? 'question-even' : 'question-odd';
+
+        // [P1] N'écrire dans le DOM que si la valeur change réellement, pour
+        // éviter des reflows/repaints inutiles à chaque ajout ou suppression.
         const h2 = question.querySelector('h2');
-        if (h2) {
-            h2.textContent = `Question ${index + 1}`;
+        if (h2 && h2.textContent !== expectedTitle) {
+            h2.textContent = expectedTitle;
         }
 
-        // Recalcul de l'alternance de couleur
-        question.classList.remove('question-odd', 'question-even');
-        if ((index + 1) % 2 === 0) {
-            question.classList.add('question-even');
-        } else {
-            question.classList.add('question-odd');
+        if (!question.classList.contains(expectedClass)) {
+            question.classList.remove('question-odd', 'question-even');
+            question.classList.add(expectedClass);
+        }
+
+        // Désactiver les flèches aux extrémités (on ne peut pas monter la
+        // première ni descendre la dernière). Même garde [P1] : n'écrire que
+        // si l'état change réellement.
+        const upBtn = question.querySelector('.move-up-btn');
+        const downBtn = question.querySelector('.move-down-btn');
+        if (upBtn && upBtn.disabled !== (index === 0)) {
+            upBtn.disabled = (index === 0);
+        }
+        if (downBtn && downBtn.disabled !== (index === lastIndex)) {
+            downBtn.disabled = (index === lastIndex);
         }
     });
 }

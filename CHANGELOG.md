@@ -1,0 +1,439 @@
+# Changelog
+
+Toutes les modifications notables de ce projet sont consignées ici.
+
+Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
+et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
+
+---
+
+## [Non publié]
+
+---
+
+## [0.18.0] — 2026-06-06
+
+### Ajouté
+- **Export Moodle XML** (nouveau module `exportMoodleXml.js`) : second format de
+  sortie **en plus** de l'export GIFT (inchangé). Nouveau bouton
+  « 🎓 Moodle XML (.xml) ». Couvre les **5 types** de questions :
+  - QCM → `multichoice` (`single=false`), pondérations reprises telles quelles ;
+  - QCU → `multichoice` (`single=true`) ;
+  - Vrai/Faux → `truefalse` ;
+  - QRC → `shortanswer` ;
+  - Numérique → `numerical` (avec `<tolerance>`).
+- **Feedback combiné** (la raison d'être de ce chantier — impossible en GIFT) :
+  trois champs facultatifs **par QCM et QCU** (réponse *correcte* /
+  *partiellement correcte* / *incorrecte*), exportés en `<correctfeedback>`,
+  `<partiallycorrectfeedback>`, `<incorrectfeedback>`. Un encart dédié signale
+  qu'ils ne valent **que pour l'export Moodle XML** (ignorés en GIFT). L'encart
+  est **replié par défaut** (élément `<details>`, à déplier d'un clic) et adopte
+  la **couleur de la question** (turquoise pour les impaires, rose pour les
+  paires).
+- **Sensibilité à la casse des QRC honorée en XML** via `<usecase>` — un gain
+  par rapport au GIFT, où ce réglage reste sans effet (cf. [B3]).
+- **Tests** : 12 nouveaux tests dédiés à la génération XML (mapping des types,
+  fractions, feedback combiné présent/absent, feedback combiné ignoré en GIFT,
+  encodage CDATA, échappement `&`/`<`/`>`, document bien formé).
+
+### Modifié
+- `buildExportFilename(extension, baseLabel)` accepte désormais un préfixe
+  (rétrocompatible) : l'export XML produit `questions_moodle_…xml`.
+
+### Notes
+- **Encodage** : le HTML enrichi (énoncés, réponses, feedback) est encapsulé en
+  `<![CDATA[…]]>` (comme l'export natif de Moodle) ; la séquence `]]>` est
+  neutralisée. Les valeurs hors CDATA (noms, attributs) sont échappées en entités.
+- **Médias** : non embarqués dans le `.xml` en V1 — un avertissement invite à
+  utiliser l'export ZIP/GIFT pour conserver les images. Embarquement base64
+  envisagé en V2.
+- **Import XML** : hors périmètre (export seul).
+
+---
+
+## [0.17.0] — 2026-06-06
+
+### Ajouté
+- **Boîte de dialogue de confirmation non bloquante** : nouveau module
+  `confirmDialog.js` (+ `confirmDialogStyles.css`) exposant
+  `confirmDialog(options)` → `Promise<boolean>`, une fenêtre modale aux couleurs
+  CNED (overlay, bouton « danger » rouge optionnel, fermeture par Échap/clic sur
+  le fond, Entrée = confirmer). Remplace les `confirm()` bloquants du navigateur.
+
+### Modifié
+- **Migration des `confirm()` bloquants** vers la modale `confirmDialog` :
+  - effacement de toutes les questions (`core.js`) ;
+  - remplacement des questions à l'import (`importGift.js` ; `parseGiftContent`
+    devient `async`, la confirmation a lieu avant l'overlay d'import).
+- **Doublons d'options à la génération** (`giftGenerator.js`) : l'ancien
+  `confirm()` « continuer quand même ? » est remplacé par un **avertissement non
+  bloquant** (`notify.warning`). La génération **se poursuit désormais** (les
+  doublons sont du GIFT valide et restent surlignés en rouge dans l'interface).
+  - **Changement de comportement assumé** : auparavant la génération était
+    interrompue si l'auteur cliquait « Annuler ». Ce point est justifié par le
+    fait que `generateGIFTCode()` est appelée de façon synchrone par le
+    téléchargement et l'import (qui lisent son résultat immédiatement) ; un
+    blocage asynchrone y aurait été risqué. L'auteur reste averti et peut
+    corriger puis régénérer.
+
+### Supprimé
+- Plus aucun `confirm()`/`alert()` bloquant dans le code applicatif (les
+  `beforeunload` natifs de l'alerte « modifications non sauvegardées » sont
+  conservés : ils relèvent du navigateur).
+
+---
+
+## [0.16.0] — 2026-06-06
+
+### Ajouté
+- **Déplacer les questions** : flèches ▲/▼ sur chaque question (à droite du
+  titre) **et** dans le sommaire, pour réordonner la liste sans copier-coller.
+  La renumérotation, l'alternance de couleurs et l'identifiant GIFT auto
+  (`CODE-QNN`) suivent automatiquement le nouvel ordre ; les médias (indexés par
+  l'id interne) ne sont pas affectés. Les flèches d'extrémité sont désactivées
+  (`questionManager.js`, `summaryManager.js`, `styles.css`, `summaryStyles.css`).
+
+### Corrigé
+- **Import — log de débogage** : `dlog()` (`importGift.js`) s'appelait
+  elle-même au lieu d'appeler `console.log`, provoquant une récursion infinie si
+  le flag `DEBUG` était passé à `true`. Sans effet en production (`DEBUG = false`),
+  mais bloquant pour tout mainteneur activant la trace de parsing.
+
+### Tests
+- 2 tests de déplacement (réordonnancement haut/bas + renumérotation ;
+  désactivation des flèches aux extrémités).
+
+### Documentation
+- Nouveau `ROADMAP.md` : backlog détaillé des évolutions à venir (banque de
+  questions, sauvegarde native, export PDF/RTF, export Moodle XML pour le
+  feedback combiné, idée d'authentification) — compatibilité GIFT, approche et
+  fichiers impactés pour chaque chantier.
+
+---
+
+## [0.15.0] — 2026-06-06
+
+### Modifié
+- **[M2] (achevé)** : l'éditeur de texte enrichi n'utilise plus
+  `document.execCommand`. La mise en forme (gras, italique, souligné, exposant,
+  indice) et l'effacement de format reposent désormais sur l'API
+  `Selection`/`Range` (`rteApplyFormat`, `rteClearFormatting`,
+  `rteIsFormatActive`) ; l'état actif de la barre d'outils n'utilise plus
+  `queryCommandState` (`richTextEditor.js`). `execCommand` ne subsiste qu'en
+  repli de la copie presse-papier (contexte non sécurisé).
+  - **Note** : l'activation/désactivation d'un format opère sur la balise
+    englobante de la sélection (cas d'usage : sélectionner le texte puis
+    cliquer) ; appliquer un format sans sélection est sans effet.
+
+### Tests
+- 4 tests de l'éditeur enrichi (gras, bascule, effacement, détection d'état).
+
+### Outillage
+- `.vscode/launch.json` : configurations Chrome pointant directement sur les
+  fichiers (`index.html`, `tests/tests.html`) plutôt que sur un `localhost`
+  inexistant — F5 ouvre désormais l'app dans un navigateur externe sans serveur.
+
+---
+
+## [0.14.3] — 2026-06-06
+
+### Modifié
+- **[M2] (partiel)** : la copie du code GIFT utilise désormais l'API
+  `navigator.clipboard.writeText()`, avec repli sur `document.execCommand('copy')`
+  si l'API est indisponible (contexte non sécurisé) (`core.js`). La migration de
+  l'éditeur enrichi (`execCommand` de mise en forme) reste un chantier dédié
+  (horizon 12 mois, cf. AUDIT [M2]).
+
+---
+
+## [0.14.2] — 2026-06-06
+
+### Modifié (refactorisation interne, sans changement de comportement)
+- **[M3]** : découpe de fonctions trop longues.
+  - `addNewQuestion` (`questionManager.js`) délègue désormais à
+    `addDefaultOptions()` et `wireQuestionEvents()` ; elle se limite à
+    l'orchestration (le gabarit HTML reste un littéral assigné, responsabilité
+    unique « markup »).
+  - `parseGiftQuestion` (`importGift.js`) délègue à `stripImportedPluginfileTags()`
+    et `associateZipMedia()`.
+
+---
+
+## [0.14.1] — 2026-06-06
+
+### Modifié (refactorisation interne, sans changement de comportement)
+- **[A1] (achevé)** : migration vers `IDS` du grand gabarit `addNewQuestion`
+  (création des champs, `questionManager.js`) et de l'UI périphérique
+  (`previewMode.js`, `summaryManager.js`, `mediaManager.js`). Tous les
+  identifiants DOM transverses passent désormais par `IDS` ; ne restent bruts
+  que les `name=` de groupes radio et les identifiants strictement internes à
+  `mediaManager` (`media-*`).
+
+---
+
+## [0.14.0] — 2026-06-06
+
+### Modifié (architecture, sans changement de comportement)
+- **[A2] Orchestrateur d'initialisation** : remplacement des 6 écouteurs
+  `DOMContentLoaded` autonomes (import, download, help, summary, preview,
+  unsaved) par un patron d'enregistrement `window.APP_INIT` ; `core.js` exécute
+  la file dans l'ordre de chargement après son propre setup. Bénéfice : ordre
+  d'init garanti et explicite ; un module non chargé n'enregistre rien (le
+  harnais de tests reste opérationnel sans l'UI périphérique).
+- **[A3] Retrait des vérifications défensives d'ordre** : suppression des
+  `typeof X === 'function'` devenus inutiles (`generateGIFTCode`,
+  `attachMediaToQuestion`, `cleanupMediaForQuestion`, `getMediaList`,
+  `getPluginfileTag`, `sanitizeRichHtml`). `mediaManager.js` est désormais aussi
+  chargé par le harnais de tests pour refléter la configuration réelle.
+
+---
+
+## [0.13.0] — 2026-06-06
+
+### Ajouté
+- **[U1] Notifications toast** : nouveau module `notify.js` (+ `notifyStyles.css`)
+  fournissant `notify.success/info/warning/error`, des notifications
+  non bloquantes en coin d'écran à disparition automatique, aux couleurs CNED.
+  Tous les `alert()` du code applicatif sont remplacés (les `confirm()`, qui
+  exigent une réponse, restent inchangés).
+- **[U2] Indicateur d'import** : overlay semi-transparent + spinner pendant le
+  parsing GIFT (CSS sur `body.importing`, classe déjà posée par l'import).
+
+### Modifié
+- **[U3] Accessibilité** : les pondérations positives affichent désormais un
+  préfixe « + » dans le sélecteur (les négatives portant déjà « - »), pour ne
+  plus dépendre uniquement de la couleur (daltonisme) (`optionManager.js`).
+
+---
+
+## [0.12.1] — 2026-06-06
+
+### Modifié (refactorisation interne, sans changement de comportement)
+- **[A1]** : migration vers `IDS` des fichiers cœur restants —
+  `optionManager.js`, `questionManager.js`, `importGift.js`. Toutes les
+  **lectures** d'identifiants (`getElementById` / `getRichTextValue` /
+  `setRichTextValue`) passent désormais par `IDS`, ainsi que les principaux
+  gabarits de création d'`optionManager`. Restent à migrer (suite) : le grand
+  gabarit `innerHTML` de `addNewQuestion` (création des champs) et l'UI
+  périphérique (help, preview, summary, media…), prévus pour une session dédiée.
+
+---
+
+## [0.12.0] — 2026-06-06
+
+### Ajouté
+- **[A1] `domIds.js`** : module centralisant la construction des identifiants
+  DOM (objet `IDS` de fonctions `(qid[, oid]) => '…'`). Objectif : renommer un
+  préfixe en un seul endroit au lieu de risquer de casser silencieusement
+  plusieurs fichiers.
+
+### Modifié (refactorisation interne, sans changement de comportement)
+- **[A1]** : migration de `giftGenerator.js` vers `IDS` (17 identifiants),
+  premier fichier d'une migration progressive fichier par fichier (méthode
+  recommandée par l'audit). Les fichiers cœur restants (`optionManager`,
+  `questionManager`, `importGift`) suivront ; l'UI périphérique est laissée pour
+  une session dédiée.
+
+---
+
+## [0.11.5] — 2026-06-06
+
+### Sécurité
+- **XSS [S1][S2][S3]** : nouveau module `sanitize.js` exposant
+  `sanitizeRichHtml()` (liste blanche stricte de balises de mise en forme,
+  suppression de tous les attributs et des balises dangereuses
+  `script/style/iframe/object/embed`).
+  - **[S1]** : `setRichTextValue` assainit désormais le HTML avant insertion,
+    neutralisant les fichiers GIFT piégés à l'import (`richTextEditor.js`).
+  - **[S2]** : la ligne du sommaire est construite en DOM-API ; l'identifiant
+    et le texte de question sont injectés via `textContent` et ne peuvent plus
+    exécuter de HTML/JS (`summaryManager.js`).
+  - **[S3]** : la prévisualisation passe tout contenu utilisateur par
+    `sanitizeRichHtml()` avant `innerHTML` (`previewMode.js`).
+
+### Tests
+- 5 tests unitaires de `sanitizeRichHtml` (formatage conservé, `<script>`,
+  `<img onerror>`, attributs `on*`, liens `javascript:`).
+
+---
+
+## [0.11.4] — 2026-06-06
+
+### Modifié (performance, sans changement de comportement)
+- **[P2]** : les `setTimeout(…, 0)` de séquencement dans `addChoiceOption`
+  (réajustement des poids, détection de doublons après ajout/suppression)
+  remplacés par `queueMicrotask`, plus précis et exécuté avant le rendu
+  (`optionManager.js`). Le debounce de saisie (300 ms) reste un `setTimeout`.
+- **[P1]** : `renumberQuestions` n'écrit plus dans le DOM que lorsque le titre
+  ou la classe d'alternance change réellement, évitant des reflows inutiles à
+  chaque ajout/suppression de question (`questionManager.js`).
+
+---
+
+## [0.11.3] — 2026-06-06
+
+### Modifié (refactorisation interne, sans changement de comportement)
+- **[D1]** : factorisation des options à choix. QCM et QCU passent par une
+  fonction partagée `addChoiceOption(qid, listEl, config)` pilotée par une
+  configuration (`MC_OPTION_CONFIG` / `SC_OPTION_CONFIG`) ; `addOption` et
+  `addSCOption` deviennent de simples wrappers. La QRC (`addSAOption`),
+  structurellement différente (champ texte simple, pas de RTE ni de feedback),
+  reste une fonction dédiée — choix validé pour préserver la lisibilité
+  (`optionManager.js`).
+
+### Tests
+- Ajout d'un test de génération QCU (couvre le chemin factorisé [D1]).
+
+---
+
+## [0.11.2] — 2026-06-06
+
+### Corrigé
+- **QCM [B4]** : un poids non nul fixé sur une option **non cochée** (ex. malus
+  −50 %) était silencieusement ignoré (`~texte`). Le générateur produit
+  désormais `~%X%texte` pour respecter le poids saisi (`giftGenerator.js`).
+- **Import [B5]** : les pondérations fractionnaires sont reconnues
+  automatiquement comme fractions `1/n` (calcul `100/n`), quelle que soit la
+  précision exportée par Moodle, au lieu d'une liste de valeurs figée
+  (`importGift.js`).
+
+### Modifié (refactorisation interne)
+- **[P3]** : `autoAdjustWeights` remplace son `switch` à neuf branches par un
+  `Map` de valeurs canoniques + calcul direct `(100/n)` (`optionManager.js`).
+
+### Tests
+- Ajout d'un test couvrant [B4] (poids négatif sur option non cochée).
+
+---
+
+## [0.11.1] — 2026-06-05
+
+### Modifié (refactorisations internes, sans changement de comportement)
+- **[D3]** : fusion de `updateWeightColor` et `updateSAWeightColor` en une seule
+  fonction acceptant indifféremment un `<select>` ou un `<input>`
+  (`optionManager.js`, appels mis à jour dans `importGift.js`).
+- **[D2]** : `setupQuestionTypeHandlers` réécrit en une boucle sur les cinq
+  types au lieu de cinq écouteurs dupliqués (`questionManager.js`).
+- **[D4]** : extraction de `buildExportFilename(extension)`, partagée par les
+  téléchargements `.txt` et `.zip` (`downloadManager.js`).
+- **[D5]** : les logs de débogage de l'import sont désormais désactivés par
+  défaut (flag `DEBUG` + helper `dlog`), au lieu d'être imprimés en console à
+  chaque import (`importGift.js`).
+
+> Filet de sécurité : la suite de tests `tests/tests.html` reste verte après
+> ces refactos.
+
+---
+
+## [0.11.0] — 2026-06-05
+
+### Ajouté
+- **Suite de tests [M1]** : premier harnais de tests automatisés, sans
+  dépendance ni build, dans le dossier `tests/`. Ouvrir `tests/tests.html`
+  dans un navigateur exécute la suite et affiche un rapport (réussites /
+  échecs / ignorés). Couverture initiale : fonctions pures (typographie,
+  balises HTML, en-tête GIFT) et tests d'intégration (génération QCM/QRC/
+  Vrai-Faux/numérique, métadonnées, round-trip QRC).
+  - **Note d'ordonnancement** : [M1] a été remonté avant les refactorings
+    DRY/architecture (initialement prévu en 0.13.0) afin de servir de
+    garde-fou anti-régression pendant ces refactos.
+
+### Modifié
+- **Import GIFT** : le point d'entrée `parseGiftContent` est désormais exposé
+  sur `window` (auparavant prisonnier de la closure `DOMContentLoaded`). Permet
+  aux tests d'invoquer l'import directement et prépare le futur orchestrateur
+  central (cf. [A2]). Aucun changement de comportement (`importGift.js`).
+
+---
+
+## [0.10.3] — 2026-06-05
+
+### Corrigé
+- **QRC [B2]** : la bonne réponse à 100 % était générée en `=%100%texte`, ce qui
+  reproduisait le défaut d'affichage « 100 % » déjà corrigé pour les QCM en
+  0.10.1. Le générateur produit désormais la syntaxe canonique `=texte` pour
+  100 %, et `=%X%texte` sans décimales superflues pour les pondérations
+  partielles (`giftGenerator.js`). Le round-trip est préservé (l'importeur
+  reconnaissait déjà les deux formes).
+
+### Modifié
+- **QRC [B3]** : le sélecteur de sensibilité à la casse n'a aucun effet (le
+  format GIFT standard ne gère pas la casse pour les réponses courtes). Ses
+  trois branches identiques dans le générateur sont consolidées en une seule,
+  et un tooltip explicite est ajouté sur le `<select>` pour informer l'auteur
+  que le choix est conservé pour mémoire mais ignoré à l'export
+  (`giftGenerator.js`, `optionManager.js`).
+
+---
+
+## [0.10.2] — 2026-06-05
+
+### Corrigé
+- **Téléchargements [B1]** : ajout d'un BOM UTF-8 en tête des fichiers `.txt`
+  exportés (téléchargement direct **et** fichier contenu dans le `.zip`). Sans
+  ce marqueur, Notepad/Windows et certains imports Moodle configurés en
+  Windows-1252 affichaient les accents cassés (`MÃ©tadonnÃ©es` au lieu de
+  `Métadonnées`) (`downloadManager.js`).
+- **Import GIFT [B1]** : un éventuel BOM UTF-8 en tête de fichier est désormais
+  retiré au parsing (`parseGiftContent`), pour les deux chemins `.txt` et
+  `.zip`, évitant de polluer la première ligne de métadonnées (`importGift.js`).
+
+---
+
+## [0.10.1] — 2026-06-05
+
+### Corrigé
+- **QCM** : la bonne réponse à 100 % était générée en `~%100.00000%texte`,
+  ce qui faisait apparaître le coefficient « 100 % » à côté de la réponse
+  lors de l'import dans Moodle. Le générateur produit désormais la syntaxe
+  canonique `=texte` pour les options cochées à 100 %, et `~%X%texte` sans
+  décimales superflues pour les pondérations partielles ou négatives
+  (`giftGenerator.js`).
+- **Import GIFT** : l'importeur QCM ne reconnaissait que les lignes `~`. Il
+  accepte désormais aussi les lignes `=` (bonne réponse à 100 %), ce qui
+  garantit le round-trip pour les QCM mixant `=` et `~%-X%` (malus)
+  (`importGift.js`).
+
+---
+
+## [0.10.0] — 2026-06-05
+
+### Ajouté (formalisation de l'existant)
+- Mise en place du système de versionnage SemVer (`APP_VERSION` dans `core.js`).
+- Documentation projet : `CLAUDE.md`, `Spec.md`.
+- Journaux : `CHANGELOG.md`, `DEVLOG.md`.
+
+### Modifié
+- La version affichée dans le pied de page est désormais injectée
+  dynamiquement depuis `APP_VERSION` (fin de la saisie en dur).
+
+---
+
+## [0.10.0 — état initial] — antérieur
+
+> Reprise de l'historique : cette version correspond à l'ancien « beta 10 ».
+> Les versions antérieures n'étaient pas formellement consignées.
+
+### Présent à cette version
+- Cinq types de questions : QCM, QCU, Vrai/Faux, réponse courte, numérique.
+- Éditeur de texte enrichi par champ.
+- Gestion d'un média par question + export ZIP (`@@PLUGINFILE@@`).
+- Import `.txt` et `.zip` avec validation du format GIFT.
+- Application automatique des espaces insécables (typographie CNED).
+- Panneau d'aide, tooltips, tour guidé.
+- Résumé des questions et navigation.
+- Mode prévisualisation.
+- Détection des doublons d'options.
+- Alerte sur modifications non sauvegardées.
+
+---
+
+<!--
+GABARIT pour une nouvelle version (à copier au-dessus) :
+
+## [X.Y.Z] — AAAA-MM-JJ
+### Ajouté
+### Modifié
+### Corrigé
+### Supprimé
+-->

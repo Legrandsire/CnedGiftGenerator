@@ -6,7 +6,7 @@
  * permettant aux utilisateurs de voir leur questionnaire sans les éléments d'édition.
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+APP_INIT.push(function initPreview() {
     // Initialiser le mode prévisualisation
     initPreviewMode();
 });
@@ -265,7 +265,7 @@ function transformQuestionHeader(question, questionId) {
  * Transforme l'identifiant de question
  */
 function transformQuestionId(question, questionId) {
-    const idField = document.getElementById(`question-id-${questionId}`);
+    const idField = document.getElementById(IDS.questionId(questionId));
     if (!idField) return;
     
     // Récupérer la valeur de l'identifiant
@@ -298,11 +298,11 @@ function transformQuestionId(question, questionId) {
  * Transforme le texte de la question
  */
 function transformQuestionText(question, questionId) {
-    const textField = document.getElementById(`question-text-${questionId}`);
+    const textField = document.getElementById(IDS.questionText(questionId));
     if (!textField) return;
  
     // CORRECTION : getRichTextValue au lieu de .value.trim()
-    const questionText = getRichTextValue(`question-text-${questionId}`);
+    const questionText = getRichTextValue(IDS.questionText(questionId));
  
     const textDisplay = document.createElement('div');
     textDisplay.className = 'preview-display preview-question-text';
@@ -310,8 +310,8 @@ function transformQuestionText(question, questionId) {
     if (!questionText) {
         textDisplay.innerHTML = '<em class="preview-missing">Texte de la question manquant</em>';
     } else {
-        // CORRECTION : innerHTML pour conserver la mise en forme HTML
-        textDisplay.innerHTML = questionText;
+        // CORRECTION : innerHTML pour conserver la mise en forme HTML (assaini [S3])
+        textDisplay.innerHTML = sanitizeRichHtml(questionText);
     }
  
     const formGroup = textField.closest('.form-group');
@@ -368,7 +368,7 @@ function transformQuestionOptions(question, questionId, questionType) {
  * Transforme les options QCM
  */
 function transformMCOptions(container, questionId) {
-    const optionsList = document.getElementById(`options-list-${questionId}`);
+    const optionsList = document.getElementById(IDS.optionsList(questionId));
     if (!optionsList) return;
  
     const optionsContainer = document.createElement('div');
@@ -380,10 +380,10 @@ function transformMCOptions(container, questionId) {
         const isCorrect  = option.querySelector('.correct-option').checked;
  
         // CORRECTION : getRichTextValue au lieu de .value.trim()
-        const optionText   = getRichTextValue(`option-text-${questionId}-${optionId}`);
-        const feedbackText = getRichTextValue(`option-feedback-${questionId}-${optionId}`);
+        const optionText   = getRichTextValue(IDS.optionText(questionId, optionId));
+        const feedbackText = getRichTextValue(IDS.optionFeedback(questionId, optionId));
  
-        const weightSelect    = document.getElementById(`option-weight-${questionId}-${optionId}`);
+        const weightSelect    = document.getElementById(IDS.optionWeight(questionId, optionId));
         const weight          = weightSelect ? weightSelect.value : '0';
         const formattedWeight = formatWeight(weight);
  
@@ -400,7 +400,7 @@ function transformMCOptions(container, questionId) {
         const textElement = document.createElement('span');
         textElement.className = 'preview-option-text';
         if (optionText) {
-            textElement.innerHTML = optionText;
+            textElement.innerHTML = sanitizeRichHtml(optionText);
         } else {
             textElement.innerHTML = '<em class="preview-missing">Texte de l\'option manquant</em>';
         }
@@ -418,7 +418,7 @@ function transformMCOptions(container, questionId) {
         if (feedbackText) {
             const feedbackElement = document.createElement('div');
             feedbackElement.className = 'preview-option-feedback';
-            feedbackElement.innerHTML = feedbackText;
+            feedbackElement.innerHTML = sanitizeRichHtml(feedbackText);
             optionElement.appendChild(feedbackElement);
         }
  
@@ -432,7 +432,7 @@ function transformMCOptions(container, questionId) {
  * Transforme les options QCU
  */
 function transformSCOptions(container, questionId) {
-    const optionsList = document.getElementById(`sc-options-list-${questionId}`);
+    const optionsList = document.getElementById(IDS.scOptionsList(questionId));
     if (!optionsList) return;
  
     const optionsContainer = document.createElement('div');
@@ -444,8 +444,8 @@ function transformSCOptions(container, questionId) {
         const isCorrect  = option.querySelector('.correct-sc-option').checked;
  
         // CORRECTION : getRichTextValue au lieu de .value.trim()
-        const optionText   = getRichTextValue(`sc-option-text-${questionId}-${optionId}`);
-        const feedbackText = getRichTextValue(`sc-option-feedback-${questionId}-${optionId}`);
+        const optionText   = getRichTextValue(IDS.scOptionText(questionId, optionId));
+        const feedbackText = getRichTextValue(IDS.scOptionFeedback(questionId, optionId));
  
         const optionElement = document.createElement('div');
         optionElement.className = `preview-option ${isCorrect ? 'preview-option-correct' : 'preview-option-incorrect'}`;
@@ -460,7 +460,7 @@ function transformSCOptions(container, questionId) {
         const textElement = document.createElement('span');
         textElement.className = 'preview-option-text';
         if (optionText) {
-            textElement.innerHTML = optionText;
+            textElement.innerHTML = sanitizeRichHtml(optionText);
         } else {
             textElement.innerHTML = '<em class="preview-missing">Texte de l\'option manquant</em>';
         }
@@ -470,7 +470,7 @@ function transformSCOptions(container, questionId) {
         if (feedbackText) {
             const feedbackElement = document.createElement('div');
             feedbackElement.className = 'preview-option-feedback';
-            feedbackElement.innerHTML = feedbackText;
+            feedbackElement.innerHTML = sanitizeRichHtml(feedbackText);
             optionElement.appendChild(feedbackElement);
         }
  
@@ -484,7 +484,7 @@ function transformSCOptions(container, questionId) {
  * Transforme les options Vrai/Faux
  */
 function transformTFOptions(container, questionId) {
-    const isTrueCorrect = document.getElementById(`true-option-${questionId}`).checked;
+    const isTrueCorrect = document.getElementById(IDS.trueOption(questionId)).checked;
     
     const optionsContainer = document.createElement('div');
     optionsContainer.className = 'preview-options-list preview-tf-options';
@@ -514,7 +514,7 @@ function transformTFOptions(container, questionId) {
  * Transforme les options QRC
  */
 function transformSAOptions(container, questionId) {
-    const optionsList = document.getElementById(`sa-options-list-${questionId}`);
+    const optionsList = document.getElementById(IDS.saOptionsList(questionId));
     if (!optionsList) return;
     
     const optionsContainer = document.createElement('div');
@@ -524,10 +524,10 @@ function transformSAOptions(container, questionId) {
     const options = optionsList.querySelectorAll('.option-container');
     options.forEach((option, index) => {
         const optionId = option.querySelector('.remove-sa-option-btn').getAttribute('data-oid');
-        const caseType = document.getElementById(`sa-case-${questionId}-${optionId}`).value;
-        const answerText = document.getElementById(`sa-option-text-${questionId}-${optionId}`).value.trim();
-        const weight = document.getElementById(`sa-option-weight-${questionId}-${optionId}`).value.trim();
-        const feedbackElement = document.getElementById(`sa-option-feedback-${questionId}-${optionId}`);
+        const caseType = document.getElementById(IDS.saCase(questionId, optionId)).value;
+        const answerText = document.getElementById(IDS.saOptionText(questionId, optionId)).value.trim();
+        const weight = document.getElementById(IDS.saOptionWeight(questionId, optionId)).value.trim();
+        const feedbackElement = document.getElementById(IDS.saOptionFeedback(questionId, optionId));
         const feedbackText = feedbackElement ? feedbackElement.value.trim() : '';
         
         // Créer l'élément de réponse
@@ -585,9 +585,9 @@ function transformSAOptions(container, questionId) {
  * Transforme les options Numérique
  */
 function transformNumOptions(container, questionId) {
-    const answer = document.getElementById(`num-answer-${questionId}`).value.trim();
-    const useRange = document.getElementById(`num-range-${questionId}`).checked;
-    const margin = useRange ? document.getElementById(`num-margin-${questionId}`).value.trim() : '';
+    const answer = document.getElementById(IDS.numAnswer(questionId)).value.trim();
+    const useRange = document.getElementById(IDS.numRange(questionId)).checked;
+    const margin = useRange ? document.getElementById(IDS.numMargin(questionId)).value.trim() : '';
     
     const optionsContainer = document.createElement('div');
     optionsContainer.className = 'preview-options-list preview-num-options';
@@ -629,7 +629,7 @@ function transformNumOptions(container, questionId) {
  * Transforme le feedback général
  */
 function transformGeneralFeedback(question, questionId) {
-    const feedbackText = getRichTextValue(`general-feedback-${questionId}`);
+    const feedbackText = getRichTextValue(IDS.generalFeedback(questionId));
 
     const feedbackDisplay = document.createElement('div');
     feedbackDisplay.className = 'preview-display preview-general-feedback';
@@ -640,7 +640,7 @@ function transformGeneralFeedback(question, questionId) {
 
     const feedbackContent = document.createElement('span');
     if (feedbackText) {
-        feedbackContent.innerHTML = feedbackText;
+        feedbackContent.innerHTML = sanitizeRichHtml(feedbackText);
     } else {
         feedbackContent.innerHTML = '<em class="preview-missing">Feedback général manquant</em>';
     }
@@ -649,7 +649,7 @@ function transformGeneralFeedback(question, questionId) {
     question.appendChild(feedbackDisplay);
 
     // Masquer le champ original
-    const feedbackField = document.getElementById(`general-feedback-${questionId}`);
+    const feedbackField = document.getElementById(IDS.generalFeedback(questionId));
     if (feedbackField) {
         const formGroup = feedbackField.closest('.form-group') || feedbackField.closest('.rte-container');
         if (formGroup) formGroup.classList.add('preview-hidden-field');

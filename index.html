@@ -13,6 +13,8 @@
     <!-- Ajout du fichier CSS pour le mode prévisualisation -->
     <link rel="stylesheet" href="previewStyles.css">
     <link rel="stylesheet" href="mediaStyles.css">
+    <link rel="stylesheet" href="notifyStyles.css">
+    <link rel="stylesheet" href="confirmDialogStyles.css">
 
 </head>
 <body>
@@ -116,6 +118,9 @@
                 📦 Télécharger le ZIP
                 <span class="media-badge" id="media-count-badge" style="display:none">0 média</span>
             </button>
+            <button id="download-xml-btn" class="btn-download-xml" title="Export Moodle XML : supporte le feedback combiné (correct / partiellement correct / incorrect), impossible en GIFT.">
+                🎓 Moodle XML (.xml)
+            </button>
         </div>
 
         <!-- ACTION DESTRUCTIVE -->
@@ -134,7 +139,7 @@
             <div class="footer-content">
                 <div class="version">
                     <p>V. W. G. Grandsire</p>
-                    <p>Version beta 10</p>
+                    <p id="app-version"></p>
                 </div>
                 <div class="copyright">
                     <p>© 2026 CNED</p>
@@ -149,6 +154,10 @@
     </div>
 
     <!-- Scripts modularisés -->
+    <script src="sanitize.js"></script>
+    <script src="domIds.js"></script>
+    <script src="notify.js"></script>
+    <script src="confirmDialog.js"></script>
     <script src="richTextEditor.js"></script>
     <script src="core.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -156,6 +165,7 @@
     <script src="optionManager.js"></script>
     <script src="questionManager.js"></script>
     <script src="giftGenerator.js"></script>
+    <script src="exportMoodleXml.js"></script>
     <script src="importGift.js"></script>
     <script src="downloadManager.js"></script>
     <!-- Ajout des scripts d'aide -->

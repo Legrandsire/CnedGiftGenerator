@@ -3,7 +3,7 @@
  * Gestion de l'alerte de fermeture avec modifications non enregistrées
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+APP_INIT.push(function initUnsavedAlert() {
     // Initialiser le système de détection des modifications
     initUnsavedChangesDetection();
 });
