@@ -22,6 +22,63 @@
 
 ---
 
+## 2026-06-07 (suite 2) — Banques de questions / catégories (0.21.0)
+
+- **Objectif** : chantier ROADMAP n°2 — classer les questions en **banques**
+  (catégories Moodle `$CATEGORY`), avec identifiant `<code>[-B<NN>]-Q<NN>` et UI
+  repliable dans le formulaire **et** le sommaire, sans casser GIFT/XML/lisible
+  ni les 63 tests.
+- **Choix validés (AskUserQuestion)** : (1) numérotation `Q` **par banque** ;
+  (2) hors-banque conservant `CODE-QNN` (sans `-B`) → round-trip des fichiers
+  existants ; (3) chemin `$course$/<code>/<nom>` ; (4) déplacement par
+  **sélecteur de banque** par question ; (5) **une seule MINOR 0.21.0** ;
+  (6) regroupement DOM en vraies sections `<details>` + zone « Sans banque ».
+- **Architecture** : **DOM = source de vérité** (pas de modèle JS parallèle).
+  `#questions-container` → `.no-bank-zone` (toujours en tête) + sections
+  `<details.bank-section>` ; toute question vit dans un `.bank-questions` →
+  `querySelectorAll('.question-container')` reste dans l'ordre de génération.
+- **Livré en 0.21.0** :
+  - **Nouveau `categoryManager.js`** : création/renommage/suppression de banque,
+    sélecteur par question, **`computeFinalQuestionId` unifié** (dé-dupliqué de
+    giftGenerator + exportMoodleXml, consommé aussi par exportPrintable),
+    `buildCategoryPath`/`bankNameFromCategoryPath`/`ensureBankByName`,
+    `refreshBanks` (badges `B<NN>`, compteurs, flèches **par groupe**, sélecteurs,
+    **aperçu d'identifiant vivant**). **Nouveau `categoryStyles.css`**.
+  - **GIFT** (`giftGenerator.js`, `importGift.js`) : `$CATEGORY:` émis aux
+    transitions de banque ; reconnu à l'import (`splitGiftQuestions` renvoie
+    `{text, category}`).
+  - **XML** (`exportMoodleXml.js`, `importMoodleXml.js`) : `<question
+    type="category">` à l'export ; mapping inverse à l'import. **Code article**
+    embarqué (`<!-- course-code: … -->`) et rechargé à l'import.
+  - **Sommaire** (`summaryManager.js`) : en-têtes de groupe repliables, état de
+    repli persistant (`bankId`), flèches par groupe.
+  - **questionManager.js** : question créée dans la zone par défaut,
+    `addNewQuestion()` **retourne** l'élément (imports adaptés), sélecteur de
+    banque + aperçu d'ID câblés, `moveQuestion` confiné au groupe.
+- **Correctifs (retours utilisateur en cours de chantier)** :
+  - Import XML : champ « Code article » non chargé → embarqué en commentaire +
+    `deriveCourseCode` (commentaire, puis chemin de catégorie).
+  - Imports GIFT **et** XML : identifiants auto figés en « manuels » →
+    `cleanQuestionId` reconnaît `(-B<NN>)?-Q<NN>` et **vide** le champ si la base
+    = code article (reste dynamique) ; fonction exposée pour réemploi XML.
+- **Fichiers modifiés** : `core.js` (0.20.0 → 0.21.0), `domIds.js`,
+  `questionManager.js`, `giftGenerator.js`, `exportMoodleXml.js`,
+  `exportPrintable.js`, `importGift.js`, `importMoodleXml.js`, `summaryManager.js`,
+  `summaryStyles.css`, `index.html`, `tests/tests.html`, `tests/testRunner.js`,
+  `CHANGELOG.md`, `ROADMAP.md`, `Spec.md`, `CLAUDE.md`. **Nouveaux** :
+  `categoryManager.js`, `categoryStyles.css`.
+- **Tests** : +9 (section 6) → **72** au total. Validés en Node (syntaxe des
+  fichiers ; logique pure de `buildFinalQuestionId`, `cleanQuestionId`,
+  extraction `$CATEGORY` et chemins). Round-trip DOM + DOMParser exigent le
+  navigateur.
+- **En suspens / à valider** : ouvrir `tests/tests.html` et confirmer les **72
+  tests** verts au navigateur avant le tag. Fonctionnellement validé par
+  l'utilisateur (import/export GIFT et XML, déplacement, aperçu d'ID).
+- **Tag Git proposé (non exécuté)** : `v0.21.0`.
+- **Version** : 0.21.0 (MINOR — banques de questions, rétrocompatible).
+
+---
+
 ## 2026-06-07 (suite) — Export lisible PDF + RTF + HTML (0.20.0)
 
 - **Objectif** : chantier ROADMAP n°4 — produire un document **lisible par un

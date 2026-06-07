@@ -11,6 +11,51 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.21.0] — 2026-06-07
+
+### Ajouté
+- **Banques de questions** (catégories Moodle `$CATEGORY`) — chantier ROADMAP
+  n°2. Nouveau module `categoryManager.js` + `categoryStyles.css`. Permet de
+  classer les questions en banques reproduisant les catégories de la banque de
+  questions Moodle.
+  - **Sections repliables** : chaque banque est une section `<details>` (badge
+    `B<NN>`, nom éditable, compteur, actions « + question » / « Supprimer »),
+    avec une zone **« Sans banque »** en tête. Boutons globaux **« 📚 Ajouter une
+    banque »** et **« Tout replier/déplier »**. Même regroupement repliable dans
+    le **sommaire** (en-têtes de groupe, état de repli persistant).
+  - **Identifiant** : format `<code>[-B<NN>]-Q<NN>`. Le segment `-B<NN>`
+    n'apparaît que pour une banque (numéro = ordre des banques, stable au
+    renommage) ; la numérotation `Q<NN>` **repart à 01 dans chaque banque** (et
+    dans la zone sans-banque). Une question hors banque garde l'ancien format
+    `CODE-QNN` → fichiers existants inchangés. **Aperçu d'identifiant vivant**
+    sous le champ : il s'adapte en direct au déplacement / changement de banque.
+  - **Déplacement** : un sélecteur **« Banque »** par question déplace celle-ci
+    entre banques ; les flèches ↑/↓ réordonnent **à l'intérieur** d'un groupe.
+  - **GIFT** : émission d'une directive `$CATEGORY: $course$/<code>/<nom>` en
+    tête de chaque banque ; reconnaissance à l'**import** (recréation des banques,
+    jusqu'ici ignorée).
+  - **Moodle XML** : entrées `<question type="category">` à l'export ; mapping
+    inverse à l'import. Le **code article** est désormais embarqué en commentaire
+    (`<!-- course-code: … -->`) et **rechargé à l'import XML** (champ « Code
+    article »), là où l'XML n'a pas de champ natif.
+
+### Modifié
+- **Règle d'identifiant unifiée** : `computeFinalQuestionId`, jusqu'ici
+  **dupliquée** (`giftGenerator.js` + `exportMoodleXml.js`) et consommée par
+  `exportPrintable.js`, est désormais **centralisée** dans `categoryManager.js`
+  (sensible à la banque). Les trois sorties (GIFT, XML, lisible) partagent la
+  même règle.
+- **Import (GIFT et XML)** : un identifiant **auto-généré** (`<code>[-B<NN>]-Q<NN>`)
+  est désormais correctement reconnu et **laissé vide** → l'identifiant reste
+  **recalculé dynamiquement** après import (au lieu d'être figé en « manuel »).
+
+### Tests
+- +9 tests (section 6) : identifiant `B<NN>` (pur), chemins de catégorie,
+  hors-banque `CODE-QNN`, `$CATEGORY` GIFT, round-trip GIFT et XML des banques,
+  rechargement du code article, distinction auto/manuel à l'import.
+
+---
+
 ## [0.20.0] — 2026-06-07
 
 ### Ajouté

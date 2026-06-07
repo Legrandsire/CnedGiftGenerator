@@ -14,6 +14,9 @@ window.IDS = {
     questionText:    (qid) => `question-text-${qid}`,
     generalFeedback: (qid) => `general-feedback-${qid}`,
 
+    // ── Banque (catégorie Moodle) — cf. categoryManager.js ───────────────────
+    bankSelect:      (qid) => `bank-select-${qid}`,
+
     // ── Feedback combiné (QCM/QCU) — export Moodle XML uniquement ─────────────
     // Trois messages distincts selon le résultat. Sans équivalent GIFT, donc
     // ignorés à l'export GIFT (cf. exportMoodleXml.js, ROADMAP chantier n°5).

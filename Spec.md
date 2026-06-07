@@ -56,10 +56,17 @@ La sortie HTML est nettoyée avant insertion dans le code GIFT.
 
 ### 2.4 Identifiants de question
 
-- Format final : `CODE-QNN` (numéro sur deux chiffres).
+- Format final : `CODE[-B<NN>]-Q<NN>` (numéros sur deux chiffres). Le segment
+  `-B<NN>` n'apparaît que si la question appartient à une **banque** (cf. 2.12) ;
+  le numéro `Q<NN>` **repart à 01 dans chaque groupe** (zone sans-banque incluse).
 - Si l'utilisateur ne fournit pas d'identifiant : préfixe = code article (ou
-  `Q` à défaut), suffixe = numéro d'ordre.
-- Si l'identifiant fourni ne se termine pas par `-QNN`, le suffixe est ajouté.
+  `Q` à défaut), segment de banque éventuel, suffixe = numéro d'ordre dans le
+  groupe. Un **aperçu vivant** sous le champ reflète l'identifiant final et
+  s'adapte au déplacement / changement de banque.
+- Si l'identifiant fourni se termine déjà par `-Q<NN>`, il est conservé tel quel ;
+  sinon le segment de banque et le suffixe `-Q<NN>` sont ajoutés.
+- Règle **centralisée** dans `categoryManager.js` (`computeFinalQuestionId`),
+  partagée par les exports GIFT, Moodle XML et lisible.
 
 ### 2.5 Médias
 
@@ -82,15 +89,23 @@ Application automatique des espaces insécables avant la ponctuation double
   (détection de la racine `<quiz>` pour le XML).
 - **Import GIFT** : validation du format (présence d'au moins une structure de
   question, équilibre des accolades), parsing et reconstruction des questions.
+  Les directives `$CATEGORY:` sont reconnues → **banques recréées** (cf. 2.12).
+- **Identifiants auto** : un identifiant importé de forme `CODE[-B<NN>]-Q<NN>`
+  (préfixe = code article) est reconnu comme auto-généré et **laissé vide**, pour
+  qu'il reste recalculé dynamiquement ; un identifiant manuel est conservé.
 - **Import Moodle XML** : parsing `DOMParser`, mapping inverse des 5 types,
   restitution du **feedback combiné** et de l'`<usecase>` (impossible via GIFT),
-  médias `base64` décodés et réattachés. Les types non gérés (essay, matching,
-  cloze…) sont **ignorés** avec un récapitulatif. HTML importé assaini
-  (`sanitizeRichHtml`).
+  médias `base64` décodés et réattachés. Les entrées `<question type="category">`
+  recréent les **banques** (cf. 2.12) ; le **code article** est rechargé depuis
+  le commentaire `<!-- course-code: … -->` (ou un chemin de catégorie). Les types
+  non gérés (essay, matching, cloze…) sont **ignorés** avec un récapitulatif.
+  HTML importé assaini (`sanitizeRichHtml`).
 
 ### 2.8 Export
 
-- `.txt` : code GIFT seul.
+- `.txt` : code GIFT seul. Une directive `$CATEGORY: $course$/<code>/<nom>` est
+  émise en tête de chaque **banque** (cf. 2.12) ; les questions sans banque
+  restent en tête sans directive (catégorie Moodle par défaut).
 - `.zip` : code GIFT + médias renommés selon l'identifiant final.
 - `.xml` : **format Moodle XML** (module `exportMoodleXml.js`, depuis 0.18.0),
   en plus du GIFT. Couvre les 5 types (mc→`multichoice` single=false,
@@ -99,7 +114,10 @@ Application automatique des espaces insécables avant la ponctuation double
   `<![CDATA[…]]>`. **Médias embarqués en `base64`** (depuis 0.19.0) :
   `<file … encoding="base64">` placé dans `<questiontext>` (`path="/"`) → fichier
   `.xml` **autonome**, rangé par Moodle dans la *filearea* de la question
-  (aucun répertoire à choisir). Avertissement de poids au-delà de ~10 Mo.
+  (aucun répertoire à choisir). Avertissement de poids au-delà de ~10 Mo. Une
+  entrée `<question type="category">` précède chaque **banque** (cf. 2.12) ; le
+  **code article** est embarqué en commentaire `<!-- course-code: … -->` pour
+  être rechargé à l'import.
 
 ### 2.9 Feedback combiné (QCM / QCU)
 
@@ -131,6 +149,28 @@ poids, QRC avec sensibilité à la casse, Numérique avec marge, Vrai/Faux), ave
 Une fonction partagée `readQuestionState()` lit l'état normalisé de chaque
 question ; les exports GIFT et Moodle XML restent inchangés.
 
+### 2.12 Banques de questions (catégories)
+
+Classement des questions en **banques**, reproduisant les catégories de la banque
+de questions Moodle (module `categoryManager.js` + `categoryStyles.css`, depuis
+0.21.0).
+
+- **Organisation** : chaque banque est une **section repliable** (`<details>`) du
+  formulaire — en-tête avec badge `B<NN>`, nom éditable, compteur et actions
+  (ajouter une question, supprimer) — précédée d'une zone **« Sans banque »**.
+  Boutons globaux « 📚 Ajouter une banque » et « Tout replier/déplier ». Le
+  **sommaire** reflète le même regroupement repliable.
+- **Numéro vs nom** : `B<NN>` (numéro = ordre des banques, stable au renommage)
+  sert à l'**identifiant** (cf. 2.4) ; le **nom libre** alimente la catégorie
+  Moodle et l'affichage.
+- **Déplacement** : un **sélecteur de banque** par question la déplace entre
+  banques ; les flèches ↑/↓ réordonnent à l'intérieur d'un groupe.
+- **Chemin de catégorie** : `$course$/<code article>/<nom de banque>` (segment
+  code omis si vide ; « / » du nom neutralisé). Émis en GIFT (`$CATEGORY:`) et en
+  Moodle XML (`<question type="category">`), reconnu aux imports correspondants.
+- **Rétrocompatibilité** : sans aucune banque, la sortie est identique à
+  l'historique (questions `CODE-QNN`, aucune directive).
+
 ### 2.10 Fonctions d'assistance
 
 - **Panneau d'aide** latéral à onglets, **tooltips**, **tour guidé** au premier
@@ -150,7 +190,8 @@ question ; les exports GIFT et Moodle XML restent inchangés.
 ### Fonctionnalités
 
 - [ ] **Déplacer des questions** (réordonnancement dans la liste).
-- [ ] **Banques de questions** : classer les questions par banque.
+- [x] **Banques de questions** : classer les questions par banque — livré en
+  0.21.0 (cf. 2.12).
 - [ ] **Nombre de questions par page** : paramétrage à l'export.
 - [x] **Export lisible : PDF (impression) + RTF + HTML autonome** — livré en
   0.20.0 (cf. 2.11).

@@ -18,7 +18,7 @@
 |---|---|---|---|---|---|
 | 0 | Qualité : correctif `dlog` + déplacement des questions | ✅ (sans impact) | Faible | **1** | `[x]` 0.16.0 |
 | 1 | Déplacer les questions (flèches ↑/↓) | ✅ (sans impact) | Faible | **1** | `[x]` 0.16.0 |
-| 2 | Banque de questions (catégories `$CATEGORY`) | ✅ Nativement | Moyen | 2 | `[ ]` |
+| 2 | Banque de questions (catégories `$CATEGORY`) | ✅ Nativement | Moyen | 2 | `[x]` 0.21.0 |
 | 3 | Sauvegarde native (localStorage / IndexedDB) | n/a (local) | Moyen | 3 | `[ ]` |
 | 4 | Export lisible : PDF (impression) + RTF | n/a (export) | Moyen | 4 | `[x]` 0.20.0 |
 | 5 | Feedback combiné → export **Moodle XML** | ❌ GIFT / ✅ XML | Élevé | 5 | `[x]` 0.18.0 |
@@ -43,7 +43,20 @@ Réalisé dans la session du 2026-06-06. Voir `CHANGELOG.md` [0.16.0] et
 
 ---
 
-## 2. Banque de questions (catégories)
+## 2. Banque de questions (catégories) — `[x]` livré en 0.21.0
+
+> **Livré** dans la session du 2026-06-07 (0.21.0). Nouveau module
+> `categoryManager.js` + `categoryStyles.css`. Banques = sections `<details>`
+> repliables (+ zone « Sans banque ») dans le formulaire **et** le sommaire ;
+> sélecteur de banque par question ; **identifiant unifié** `<code>[-B<NN>]-Q<NN>`
+> (`computeFinalQuestionId` centralisé, dé-dupliqué des 3 consommateurs) avec
+> **aperçu vivant** ; `$CATEGORY:` émis/reconnu en GIFT et `<question
+> type="category">` en Moodle XML ; **code article** embarqué/rechargé à l'import
+> XML ; identifiants auto **laissés vides** à l'import (GIFT+XML) pour rester
+> dynamiques. +9 tests (section 6). Choix validés (AskUserQuestion) : numérotation
+> Q **par banque**, hors-banque conservant `CODE-QNN`, chemin
+> `$course$/<code>/<nom>`, déplacement par **sélecteur**, version unique 0.21.0.
+> Descriptif d'origine conservé ci-dessous pour la traçabilité.
 
 **Objectif.** Permettre de classer les questions en « banques »/catégories, pour
 reproduire le fonctionnement des banques de questions Moodle (un quiz pioche des

@@ -266,6 +266,56 @@
     }
 }
 
+/* ── Regroupement par banque dans le sommaire (v0.21.0) ───────────────────── */
+
+/* Ligne d'en-tête de groupe (banque ou « Sans banque ») — cliquable pour replier. */
+.summary-group-row > .summary-group-cell {
+    background: linear-gradient(0deg, #effaf8, #e3f6f0);
+    border-top: 2px solid #00bcb4;
+    padding: 8px 12px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.9rem;
+}
+
+.summary-group-toggle {
+    display: inline-block;
+    width: 1em;
+    color: #2da288;
+    font-size: 0.85rem;
+}
+
+.summary-group-badge {
+    display: inline-block;
+    background: #2da288;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin: 0 8px;
+}
+.summary-group-badge.none {
+    background: #9aa6a3;
+}
+
+.summary-group-name {
+    font-weight: 600;
+    color: #1c4f44;
+}
+
+.summary-group-count {
+    color: #5a7a73;
+    font-size: 0.8rem;
+    margin-left: 8px;
+}
+
+/* Lignes de questions masquées quand leur groupe est replié. */
+.summary-row-hidden {
+    display: none;
+}
+
 /* Icône média dans le sommaire */
 .summary-media-icon {
     display: inline-block;

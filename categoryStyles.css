@@ -1,0 +1,212 @@
+/* ── Banques de questions (catégories Moodle) — v0.21.0 ─────────────────────
+   Domaine : categoryManager.js. Charte CNED (turquoise #2da288 / #00bcb4,
+   rose #ae2585). Repli natif via <details>/<summary> (cohérent avec le
+   « feedback combiné »). */
+
+/* ── En-tête de question : cluster droit (banque + flèches) ───────────────── */
+.question-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.question-bank-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #4a4a4a;
+}
+
+.question-bank-control label {
+    margin: 0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.bank-select {
+    border: 1px solid #AED6F1;
+    border-radius: 4px;
+    padding: 4px 6px;
+    background-color: #ffffff;
+    color: #1c1c1c;
+    cursor: pointer;
+    max-width: 180px;
+}
+
+.bank-select:focus {
+    outline: none;
+    border-color: #00bcb4;
+    box-shadow: 0 0 0 2px rgba(0, 188, 180, 0.25);
+}
+
+/* ── Boutons de la barre d'action (à côté de « Ajouter une question ») ────── */
+.add-bank-btn {
+    background-color: #00bcb4;
+}
+.add-bank-btn:hover {
+    background-color: #019a93;
+}
+
+.toggle-banks-btn {
+    background-color: #ffffff;
+    color: #2da288;
+    border: 1px solid #2da288;
+}
+.toggle-banks-btn:hover {
+    background-color: #e3f6f0;
+}
+
+/* ── Zone « Sans banque » ─────────────────────────────────────────────────── */
+.no-bank-zone {
+    margin-bottom: 14px;
+}
+
+/* L'en-tête « Sans banque » n'a de sens que lorsqu'au moins une banque existe :
+   sans banque du tout, l'interface reste identique à l'historique (simple liste). */
+.no-bank-header {
+    display: none;
+}
+#questions-container.has-banks .no-bank-header {
+    display: block;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+    border-left: 4px solid #b8b8b8;
+    background: #f4f4f4;
+    color: #555;
+    font-size: 0.9rem;
+    border-radius: 0 4px 4px 0;
+}
+
+.no-bank-title {
+    font-weight: 700;
+}
+
+.no-bank-count {
+    color: #777;
+    font-size: 0.85rem;
+}
+
+/* Zone « Sans banque » vide alors que des banques existent → masquée. */
+#questions-container.has-banks .no-bank-zone.is-empty {
+    display: none;
+}
+
+/* ── Section de banque (repliable) ────────────────────────────────────────── */
+.bank-section {
+    border: 1px solid #00bcb4;
+    border-radius: 6px;
+    margin: 0 0 18px 0;
+    background: #f7fdfc;
+    overflow: hidden;
+}
+
+.bank-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    cursor: pointer;
+    background: linear-gradient(0deg, #effaf8, #e3f6f0);
+    list-style: none;            /* masque le marqueur par défaut (remplacé ci-dessous) */
+    user-select: none;
+}
+.bank-summary::-webkit-details-marker { display: none; }
+
+/* Chevron maison, piloté par l'état open de <details>. */
+.bank-summary::before {
+    content: "▸";
+    color: #2da288;
+    font-size: 0.9rem;
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+}
+.bank-section[open] > .bank-summary::before {
+    transform: rotate(90deg);
+}
+
+.bank-badge {
+    flex-shrink: 0;
+    background: #2da288;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.bank-name {
+    flex: 1 1 180px;
+    min-width: 120px;
+    border: 1px solid #cfe9e3;
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1c1c1c;
+    background: #ffffff;
+}
+.bank-name:focus {
+    outline: none;
+    border-color: #00bcb4;
+    box-shadow: 0 0 0 2px rgba(0, 188, 180, 0.25);
+}
+
+.bank-count {
+    flex-shrink: 0;
+    color: #5a7a73;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.bank-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.bank-add-question-btn,
+.bank-delete-btn {
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.bank-add-question-btn {
+    background: #2da288;
+    color: #ffffff;
+}
+.bank-add-question-btn:hover {
+    background: #259678;
+}
+
+.bank-delete-btn {
+    background: #ffffff;
+    color: #ae2585;
+    border: 1px solid #e6b8d2;
+}
+.bank-delete-btn:hover {
+    background: #fbeaf3;
+    border-color: #ae2585;
+}
+
+/* Conteneur des questions d'une banque. */
+.bank-questions {
+    padding: 4px 12px 12px 12px;
+}
+
+/* Une banque sans question affiche un repère discret. */
+.bank-section .bank-questions:empty::before {
+    content: "Aucune question dans cette banque — utilisez « + question » ou le sélecteur « Banque » d'une question.";
+    display: block;
+    padding: 10px 4px;
+    color: #8a9a96;
+    font-size: 0.85rem;
+    font-style: italic;
+}

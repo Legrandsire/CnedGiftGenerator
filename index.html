@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="mediaStyles.css">
     <link rel="stylesheet" href="notifyStyles.css">
     <link rel="stylesheet" href="confirmDialogStyles.css">
+    <!-- Styles des banques de questions (catégories Moodle) -->
+    <link rel="stylesheet" href="categoryStyles.css">
     <!-- Styles de l'export lisible (PDF / HTML). Règles scopées sous .printable-doc :
          sans effet sur l'app ; inlinées dans le document généré par exportPrintable.js. -->
     <link rel="stylesheet" href="printStyles.css">
@@ -100,6 +102,8 @@
         
         <div class="add-question-section">
             <button id="add-question-btn" class="add-btn">Ajouter une question</button>
+            <button id="add-bank-btn" class="add-btn add-bank-btn" title="Créer une banque (catégorie Moodle) regroupant des questions">📚 Ajouter une banque</button>
+            <button id="toggle-all-banks-btn" class="control-btn toggle-banks-btn" title="Replier ou déplier toutes les banques">Tout replier</button>
         </div>
         
        <div class="form-group button-group">
@@ -175,6 +179,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="mediaManager.js"></script>
     <script src="optionManager.js"></script>
+    <script src="categoryManager.js"></script>
     <script src="questionManager.js"></script>
     <script src="giftGenerator.js"></script>
     <script src="exportMoodleXml.js"></script>

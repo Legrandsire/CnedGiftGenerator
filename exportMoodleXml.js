@@ -87,30 +87,26 @@ function formatXmlHtml(raw) {
     return addHtmlTags(addNonBreakingSpaces(raw));
 }
 
-// ── Lecture du DOM (réutilise les helpers partagés, sans dupliquer la logique
-//    métier de giftGenerator.js) ──────────────────────────────────────────────
-
 /**
- * Calcule l'identifiant GIFT final d'une question — même règle que
- * generateGIFTCode() (CODE-QNN). Réimplémenté ici pour ne pas dépendre d'une
- * génération GIFT préalable.
- *
- * @param {string} questionIdValue — valeur saisie du champ identifiant
- * @param {number} index           — position (0-based)
- * @param {string} courseCodeValue — code matière
+ * Entrée Moodle `<question type="category">` plaçant les questions suivantes dans
+ * une catégorie (banque). Le chemin est identique à la directive GIFT $CATEGORY.
+ * @param {string} path — ex. « $course$/CODE/Algèbre »
  * @returns {string}
  */
-function computeFinalQuestionId(questionIdValue, index, courseCodeValue) {
-    const questionNumber = (index + 1).toString().padStart(2, '0');
-    if (!questionIdValue) {
-        const prefix = courseCodeValue ? courseCodeValue : 'Q';
-        return `${prefix}-Q${questionNumber}`;
-    }
-    if (!/-Q\d+$/.test(questionIdValue)) {
-        return `${questionIdValue}-Q${questionNumber}`;
-    }
-    return questionIdValue;
+function buildXmlCategory(path) {
+    return '\n  <question type="category">\n' +
+           '    <category>\n' +
+           `      <text>${xmlEscapeText(path)}</text>\n` +
+           '    </category>\n' +
+           '  </question>';
 }
+
+// ── Lecture du DOM (réutilise les helpers partagés, sans dupliquer la logique
+//    métier de giftGenerator.js) ──────────────────────────────────────────────
+//
+// NB : la règle d'identifiant final (computeFinalQuestionId) est désormais
+// UNIFIÉE dans categoryManager.js — elle est sensible à la banque (segment
+// -B<NN>). On l'appelle ici en passant l'élément question (et non plus un index).
 
 /**
  * Construit la balise HTML média à insérer dans le texte de la question, pointant
@@ -315,7 +311,7 @@ function buildXmlQuestion(question, index, courseCodeValue, mediaBase64) {
 
     const questionIdField = document.getElementById(IDS.questionId(questionId));
     const questionIdValue = questionIdField ? questionIdField.value.trim() : '';
-    const finalQuestionId = computeFinalQuestionId(questionIdValue, index, courseCodeValue);
+    const finalQuestionId = computeFinalQuestionId(questionIdValue, question, courseCodeValue);
 
     const generalFeedback = getRichTextValue(IDS.generalFeedback(questionId));
 
@@ -421,11 +417,34 @@ function generateMoodleXmlCode(mediaBase64) {
     const courseCodeValue = courseCodeEl ? courseCodeEl.value.trim() : '';
 
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<quiz>';
+
+    // Code article embarqué en commentaire (l'XML Moodle n'a pas de champ dédié).
+    // Permet à l'import de recharger le champ « Code article » et de reconnaître
+    // les identifiants auto-générés. Émis seulement s'il est renseigné.
+    // Un commentaire XML ne peut contenir « -- » ni « > ».
+    if (courseCodeValue) {
+        const safeCode = courseCodeValue.replace(/-{2,}/g, '-').replace(/[<>]/g, '');
+        xml += `\n  <!-- course-code: ${safeCode} -->`;
+    }
+
     let count = 0;
 
+    // Les questions sont dans l'ordre du document : groupe « Sans banque »
+    // d'abord (aucune entrée catégorie = catégorie par défaut à l'import), puis
+    // chaque banque. On insère une entrée `<question type="category">` au passage
+    // dans une nouvelle banque (même chemin que la directive GIFT $CATEGORY).
+    let emittedBankNum; // sentinel (undefined) → force la 1ʳᵉ décision
     questions.forEach((question, index) => {
         const block = buildXmlQuestion(question, index, courseCodeValue, mediaBase64);
         if (block) {
+            const info = getQuestionBankInfo(question);
+            if (info.bankNum !== emittedBankNum) {
+                emittedBankNum = info.bankNum;
+                if (info.bankNum) {
+                    const label = 'B' + String(info.bankNum).padStart(2, '0');
+                    xml += buildXmlCategory(buildCategoryPath(courseCodeValue, info.bankName, label));
+                }
+            }
             xml += block;
             count++;
         }

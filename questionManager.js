@@ -9,15 +9,23 @@ questionDiv.dataset.id = window.questionCounter;
     questionDiv.innerHTML = `
         <div class="question-header">
             <h2>Question ${document.querySelectorAll('.question-container').length + 1}</h2>
-            <div class="question-move-controls">
-                <button type="button" class="move-btn move-up-btn" data-qid="${window.questionCounter}" title="Monter cette question">▲</button>
-                <button type="button" class="move-btn move-down-btn" data-qid="${window.questionCounter}" title="Descendre cette question">▼</button>
+            <div class="question-header-right">
+                <div class="question-bank-control">
+                    <label for="${IDS.bankSelect(window.questionCounter)}">Banque&nbsp;:</label>
+                    <select id="${IDS.bankSelect(window.questionCounter)}" class="bank-select" data-qid="${window.questionCounter}" title="Banque (catégorie Moodle) de cette question">
+                        <option value="">Sans banque</option>
+                    </select>
+                </div>
+                <div class="question-move-controls">
+                    <button type="button" class="move-btn move-up-btn" data-qid="${window.questionCounter}" title="Monter cette question dans son groupe">▲</button>
+                    <button type="button" class="move-btn move-down-btn" data-qid="${window.questionCounter}" title="Descendre cette question dans son groupe">▼</button>
+                </div>
             </div>
         </div>
         <div class="form-group">
             <label for="${IDS.questionId(window.questionCounter)}">Identifiant/Numéro de question: <span class="optional-field">(facultatif)</span></label>
             <input type="text" id="${IDS.questionId(window.questionCounter)}" placeholder="Laissez vide pour générer automatiquement">
-            <p class="info-text">Si non renseigné, un identifiant sera généré avec le format: [Code matière]-Q${window.questionCounter}</p>
+            <p class="info-text id-preview">Identifiant généré automatiquement.</p>
         </div>
         <div class="form-group">
             <label for="question-type-${window.questionCounter}">Type de question:</label>
@@ -147,19 +155,28 @@ questionDiv.dataset.id = window.questionCounter;
         <button class="remove-btn remove-question-btn" data-qid="${window.questionCounter}">Supprimer cette question</button>
     `;
     
-    window.questionsContainer.appendChild(questionDiv);
+    // Accueil par défaut : zone « Sans banque » (catégorie par défaut). Repli
+    // sur le conteneur si categoryManager n'est pas chargé (contexte de test).
+    const parent = (typeof getDefaultQuestionParent === 'function')
+        ? getDefaultQuestionParent()
+        : window.questionsContainer;
+    parent.appendChild(questionDiv);
     renumberQuestions();
- 
-    // Initialiser les éditeurs RTE de la nouvelle question
-    const newQuestion = window.questionsContainer.lastElementChild;
-    initRichTextEditors(newQuestion);
- 
+
+    // Initialiser les éditeurs RTE de la question fraîchement ajoutée (on tient
+    // l'élément directement : il n'est plus forcément le dernier enfant du
+    // conteneur depuis l'introduction des zones/banques).
+    initRichTextEditors(questionDiv);
+
     // Attacher le bloc média à la nouvelle question (mediaManager garanti chargé — [A3])
     attachMediaToQuestion(window.questionCounter);
 
     // Options par défaut + câblage des événements (sous-fonctions — [M3])
     addDefaultOptions(window.questionCounter);
     wireQuestionEvents(questionDiv, window.questionCounter);
+
+    // Renvoie l'élément créé (utilisé par les imports et par l'ajout dans une banque).
+    return questionDiv;
 }
 
 // ── Sous-fonctions de addNewQuestion ([M3]) ─────────────────────────────────
@@ -214,11 +231,35 @@ function wireQuestionEvents(questionDiv, questionId) {
         moveQuestion(this.getAttribute('data-qid'), 'down');
     });
 
+    // Aperçu vivant de l'identifiant final : se met à jour quand l'auteur tape
+    // dans le champ identifiant (le déplacement/changement de banque passe, lui,
+    // par refreshBanks()).
+    const idField = document.getElementById(IDS.questionId(questionId));
+    if (idField && typeof updateQuestionIdPreview === 'function') {
+        idField.addEventListener('input', function () {
+            updateQuestionIdPreview(questionDiv);
+        });
+    }
+
+    // Sélecteur de banque : déplace la question vers la banque choisie (ou « Sans
+    // banque » si valeur vide). Les options sont (re)peuplées par refreshBanks().
+    const bankSelect = questionDiv.querySelector('.bank-select');
+    if (bankSelect) {
+        bankSelect.addEventListener('change', function () {
+            if (typeof moveQuestionToBank !== 'function') return;
+            const targetSection = this.value
+                ? document.querySelector(`.bank-section[data-bank-id="${this.value}"]`)
+                : null;
+            moveQuestionToBank(questionDiv, targetSection);
+        });
+    }
+
     questionDiv.querySelector('.remove-question-btn').addEventListener('click', function () {
         const qid = this.getAttribute('data-qid');
         const questionElement = document.querySelector(`.question-container[data-id="${qid}"]`);
         cleanupMediaForQuestion(qid);
-        window.questionsContainer.removeChild(questionElement);
+        // .remove() : le parent est désormais une zone/banque, plus le conteneur.
+        questionElement.remove();
         renumberQuestions();
     });
 }
@@ -228,6 +269,9 @@ function wireQuestionEvents(questionDiv, questionId) {
  * renumérote et rafraîchit le sommaire. Les médias étant indexés par l'id
  * interne (dataset.id) et non par la position, le déplacement n'a aucun effet
  * sur eux. L'identifiant GIFT auto (CODE-QNN) suit le nouvel ordre.
+ * Le déplacement reste CONFINÉ au groupe de la question (zone « Sans banque » ou
+ * banque) : on n'échange qu'avec un frère .question-container, jamais avec le
+ * <summary> d'une banque. Changer de banque passe par le sélecteur dédié.
  * @param {string|number} questionId - dataset.id de la question à déplacer
  * @param {'up'|'down'}   direction
  */
@@ -237,10 +281,14 @@ function moveQuestion(questionId, direction) {
 
     if (direction === 'up') {
         const prev = question.previousElementSibling;
-        if (prev) question.parentNode.insertBefore(question, prev);
+        if (prev && prev.classList.contains('question-container')) {
+            question.parentNode.insertBefore(question, prev);
+        }
     } else if (direction === 'down') {
         const next = question.nextElementSibling;
-        if (next) question.parentNode.insertBefore(next, question);
+        if (next && next.classList.contains('question-container')) {
+            question.parentNode.insertBefore(next, question);
+        }
     }
 
     renumberQuestions();
@@ -295,7 +343,6 @@ function setupNumericQuestionHandlers(questionId) {
 
 function renumberQuestions() {
     const questions = document.querySelectorAll('.question-container');
-    const lastIndex = questions.length - 1;
     questions.forEach((question, index) => {
         const expectedTitle = `Question ${index + 1}`;
         const expectedClass = (index + 1) % 2 === 0 ? 'question-even' : 'question-odd';
@@ -311,17 +358,10 @@ function renumberQuestions() {
             question.classList.remove('question-odd', 'question-even');
             question.classList.add(expectedClass);
         }
-
-        // Désactiver les flèches aux extrémités (on ne peut pas monter la
-        // première ni descendre la dernière). Même garde [P1] : n'écrire que
-        // si l'état change réellement.
-        const upBtn = question.querySelector('.move-up-btn');
-        const downBtn = question.querySelector('.move-down-btn');
-        if (upBtn && upBtn.disabled !== (index === 0)) {
-            upBtn.disabled = (index === 0);
-        }
-        if (downBtn && downBtn.disabled !== (index === lastIndex)) {
-            downBtn.disabled = (index === lastIndex);
-        }
     });
+
+    // Banques : numéros B<NN>, compteurs, flèches PAR GROUPE et sélecteurs de
+    // banque. La désactivation des flèches d'extrémité s'y fait désormais groupe
+    // par groupe (on ne déplace plus qu'à l'intérieur d'un groupe).
+    if (typeof refreshBanks === 'function') refreshBanks();
 }

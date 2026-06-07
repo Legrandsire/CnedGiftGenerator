@@ -910,6 +910,133 @@
         });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // 6. TESTS BANQUES DE QUESTIONS (chantier n°2 — catégories $CATEGORY)
+    // ─────────────────────────────────────────────────────────────────────────
+    async function runBankTests() {
+        const qEl = (qid) => document.querySelector(`.question-container[data-id="${qid}"]`);
+        // Crée une question Vrai/Faux AVEC énoncé (sinon la génération l'ignore).
+        const tfQuestion = () => {
+            const id = newQuestion('tf');
+            setRichTextValue(`question-text-${id}`, 'Énoncé');
+            return id;
+        };
+
+        // ── Fonctions pures ──────────────────────────────────────────────────
+        await test('Banque : buildFinalQuestionId (hors banque / banque / manuel)', () => {
+            assertEqual(buildFinalQuestionId('', 'CODE', null, 1), 'CODE-Q01', 'hors banque');
+            assertEqual(buildFinalQuestionId('', 'CODE', 2, 3), 'CODE-B02-Q03', 'en banque B02, Q03');
+            assertEqual(buildFinalQuestionId('FOO', 'CODE', 1, 2), 'FOO-B01-Q02', 'préfixe manuel + banque');
+            assertEqual(buildFinalQuestionId('FOO-Q05', 'CODE', 1, 2), 'FOO-Q05', 'ID manuel complet conservé');
+            assertEqual(buildFinalQuestionId('', '', null, 1), 'Q-Q01', 'sans code article → préfixe Q');
+        });
+
+        await test('Banque : buildCategoryPath et bankNameFromCategoryPath', () => {
+            assertEqual(buildCategoryPath('CODE', 'Algèbre', 'B01'), '$course$/CODE/Algèbre', 'chemin code + nom');
+            assertEqual(buildCategoryPath('', 'Géométrie', 'B02'), '$course$/Géométrie', 'sans code article');
+            assertEqual(buildCategoryPath('CODE', 'a/b', 'B01'), '$course$/CODE/a-b', '« / » du nom neutralisé');
+            assertEqual(bankNameFromCategoryPath('$course$/CODE/Algèbre'), 'Algèbre', 'feuille du chemin');
+            assertEqual(bankNameFromCategoryPath('Algèbre'), 'Algèbre', 'nom seul');
+        });
+
+        // ── Génération GIFT ──────────────────────────────────────────────────
+        await test('Banque GIFT : question hors banque garde CODE-QNN (sans -B)', () => {
+            resetApp();
+            window.courseCode.value = 'CODE';
+            tfQuestion();
+            generateGIFTCode();
+            assertMatch(gift(), /::CODE-Q01::/, 'ID sans segment -B');
+            assertNoMatch(gift(), /-B\d+-Q/, 'aucun segment -B hors banque');
+            assertNoMatch(gift(), /\$CATEGORY:/, 'aucune directive $CATEGORY hors banque');
+        });
+
+        await test('Banque GIFT : question en banque → CODE-B01-Q01 + $CATEGORY', () => {
+            resetApp();
+            window.courseCode.value = 'CODE';
+            const qid = tfQuestion();
+            const section = createBank('Algèbre');
+            moveQuestionToBank(qEl(qid), section);
+            generateGIFTCode();
+            const g = gift();
+            assertMatch(g, /\$CATEGORY:\s*\$course\$\/CODE\/Algèbre/, 'directive $CATEGORY émise');
+            assertMatch(g, /::CODE-B01-Q01::/, 'ID avec segment -B01');
+        });
+
+        await test('Banque GIFT : numérotation Q repart à 01 dans chaque banque', () => {
+            resetApp();
+            window.courseCode.value = 'CODE';
+            const q1 = tfQuestion();
+            const q2 = tfQuestion();
+            const b1 = createBank('A');
+            const b2 = createBank('B');
+            moveQuestionToBank(qEl(q1), b1);
+            moveQuestionToBank(qEl(q2), b2);
+            generateGIFTCode();
+            const g = gift();
+            assertMatch(g, /::CODE-B01-Q01::/, 'banque A → Q01');
+            assertMatch(g, /::CODE-B02-Q01::/, 'banque B → Q01');
+        });
+
+        // ── Round-trip GIFT ──────────────────────────────────────────────────
+        await test('Round-trip GIFT banque : générer → importer → régénérer', async () => {
+            resetApp();
+            window.courseCode.value = 'CODE';
+            const qid = tfQuestion();
+            const section = createBank('Histoire');
+            moveQuestionToBank(qEl(qid), section);
+            generateGIFTCode();
+            const g1 = gift();
+
+            resetApp();
+            parseGiftContent(g1);
+            await wait(300);
+            const g2 = gift();
+            assertMatch(g2, /\$CATEGORY:\s*\$course\$\/CODE\/Histoire/, 'banque recréée à l\'import');
+            assertMatch(g2, /::CODE-B01-Q01::/, 'ID de banque préservé');
+            assertEqual(getBankSections().length, 1, 'une banque recréée');
+        });
+
+        // ── Export + round-trip XML ──────────────────────────────────────────
+        await test('Banque XML : entrée <question type="category"> émise', () => {
+            resetApp();
+            window.courseCode.value = 'CODE';
+            const qid = tfQuestion();
+            document.getElementById(`true-option-${qid}`).checked = true;
+            const section = createBank('Géo');
+            moveQuestionToBank(qEl(qid), section);
+            const xml = generateMoodleXmlCode();
+            assertMatch(xml, /<question type="category">[\s\S]*?\$course\$\/CODE\/Géo/, 'entrée catégorie émise');
+            assertMatch(xml, /<!-- course-code: CODE -->/, 'code article embarqué en commentaire');
+        });
+
+        await test('Round-trip XML banque : catégorie préservée + code article rechargé', async () => {
+            resetApp();
+            window.courseCode.value = 'CODE';
+            const qid = tfQuestion();
+            document.getElementById(`true-option-${qid}`).checked = true;
+            const section = createBank('Géo');
+            moveQuestionToBank(qEl(qid), section);
+            const xml1 = generateMoodleXmlCode();
+
+            resetApp();
+            await window.importMoodleXmlContent(xml1);
+            assertEqual(document.getElementById('course-code').value, 'CODE', 'code article rechargé depuis le commentaire');
+            assertEqual(getBankSections().length, 1, 'banque recréée à l\'import XML');
+            const xml2 = generateMoodleXmlCode();
+            assertMatch(xml2, /<question type="category">[\s\S]*?\$course\$\/CODE\/Géo/, 'catégorie préservée');
+        });
+
+        // ── Identifiant auto vs manuel à l'import (reste dynamique) ───────────
+        await test('Banque : ID auto importé reste vide (dynamique), ID manuel conservé', () => {
+            // Auto : base = code article → champ vide
+            assertEqual(window.cleanQuestionId('CODE-B01-Q03', 'CODE').id, '', 'ID auto → champ vide');
+            assertEqual(window.cleanQuestionId('CODE-Q03', 'CODE').id, '', 'ID auto sans banque → champ vide');
+            // Manuel : base ≠ code article → base conservée (suffixe -B/-Q retiré)
+            assertEqual(window.cleanQuestionId('FOO-B01-Q03', 'CODE').id, 'FOO', 'ID manuel → base conservée');
+            assertEqual(window.cleanQuestionId('MANUEL', 'CODE').id, 'MANUEL', 'ID manuel sans suffixe conservé');
+        });
+    }
+
     // ── Rendu HTML des résultats ─────────────────────────────────────────────
     function render() {
         const root = document.getElementById('results');
@@ -941,6 +1068,7 @@
                 await runXmlTests();
                 await runXmlImportTests();
                 await runPrintableTests();
+                await runBankTests();
             } catch (err) {
                 record('Initialisation de la suite', 'FAIL', String(err));
             }

@@ -50,7 +50,8 @@ domaine fonctionnel précis.
 | `notify.js` | Notifications toast non bloquantes (`notify.*`) — cf. audit [U1] |
 | `confirmDialog.js` | Boîte de confirmation modale non bloquante (`confirmDialog()` → `Promise<boolean>`) |
 | `richTextEditor.js` | Éditeur de texte enrichi (gras, italique, exposant, indice) |
-| `questionManager.js` | Création / suppression / renumérotation / **déplacement** des questions |
+| `questionManager.js` | Création / suppression / renumérotation / **déplacement** des questions ; aperçu d'identifiant vivant |
+| `categoryManager.js` | **Banques de questions** (catégories Moodle) : sections repliables, sélecteur de banque par question, **règle d'identifiant unifiée** `computeFinalQuestionId` (sensible à la banque, format `<code>[-B<NN>]-Q<NN>`), chemins `$CATEGORY`/`<category>` |
 | `optionManager.js` | Gestion des options de réponse (QCM, QCU, QRC) |
 | `mediaManager.js` | Pièce jointe média par question, balise `@@PLUGINFILE@@`, export ZIP |
 | `giftGenerator.js` | Génération du code GIFT à partir du DOM |
@@ -67,9 +68,11 @@ domaine fonctionnel précis.
 
 **Fichiers CSS** : `styles.css` (principal), `rteStyles.css`, `helpStyles.css`,
 `summaryStyles.css`, `previewStyles.css`, `mediaStyles.css`, `notifyStyles.css`,
-`confirmDialogStyles.css`, `printStyles.css` (export lisible — règles scopées
-sous `.printable-doc`, inlinées dans le document généré par `exportPrintable.js`)
-— un fichier par domaine, en cohérence avec le découpage JS.
+`confirmDialogStyles.css`, `categoryStyles.css` (banques de questions :
+sections repliables, badges `B<NN>`, sélecteur de banque), `printStyles.css`
+(export lisible — règles scopées sous `.printable-doc`, inlinées dans le document
+généré par `exportPrintable.js`) — un fichier par domaine, en cohérence avec le
+découpage JS.
 
 **Règle d'or** : une nouvelle fonctionnalité va dans le fichier dont c'est la
 responsabilité. Si elle ne rentre dans aucun, proposer un nouveau fichier dédié
@@ -85,8 +88,10 @@ plutôt que de surcharger un fichier existant — et le signaler.
 - **Typographie CNED** : espaces insécables avant `; : ! ?`, guillemets français.
   `addNonBreakingSpaces()` (dans `giftGenerator.js`) applique cette règle au code
   généré — ne pas la contourner.
-- **Identifiants GIFT** : format `CODE-QNN` (numéro sur deux chiffres). Logique
-  centralisée dans `giftGenerator.js`.
+- **Identifiants GIFT** : format `<code>[-B<NN>]-Q<NN>` (numéros sur deux
+  chiffres ; segment `-B<NN>` uniquement en banque, `Q<NN>` repart à 01 par
+  groupe). Règle **unifiée** dans `categoryManager.js` (`computeFinalQuestionId`),
+  consommée par GIFT, XML et export lisible.
 - **Charte CNED** : turquoise `#2da288` / `#00bcb4`, rose `#ae2585` / `#e6417a`.
   Pas d'autre couleur primaire sans validation.
 

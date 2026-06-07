@@ -93,7 +93,28 @@ function initSummaryEvents() {
         event.preventDefault();
         event.stopPropagation();
     });
+
+    // Repli/dépli d'un groupe (banque ou « Sans banque ») en cliquant son en-tête.
+    document.addEventListener('click', function (event) {
+        const groupHeader = event.target.closest('.summary-group-row');
+        if (!groupHeader) return;
+        const key = groupHeader.dataset.groupKey;
+        if (!key) return;
+        if (summaryCollapsedGroups.has(key)) {
+            summaryCollapsedGroups.delete(key);
+        } else {
+            summaryCollapsedGroups.add(key);
+        }
+        updateQuestionsSummary(); // reconstruit en appliquant le nouvel état
+        event.preventDefault();
+        event.stopPropagation();
+    });
 }
+
+// État de repli des groupes (banques) dans le sommaire, par bankId stable
+// (+ « none » pour la zone sans-banque). Persiste entre les reconstructions de
+// la table — celle-ci est recréée à chaque mutation. cf. categoryManager.js.
+const summaryCollapsedGroups = new Set();
 
 /**
  * Met à jour le résumé des questions
@@ -133,11 +154,43 @@ function updateQuestionsSummary() {
         return;
     }
 
-    questions.forEach((question, index) => {
+    // ── Pré-calcul du regroupement par banque ────────────────────────────────
+    // Les questions sont déjà dans l'ordre du document (zone « Sans banque »
+    // d'abord, puis chaque banque). On n'affiche les en-têtes de groupe que si au
+    // moins une banque existe ; sinon la table reste plate (rétrocompatible).
+    const questionList = Array.from(questions);
+    const hasBanks = (typeof getBankSections === 'function') && getBankSections().length > 0;
+    const infos = questionList.map(q =>
+        (typeof getQuestionBankInfo === 'function')
+            ? getQuestionBankInfo(q)
+            : { bankNum: null, bankName: null, bankId: null, groupSeq: 1 }
+    );
+    const groupSizes = {};
+    infos.forEach(info => {
+        const key = info.bankId || 'none';
+        groupSizes[key] = (groupSizes[key] || 0) + 1;
+    });
+
+    let prevKey = null;
+
+    questionList.forEach((question, index) => {
         if (!question) return;
 
         const questionId = question.dataset.id;
         if (!questionId) return;
+
+        const info = infos[index];
+        const groupKey = info.bankId || 'none';
+
+        // ── En-tête de groupe (banque ou « Sans banque »), repliable ──────────
+        if (hasBanks && groupKey !== prevKey) {
+            prevKey = groupKey;
+            summaryTableBody.appendChild(
+                buildSummaryGroupHeader(info, groupSizes[groupKey])
+            );
+        }
+
+        const collapsed = hasBanks && summaryCollapsedGroups.has(groupKey);
 
         const questionIdField = document.getElementById(IDS.questionId(questionId));
         const questionIdValue = questionIdField ? questionIdField.value : '';
@@ -171,6 +224,8 @@ function updateQuestionsSummary() {
         const row = document.createElement('tr');
         row.className  = 'summary-row';
         row.dataset.qid = questionId;
+        row.dataset.groupKey = groupKey;
+        if (collapsed) row.classList.add('summary-row-hidden');
 
         // [S2] Construction en DOM-API : l'identifiant et le texte (saisis par
         // l'utilisateur) sont injectés via textContent et ne peuvent donc pas
@@ -202,8 +257,10 @@ function updateQuestionsSummary() {
         textTd.className = 'summary-text';
         textTd.textContent = questionText; // déjà détaggé + tronqué en amont
 
-        const isFirst = index === 0;
-        const isLast  = index === questions.length - 1;
+        // Flèches désactivées aux extrémités DU GROUPE (cohérent avec le
+        // formulaire : on ne déplace qu'à l'intérieur d'un groupe).
+        const isFirst = info.groupSeq === 1;
+        const isLast  = info.groupSeq === groupSizes[groupKey];
 
         const actionsTd = document.createElement('td');
         actionsTd.className = 'summary-actions';
@@ -222,6 +279,45 @@ function updateQuestionsSummary() {
         row.append(numTd, idTd, typeTd, textTd, actionsTd);
         summaryTableBody.appendChild(row);
     });
+}
+
+/**
+ * Construit la ligne d'en-tête repliable d'un groupe (banque ou « Sans banque »).
+ * @param {{bankNum:number|null, bankName:string|null, bankId:string|null}} info
+ * @param {number} count — nombre de questions du groupe
+ * @returns {HTMLTableRowElement}
+ */
+function buildSummaryGroupHeader(info, count) {
+    const groupKey = info.bankId || 'none';
+    const collapsed = summaryCollapsedGroups.has(groupKey);
+
+    const headerRow = document.createElement('tr');
+    headerRow.className = 'summary-group-row' + (collapsed ? ' collapsed' : '');
+    headerRow.dataset.groupKey = groupKey;
+
+    const cell = document.createElement('td');
+    cell.colSpan = 5;
+    cell.className = 'summary-group-cell';
+
+    const toggle = document.createElement('span');
+    toggle.className = 'summary-group-toggle';
+    toggle.textContent = collapsed ? '▸' : '▾';
+
+    const badge = document.createElement('span');
+    badge.className = 'summary-group-badge' + (info.bankNum ? '' : ' none');
+    badge.textContent = info.bankNum ? ('B' + String(info.bankNum).padStart(2, '0')) : 'Sans banque';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'summary-group-name';
+    nameSpan.textContent = info.bankNum ? (info.bankName || '') : ''; // nom utilisateur : textContent (sûr)
+
+    const countSpan = document.createElement('span');
+    countSpan.className = 'summary-group-count';
+    countSpan.textContent = count + (count > 1 ? ' questions' : ' question');
+
+    cell.append(toggle, badge, nameSpan, countSpan);
+    headerRow.appendChild(cell);
+    return headerRow;
 }
 
 /**

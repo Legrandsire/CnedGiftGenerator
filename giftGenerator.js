@@ -79,27 +79,20 @@ function generateGIFTCode() {
     }
  
     // ── 4. Génération des questions ──────────────────────────────────────────
+    // Les questions sont déjà dans l'ordre du document : groupe « Sans banque »
+    // d'abord (aucune directive = catégorie Moodle par défaut), puis chaque
+    // banque. On émet une ligne `$CATEGORY:` au passage dans une nouvelle banque.
+    let emittedBankNum; // sentinel (undefined) → force la 1ʳᵉ décision
     questions.forEach((question, index) => {
         const questionId = question.dataset.id;
  
         const questionIdField = document.getElementById(IDS.questionId(questionId));
         const questionIdValue = questionIdField ? questionIdField.value.trim() : '';
  
-        // Construction de l'identifiant GIFT
-        let finalQuestionId;
-        if (!questionIdValue) {
-            const prefix         = courseCodeValue ? courseCodeValue : 'Q';
-            const questionNumber = (index + 1).toString().padStart(2, '0');
-            finalQuestionId = `${prefix}-Q${questionNumber}`;
-        } else {
-            const qSuffixPattern = /-Q\d+$/;
-            if (!qSuffixPattern.test(questionIdValue)) {
-                const questionNumber = (index + 1).toString().padStart(2, '0');
-                finalQuestionId = `${questionIdValue}-Q${questionNumber}`;
-            } else {
-                finalQuestionId = questionIdValue;
-            }
-        }
+        // Identifiant GIFT final : règle UNIFIÉE, sensible à la banque
+        // (cf. categoryManager.js, computeFinalQuestionId). Le 2ᵉ argument est
+        // l'élément question : sa banque et son rang dans le groupe en découlent.
+        const finalQuestionId = computeFinalQuestionId(questionIdValue, question, courseCodeValue);
  
         // Lecture via getRichTextValue (compatible RTE et input classique)
         const questionText    = getRichTextValue(IDS.questionText(questionId));
@@ -114,7 +107,18 @@ function generateGIFTCode() {
         }
  
         const formattedQuestionText = addHtmlTags(addNonBreakingSpaces(questionText));
- 
+
+        // ── Directive de banque : émise une seule fois, au passage dans une
+        //    nouvelle banque (le groupe « Sans banque » n'émet rien). ──────────
+        const bankInfo = getQuestionBankInfo(question);
+        if (bankInfo.bankNum !== emittedBankNum) {
+            emittedBankNum = bankInfo.bankNum;
+            if (bankInfo.bankNum) {
+                const label = 'B' + String(bankInfo.bankNum).padStart(2, '0');
+                giftCode += `$CATEGORY: ${buildCategoryPath(courseCodeValue, bankInfo.bankName, label)}\n\n`;
+            }
+        }
+
         // ── AJOUT : Mémoriser le finalQuestionId pour l'export ZIP ───────────
         window.generatedQuestionIds[questionId] = finalQuestionId;
         // ─────────────────────────────────────────────────────────────────────

@@ -132,13 +132,24 @@
         const container = document.getElementById('questions-container');
         if (!container) return null;
 
-        addNewQuestion();
-        const questionEl = container.lastElementChild;
+        // addNewQuestion() renvoie l'élément créé (lastElementChild n'est plus
+        // fiable depuis l'introduction des zones/banques).
+        const questionEl = addNewQuestion();
         if (!questionEl) return null;
         const qid = questionEl.dataset.id;
 
+        // Nettoyer l'identifiant comme à l'import GIFT : un identifiant
+        // auto-généré (« <code>[-B<NN>]-Q<NN> ») est laissé VIDE pour rester
+        // dynamique ; un identifiant manuel est conservé (suffixe -B/-Q retiré).
         const idField = document.getElementById(IDS.questionId(qid));
-        if (idField) idField.value = idValue;
+        if (idField) {
+            const courseEl = document.getElementById('course-code');
+            const courseCode = courseEl ? courseEl.value.trim() : '';
+            const cleaned = (typeof window.cleanQuestionId === 'function')
+                ? window.cleanQuestionId(idValue, courseCode)
+                : { id: idValue };
+            idField.value = cleaned.id;
+        }
 
         setRichTextValue(IDS.questionText(qid), stripPluginfileTags(htmlText));
 
@@ -365,7 +376,53 @@
 
         if (generalFeedback.trim()) setRichTextValue(IDS.generalFeedback(qid), generalFeedback);
         attachQuestionMedia(qid, questionEl);
-        return true;
+        return qid; // id interne (chaîne, donc truthy) — utilisé pour la banque
+    }
+
+    /**
+     * Rattache une question importée à sa banque, d'après l'entrée
+     * `<question type="category">` qui la précédait. Sans catégorie, la question
+     * reste dans la zone « Sans banque ». Recrée la banque si nécessaire.
+     * @param {string} qid          — id interne de la question créée
+     * @param {string|null} categoryPath — chemin Moodle (ex. « $course$/CODE/Algèbre »)
+     */
+    function assignXmlCategory(qid, categoryPath) {
+        if (typeof qid !== 'string' || !categoryPath) return;
+        if (typeof window.bankNameFromCategoryPath !== 'function'
+            || typeof window.ensureBankByName !== 'function'
+            || typeof window.moveQuestionToBank !== 'function') return;
+
+        const name = window.bankNameFromCategoryPath(categoryPath);
+        if (!name) return;
+
+        const section = window.ensureBankByName(name);
+        const el = document.querySelector(`.question-container[data-id="${qid}"]`);
+        if (section && el) window.moveQuestionToBank(el, section);
+    }
+
+    /**
+     * Déduit le « Code article » d'un document Moodle XML, dans l'ordre :
+     *   1. commentaire explicite `<!-- course-code: … -->` (émis par notre export,
+     *      seule source fiable et présente dès qu'un code est renseigné) ;
+     *   2. segment <code> d'un chemin de catégorie « $course$/<code>/<nom> »
+     *      (pour les fichiers tiers organisés en banques).
+     * On NE déduit PAS depuis les identifiants de question : le préfixe peut être
+     * le sentinel « Q » (code vide) ou une base manuelle → champ pollué à tort.
+     * @param {string}    rawXml
+     * @param {Element[]} qEls
+     * @returns {string} code article, ou '' si indéterminable
+     */
+    function deriveCourseCode(rawXml, qEls) {
+        const m = rawXml.match(/<!--\s*course-code\s*:\s*([^>]*?)\s*-->/i);
+        if (m && m[1].trim()) return m[1].trim();
+
+        for (const el of qEls) {
+            if ((el.getAttribute('type') || '').toLowerCase() !== 'category') continue;
+            const seg = fieldText(el, 'category').trim().split('/').map(s => s.trim()).filter(Boolean);
+            if (seg.length >= 3 && seg[0] === '$course$') return seg[1];
+        }
+
+        return '';
     }
 
     // ── Point d'entrée ────────────────────────────────────────────────────────
@@ -399,7 +456,7 @@
         const giftOutput = document.getElementById('gift-output');
 
         // Confirmation avant de remplacer les questions existantes (modale non bloquante).
-        if (questionsContainer && questionsContainer.children.length > 0) {
+        if (questionsContainer && questionsContainer.querySelectorAll('.question-container').length > 0) {
             const proceed = await confirmDialog({
                 title: 'Remplacer les questions',
                 message: 'Cet import remplacera toutes les questions actuelles. Voulez-vous continuer ?',
@@ -414,20 +471,40 @@
 
         if (typeof window.questionCounter !== 'undefined') window.questionCounter = 0;
 
+        // Charger le « Code article » : il préfixe les identifiants et permet de
+        // reconnaître les identifiants auto-générés (à laisser vides pour rester
+        // dynamiques). L'XML ne le porte pas nativement → on le déduit.
+        const courseCode = deriveCourseCode(content, questionEls);
+        if (courseCode) {
+            const courseEl = document.getElementById('course-code');
+            if (courseEl) courseEl.value = courseCode;
+            if (window.courseCode) window.courseCode.value = courseCode;
+        }
+
         let successCount = 0;
         let unsupportedCount = 0;
         let errorCount = 0;
         let mediaCount = 0;
 
+        // Banque courante : mise à jour par chaque `<question type="category">`,
+        // appliquée aux questions suivantes (sémantique Moodle native).
+        let currentCategory = null;
+
         questionEls.forEach((questionEl, index) => {
             const moodleType = (questionEl.getAttribute('type') || '').toLowerCase();
-            if (moodleType === 'category') return; // marqueur de catégorie : ignoré silencieusement
+            if (moodleType === 'category') {
+                const path = fieldText(questionEl, 'category').trim();
+                if (path) currentCategory = path;
+                return;
+            }
 
             try {
                 const handled = processQuestion(questionEl);
                 if (handled) {
                     successCount++;
                     if (questionEl.querySelector('file')) mediaCount++;
+                    // Rattacher à sa banque (handled = id interne quand exploitable).
+                    assignXmlCategory(handled, currentCategory);
                 } else {
                     unsupportedCount++;
                 }

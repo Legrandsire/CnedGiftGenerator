@@ -16,8 +16,9 @@
 //
 // Contrainte ferme (CLAUDE.md §2) : aucune dépendance nouvelle (pas de jsPDF).
 // Réutilise les briques globales : getRichTextValue, addNonBreakingSpaces, IDS,
-// computeFinalQuestionId (exportMoodleXml.js), getMediaFilename/getMediaCategory
-// (mediaManager.js), buildExportFilename (downloadManager.js).
+// computeFinalQuestionId (categoryManager.js — sensible à la banque),
+// getMediaFilename/getMediaCategory (mediaManager.js), buildExportFilename
+// (downloadManager.js).
 //
 // Choix d'architecture (validés) :
 //   • Fonction partagée readQuestionState() NOUVELLE, consommée par ce module
@@ -184,7 +185,7 @@ function readQuestionState(questionEl, index, courseCode) {
     }
 
     const idField = document.getElementById(IDS.questionId(qid));
-    const finalId = computeFinalQuestionId(idField ? idField.value.trim() : '', index, courseCode);
+    const finalId = computeFinalQuestionId(idField ? idField.value.trim() : '', questionEl, courseCode);
 
     const labels = { mc: 'QCM', sc: 'QCU', tf: 'Vrai / Faux', sa: 'Réponse courte', num: 'Numérique' };
 

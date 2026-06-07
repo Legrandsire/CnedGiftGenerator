@@ -344,7 +344,7 @@ async function parseGiftContent(giftContent, mediaFiles = {}) {
 
     // Confirmer avant de remplacer les questions existantes (modale non bloquante).
     // La confirmation a lieu AVANT d'afficher l'overlay d'import.
-    if (questionsContainer.children.length > 0) {
+    if (questionsContainer.querySelectorAll('.question-container').length > 0) {
         const proceed = await confirmDialog({
             title: 'Remplacer les questions',
             message: 'Cet import remplacera toutes les questions actuelles. Voulez-vous continuer ?',
@@ -396,15 +396,18 @@ async function parseGiftContent(giftContent, mediaFiles = {}) {
             let errorCount = 0;
             
             // Traiter chaque question
-            questions.forEach((questionText, index) => {
-                if (questionText.trim() === '') return;
-                
+            questions.forEach((q, index) => {
+                if (!q.text || q.text.trim() === '') return;
+
                 try {
-                    parseGiftQuestion(questionText, courseCode, mediaFiles);
+                    const qid = parseGiftQuestion(q.text, courseCode, mediaFiles);
+                    // Reconstituer la banque (catégorie) issue de la directive
+                    // `$CATEGORY:` qui précédait cette question, le cas échéant.
+                    assignQuestionToCategory(qid, q.category, courseCode);
                     successCount++;
                 } catch (error) {
                     console.error(`Erreur lors du parsing de la question ${index + 1}:`, error);
-                    dlog('Texte de la question problématique:', questionText);
+                    dlog('Texte de la question problématique:', q.text);
                     errorCount++;
                 }
             });
@@ -528,32 +531,37 @@ function cleanQuestionId(questionId, courseCode) {
             isAuto: true
         };
     }
-    
+
     dlog(`Nettoyage de l'ID: "${questionId}" avec le code article: "${courseCode}"`);
-    
-    // Si le code article est défini et que l'ID commence par ce code article
-    if (courseCode && questionId.startsWith(courseCode + '-Q')) {
-        // C'est un ID auto-généré, retourner une chaîne vide
+
+    // Suffixe « auto » : segment de banque OPTIONNEL (-B<NN>) suivi de -Q<NN>.
+    // (Avant les banques, le format était simplement -Q<NN>.)
+    const autoSuffix   = /(-B\d+)?-Q\d+$/;
+    const hasAutoSuffix = autoSuffix.test(questionId);
+    const base          = questionId.replace(autoSuffix, '');
+
+    // ID auto-généré : la base (préfixe avant -B/-Q) est le code article.
+    // → champ laissé VIDE pour que l'identifiant reste recalculé dynamiquement
+    //   (numéro de question et segment de banque adaptés à la position).
+    if (hasAutoSuffix && courseCode && base === courseCode) {
         dlog(`ID auto-généré détecté: ${questionId}`);
         return {
             id: '',
             isAuto: true
         };
     }
-    
-    // Vérifier s'il y a un motif -Q suivi de chiffres à la fin (y compris format -Q01, -Q02)
-    const qSuffixPattern = /-Q\d+$/;
-    if (qSuffixPattern.test(questionId)) {
-        // Supprimer le suffixe -Q et les chiffres
-        const cleanedId = questionId.replace(qSuffixPattern, '');
-        dlog(`ID manuel avec suffixe détecté, nettoyé en: ${cleanedId}`);
+
+    // ID manuel AVEC suffixe : on retire -B<NN>/-Q<NN> pour ne garder que la base
+    // saisie par l'auteur (le suffixe sera réappliqué à la génération).
+    if (hasAutoSuffix) {
+        dlog(`ID manuel avec suffixe détecté, nettoyé en: ${base}`);
         return {
-            id: cleanedId,
+            id: base,
             isAuto: false
         };
     }
-    
-    // Si c'est un ID sans motif -Q, le considérer comme manuel
+
+    // Si c'est un ID sans suffixe, le considérer comme manuel tel quel
     dlog(`ID manuel sans suffixe: ${questionId}`);
     return {
         id: questionId,
@@ -705,50 +713,68 @@ function parseOptionWithFeedback(optionLine, isSingleChoice) {
         
         dlog("Clean content for parsing:", cleanContent);
         
-        // Array pour stocker les questions
+        // Array pour stocker les questions ({ text, category })
         const questions = [];
-        
+
         // Parcourir le texte et extraire chaque question complète
         let insideQuestion = false;
         let currentQuestion = '';
         let braceCount = 0;
-        
+
+        // Suivi de la banque courante : on accumule le texte HORS question et on
+        // y relève la dernière directive `$CATEGORY:` rencontrée. Elle s'applique
+        // à toutes les questions suivantes (sémantique GIFT native).
+        let between = '';
+        let currentCategory = null;
+        const flushBetween = () => {
+            const matches = between.match(/^\s*\$CATEGORY:\s*(.+)$/gim);
+            if (matches && matches.length) {
+                const last = matches[matches.length - 1].match(/\$CATEGORY:\s*(.+)$/i);
+                if (last) currentCategory = last[1].trim();
+            }
+            between = '';
+        };
+
         for (let i = 0; i < cleanContent.length; i++) {
             const char = cleanContent[i];
-            
+
             // Si on trouve l'identifiant d'une question "::" et qu'on n'est pas déjà dans une question
             if (char === ':' && cleanContent[i + 1] === ':' && !insideQuestion) {
+                flushBetween(); // fige la banque courante avant d'entamer la question
                 currentQuestion = '';
                 insideQuestion = true;
             }
-            
+
             // Ajouter le caractère actuel à la question en cours
             if (insideQuestion) {
                 currentQuestion += char;
-                
+
                 // Compter les accolades
                 if (char === '{') {
                     braceCount++;
                 } else if (char === '}') {
                     braceCount--;
-                    
+
                     // Si braceCount revient à 0, c'est la fin de la question
                     if (braceCount === 0) {
-                        questions.push(currentQuestion);
+                        questions.push({ text: currentQuestion, category: currentCategory });
                         currentQuestion = '';
                         insideQuestion = false;
                     }
                 }
+            } else {
+                // Hors question : on accumule pour y détecter les `$CATEGORY:`.
+                between += char;
             }
         }
-        
+
         // Filtrer les questions vides et invalides
         const filteredQuestions = questions.filter(q => {
             // Une question GIFT valide doit contenir à la fois ::, { et }
-            return q.trim() !== '' && q.includes('::') && 
-                   q.includes('{') && q.includes('}');
+            return q.text.trim() !== '' && q.text.includes('::') &&
+                   q.text.includes('{') && q.text.includes('}');
         });
-        
+
         dlog("Questions extracted:", filteredQuestions);
         return filteredQuestions;
     }
@@ -825,6 +851,31 @@ function parseGiftQuestion(questionText, courseCode, mediaFiles = {}) {
     if (newQuestionId) {
         associateZipMedia(newQuestionId, originalGiftId, mediaFiles);
     }
+
+    // Renvoie l'id interne (utilisé pour rattacher la question à sa banque).
+    return newQuestionId;
+}
+
+/**
+ * Rattache une question importée à sa banque, d'après la directive `$CATEGORY:`
+ * qui la précédait. Sans catégorie (ou catégorie vide), la question reste dans
+ * la zone « Sans banque ». Recrée la banque si elle n'existe pas encore.
+ * @param {string|number} qid          — id interne de la question créée
+ * @param {string|null}   categoryPath — chemin Moodle (ex. « $course$/CODE/Algèbre »)
+ * @param {string}        courseCode   — code article (non utilisé ici, signature homogène)
+ */
+function assignQuestionToCategory(qid, categoryPath, courseCode) {
+    if (!qid || !categoryPath) return;
+    if (typeof window.bankNameFromCategoryPath !== 'function'
+        || typeof window.ensureBankByName !== 'function'
+        || typeof window.moveQuestionToBank !== 'function') return;
+
+    const name = window.bankNameFromCategoryPath(categoryPath);
+    if (!name) return;
+
+    const section = window.ensureBankByName(name);
+    const el = document.querySelector(`.question-container[data-id="${qid}"]`);
+    if (section && el) window.moveQuestionToBank(el, section);
 }
 
 /**
@@ -960,11 +1011,9 @@ function addNewQuestionFromImport(questionId, questionContent, questionType) {
  
     dlog(`Adding new question: ${questionId}, type: ${questionType}`);
  
-    // Créer la question via la fonction globale existante
-    addNewQuestion();
- 
-    // Récupérer la dernière question ajoutée
-    const questionContainer = questionsContainer.lastElementChild;
+    // Créer la question via la fonction globale existante (qui renvoie l'élément
+    // créé : on ne lit plus lastElementChild, invalide depuis les zones/banques).
+    const questionContainer = addNewQuestion();
     if (!questionContainer) {
         console.error('Failed to create a new question element');
         return null;
@@ -1235,4 +1284,7 @@ function fillQuestionAnswers(questionId, questionType, answersContent) {
     // prépare le futur orchestrateur central ([A2]). Aucun changement de
     // comportement pour l'application.
     window.parseGiftContent = parseGiftContent;
+    // Exposé pour réemploi par l'import Moodle XML (nettoyage d'identifiant
+    // partagé : un ID auto-généré reste vide → recalcul dynamique).
+    window.cleanQuestionId = cleanQuestionId;
 });
