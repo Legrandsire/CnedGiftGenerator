@@ -116,13 +116,13 @@
     color: #2c3e50;
 }
 
-/* Étiquette de type : pastille pleine à fort contraste (texte blanc). La couleur
-   s'accorde à la parité du cadre de question (turquoise/rose), réglée plus bas. */
+/* Étiquette de type : pastille à fond CLAIR et texte FONCÉ (contraste inversé),
+   teintée selon la parité du cadre de question (turquoise/rose), réglée plus bas. */
 .preview-question-type {
-    color: #ffffff;
-    background-color: #2da288; /* défaut (questions impaires) */
+    color: #1c6b58;             /* défaut (questions impaires) */
+    background-color: #d3efec;
     font-size: 0.85em;
-    font-weight: 600;
+    font-weight: 700;
     margin-left: 0;
     display: inline-block;
     padding: 4px 12px;
@@ -131,10 +131,12 @@
 
 /* Accord avec la couleur du cadre (cf. .question-odd / .question-even). */
 body.preview-mode .question-odd .preview-question-type {
-    background-color: #2da288; /* turquoise CNED */
+    background-color: #d3efec; /* turquoise très clair */
+    color: #1c6b58;            /* turquoise foncé */
 }
 body.preview-mode .question-even .preview-question-type {
-    background-color: #ae2585; /* rose CNED */
+    background-color: #f8dde9; /* rose très clair */
+    color: #8e1e6c;            /* rose foncé */
 }
 
 /* Texte de la question — épuré : texte simple, sans fond ni encadré. */
@@ -312,7 +314,7 @@ body.preview-mode .question-even .preview-question-type {
 .preview-general-feedback {
     margin-top: 12px;
     padding-top: 9px;
-    border-top: 1px solid #eef1f4;
+    border-top: 2px solid #d6dde3; /* couleur affinée par parité plus bas */
     font-size: 0.95em;
     line-height: 1.45;
     color: #2f3d4a;
@@ -336,7 +338,7 @@ body.preview-mode .question-even .preview-question-type {
 .preview-combined-feedback {
     margin-top: 12px;
     padding-top: 9px;
-    border-top: 1px solid #eef1f4;
+    border-top: 2px solid #d6dde3; /* couleur affinée par parité plus bas */
 }
 .preview-combined-title {
     font-weight: 700;
@@ -390,6 +392,24 @@ body.preview-mode .question-odd {
 }
 body.preview-mode .question-even {
     border-left-color: #ae2585; /* rose CNED */
+}
+
+/* Filets de séparation teintés selon la parité de la question (vert/rose) et
+   plus visibles : filet fin entre réponses, filet plus marqué (2px) avant les
+   sections de rétroaction. */
+body.preview-mode .question-odd .preview-option {
+    border-bottom-color: rgba(45, 162, 136, 0.30);
+}
+body.preview-mode .question-even .preview-option {
+    border-bottom-color: rgba(174, 37, 133, 0.26);
+}
+body.preview-mode .question-odd .preview-general-feedback,
+body.preview-mode .question-odd .preview-combined-feedback {
+    border-top-color: rgba(45, 162, 136, 0.55);
+}
+body.preview-mode .question-even .preview-general-feedback,
+body.preview-mode .question-even .preview-combined-feedback {
+    border-top-color: rgba(174, 37, 133, 0.50);
 }
 
 /* Optimisations pour petits écrans */
