@@ -139,12 +139,16 @@ body.preview-mode .question-even .preview-question-type {
     color: #8e1e6c;            /* rose foncé */
 }
 
-/* Texte de la question — épuré : texte simple, sans fond ni encadré. */
+/* Texte de la question — mis en valeur : police plus grande + fond très
+   légèrement teinté selon la parité (réglé plus bas). Reste épuré (teinte douce). */
 .preview-question-text {
-    font-size: 1.05em;
+    font-size: 1.2em;
     margin-bottom: 12px;
-    line-height: 1.45;
+    line-height: 1.5;
     color: #1f2d3a;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background-color: #f4f6f8; /* teinte affinée par parité plus bas */
 }
 
 /* Média en preview */
@@ -410,6 +414,14 @@ body.preview-mode .question-odd .preview-combined-feedback {
 body.preview-mode .question-even .preview-general-feedback,
 body.preview-mode .question-even .preview-combined-feedback {
     border-top-color: rgba(174, 37, 133, 0.50);
+}
+
+/* Fond de l'énoncé teinté très légèrement selon la parité (mise en valeur). */
+body.preview-mode .question-odd .preview-question-text {
+    background-color: rgba(45, 162, 136, 0.10);
+}
+body.preview-mode .question-even .preview-question-text {
+    background-color: rgba(174, 37, 133, 0.08);
 }
 
 /* Optimisations pour petits écrans */
