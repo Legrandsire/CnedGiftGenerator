@@ -63,7 +63,9 @@ domaine fonctionnel précis.
 | `helpManager.js` | Panneau d'aide, tooltips, tour guidé |
 | `advancedTourFeatures.js` | Fonctionnalités avancées du tour guidé |
 | `summaryManager.js` | Résumé des questions et navigation |
-| `previewMode.js` | Mode prévisualisation (lecture seule) |
+| `previewMode.js` | Mode prévisualisation (lecture seule) : rendu compact, bonnes réponses en **bleu** / mauvaises en **rouge**, feedback combiné et média affichés en lecture seule, contrôles d'édition masqués |
+| `actionMenu.js` | **Menus déroulants** de la barre d'action (GIFT / Moodle / Document) + **onglets de sortie** GIFT/XML (`switchOutputTab`). Ne fait que l'UI : les boutons conservent leurs identifiants et leur câblage |
+| `bugReport.js` | Bouton **« Contact »** (pile haut-droite) → modale (formulaire nom/prénom/email/message) → lien `mailto:` pré-rempli (expéditeur, message, version, navigateur). App statique : aucun backend, aucune donnée transmise à un tiers |
 | `unsavedChangesAlert.js` | Alerte en cas de modifications non sauvegardées |
 
 **Fichiers CSS** : `styles.css` (principal), `rteStyles.css`, `helpStyles.css`,
@@ -71,8 +73,9 @@ domaine fonctionnel précis.
 `confirmDialogStyles.css`, `categoryStyles.css` (banques de questions :
 sections repliables, badges `B<NN>`, sélecteur de banque), `printStyles.css`
 (export lisible — règles scopées sous `.printable-doc`, inlinées dans le document
-généré par `exportPrintable.js`) — un fichier par domaine, en cohérence avec le
-découpage JS.
+généré par `exportPrintable.js`), `actionMenuStyles.css` (menus déroulants +
+onglets de sortie), `bugReportStyles.css` (bouton et modale de signalement de
+bug) — un fichier par domaine, en cohérence avec le découpage JS.
 
 **Règle d'or** : une nouvelle fonctionnalité va dans le fichier dont c'est la
 responsabilité. Si elle ne rentre dans aucun, proposer un nouveau fichier dédié

@@ -187,11 +187,22 @@ function readQuestionState(questionEl, index, courseCode) {
     const idField = document.getElementById(IDS.questionId(qid));
     const finalId = computeFinalQuestionId(idField ? idField.value.trim() : '', questionEl, courseCode);
 
+    // Banque (catégorie) de la question : utilisée pour les séparateurs RTF
+    // (chantier UI/UX n°10). Neutre si categoryManager n'est pas chargé (tests).
+    let bankNum = null, bankName = '';
+    if (typeof getQuestionBankInfo === 'function') {
+        const bi = getQuestionBankInfo(questionEl);
+        bankNum = bi.bankNum;
+        bankName = bi.bankName || '';
+    }
+
     const labels = { mc: 'QCM', sc: 'QCU', tf: 'Vrai / Faux', sa: 'Réponse courte', num: 'Numérique' };
 
     const state = {
         index,
         finalId,
+        bankNum,
+        bankName,
         typeCode: type,
         typeLabel: labels[type] || type,
         statementHtml: statement,
@@ -643,6 +654,38 @@ function richHtmlToRtf(html) {
 }
 
 /**
+ * Filets de séparation RTF de NATURES DIFFÉRENTES (chantier UI/UX n°10), pour
+ * hiérarchiser visuellement la lecture :
+ *   • 'bank'      : filet double épais turquoise (cf1) — séparation de banque ;
+ *   • 'component' : filet pointillé fin — séparation entre composantes d'une
+ *                   même question (énoncé / réponses / rétroactions).
+ * (La séparation entre questions reste le filet simple sous le titre de question.)
+ * Un paragraphe quasi vide doté d'une bordure basse dessine le filet.
+ * @param {'bank'|'component'} kind
+ * @returns {string}
+ */
+function rtfRule(kind) {
+    if (kind === 'bank') {
+        return '\\pard\\sb160\\sa80\\brdrb\\brdrdb\\brdrw40\\brdrcf1\\brsp60\n{\\fs8 }\\par\n';
+    }
+    return '\\pard\\li360\\sb20\\sa20\\brdrb\\brdrdot\\brdrw10\\brsp20\n{\\fs8 }\\par\n';
+}
+
+/**
+ * En-tête de banque en RTF : filet double + libellé en turquoise gras.
+ * @param {Object} s — premier état de la banque (porte bankNum/bankName)
+ * @returns {string}
+ */
+function rtfBankHeader(s) {
+    let r = rtfRule('bank');
+    const label = s.bankNum
+        ? ('Banque B' + String(s.bankNum).padStart(2, '0') + (s.bankName ? ' — ' + s.bankName : ''))
+        : 'Questions sans banque';
+    r += '\\pard\\sb40\\sa80\n{\\b\\fs32\\cf1 ' + rtfEscape('📚 ' + label) + '\\par}\n';
+    return r;
+}
+
+/**
  * Rend une question en RTF.
  * @param {Object} s
  * @returns {string}
@@ -671,6 +714,10 @@ function rtfQuestion(s) {
     }
 
     // ── Réponses (indentées pour les délimiter de l'énoncé) ───────────────────
+    // Filet pointillé fin = séparateur de COMPOSANTE (nature différente du filet
+    // de question et du filet double de banque).
+    r += rtfRule('component');
+    r += '{\\b\\fs18\\cf1 ' + rtfEscape('Réponses') + '\\par}\n';
     r += '\\pard\\li360\\sb40\n';
     if (s.numeric) {
         const m = (s.numeric.margin && parseFloat(s.numeric.margin) !== 0) ? ' ± ' + s.numeric.margin : '';
@@ -696,6 +743,13 @@ function rtfQuestion(s) {
     }
 
     // ── Rétroactions ──────────────────────────────────────────────────────────
+    const c0 = s.combined;
+    const hasAnyFeedback = s.generalFeedbackHtml ||
+        (c0 && (c0.correct || c0.partial || c0.incorrect));
+    if (hasAnyFeedback) {
+        // Séparateur de composante avant le bloc de rétroactions.
+        r += rtfRule('component');
+    }
     if (s.generalFeedbackHtml) {
         r += '\\pard\\li360\\sb60\n{\\b ' + rtfEscape('Rétroaction générale : ') + '}' +
              richHtmlToRtf(s.generalFeedbackHtml) + '\\par\n';
@@ -733,7 +787,17 @@ function buildRtf(states, meta) {
     if (meta.courseCode) r += `{ ` + rtfEscape('Code article : ' + meta.courseCode) + `\\par}\n`;
     r += `{ ` + rtfEscape('Généré le ' + meta.date + ' — ' + states.length + ' question(s)') + `\\par}\n\\par\n`;
 
-    states.forEach(s => { r += rtfQuestion(s); });
+    // En-têtes de banque : émis seulement si AU MOINS une question est rangée
+    // dans une banque (sinon, document linéaire sans séparateur de banque).
+    const hasBanks = states.some(s => s.bankNum);
+    let lastBankNum; // sentinel undefined → force la 1ʳᵉ décision
+    states.forEach(s => {
+        if (hasBanks && s.bankNum !== lastBankNum) {
+            lastBankNum = s.bankNum;
+            r += rtfBankHeader(s);
+        }
+        r += rtfQuestion(s);
+    });
 
     r += '}';
     return r;

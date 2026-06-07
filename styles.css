@@ -196,7 +196,8 @@ textarea {
     margin-bottom: 20px;
 }
 
-#gift-output {
+#gift-output,
+#xml-output {
     width: 100%;
     min-height: 200px;
     font-family: monospace;
@@ -204,7 +205,6 @@ textarea {
     border: 1px solid #ddd;
     border-radius: 4px;
     background-color: #f5f5f5;
-    margin-top: 20px;
 }
 
 .hidden {
@@ -1058,4 +1058,54 @@ textarea {
     color: #c8c8c8;
     border-color: #e8e8e8;
     cursor: not-allowed;
+}
+
+/* ── Responsive smartphone / tablette (chantier UI/UX n°10) ─────────────────
+   La barre d'action et la pile de boutons fixes sont traitées dans
+   actionMenuStyles.css / previewStyles.css / helpStyles.css / bugReportStyles.css.
+   Ici : mise en page générale, en-tête, sommaire et en-tête de question. */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+        /* Laisser la place à la pile de boutons fixes en haut à droite. */
+        padding-top: 130px;
+    }
+    .container {
+        padding: 12px;
+    }
+
+    /* En-tête : le titre absolu/centré se superpose mal au logo en petit écran. */
+    .header-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .logo {
+        margin-right: 0;
+        margin-bottom: 10px;
+        max-height: 60px;
+    }
+    h1 {
+        position: static;
+        width: auto;
+        font-size: 1.4em;
+    }
+
+    /* En-tête de question : empiler titre et contrôles (banque + flèches). */
+    .question-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .question-header-right {
+        justify-content: space-between;
+    }
+
+    /* Sommaire : tableau défilable horizontalement plutôt que débordant. */
+    .summary-content {
+        overflow-x: auto;
+    }
+    .summary-table {
+        min-width: 520px;
+    }
 }

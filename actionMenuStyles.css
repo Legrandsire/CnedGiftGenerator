@@ -1,0 +1,178 @@
+/* ── actionMenuStyles.css ─────────────────────────────────────────────────────
+ * Menus déroulants de la barre d'action + onglets de sortie GIFT / Moodle XML
+ * (chantier UI/UX n°10). Charte CNED : turquoise #2da288/#00bcb4, rose
+ * #ae2585/#e6417a, bleu institutionnel #005EB8.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Menus déroulants ──────────────────────────────────────────────────────── */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Déclencheur de menu — même gabarit que les boutons secondaires. */
+.btn-menu {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    padding: 9px 15px;
+    font-size: 0.88em;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+}
+.btn-menu:hover {
+    background-color: #f0f0f0;
+    border-color: #9e9e9e;
+}
+
+/* Accents par format (cohérents avec les anciens boutons pleins). */
+.btn-menu-xml  { border-color: #e3a9cf; color: #8e1e6c; }
+.btn-menu-xml:hover  { background-color: #fbeef6; border-color: #ae2585; }
+.btn-menu-doc  { border-color: #9fd8c9; color: #1c6b58; }
+.btn-menu-doc:hover  { background-color: #e9f7f2; border-color: #2da288; }
+
+.dropdown-caret {
+    font-size: 0.8em;
+    transition: transform 0.2s ease;
+}
+.dropdown.open .dropdown-caret {
+    transform: rotate(180deg);
+}
+
+/* Liste déroulante — masquée par défaut, dépliée via .open. */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 220px;
+    background: #ffffff;
+    border: 1px solid #d6d6d6;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+    padding: 6px;
+    z-index: 500;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+}
+.dropdown.open .dropdown-menu {
+    display: flex;
+}
+
+/* Élément de menu. */
+.dropdown-item {
+    background: none;
+    border: none;
+    border-radius: 5px;
+    text-align: left;
+    padding: 9px 12px;
+    font-size: 0.9em;
+    color: #1f2d3a;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: #eef5fc;
+    outline: none;
+}
+
+/* Pastille du compteur de médias dans le menu GIFT. */
+.dropdown-item .media-badge {
+    margin-left: auto;
+    background-color: #2e7d32;
+    color: #fff;
+    font-size: 0.78em;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 10px;
+}
+
+/* ── Onglets de sortie GIFT / Moodle XML ───────────────────────────────────── */
+.output-tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 20px;
+    border-bottom: 2px solid #d6e0e8;
+}
+.output-tab {
+    background: #eef2f5;
+    color: #4a5b6b;
+    border: 1px solid #d6e0e8;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    margin-bottom: -2px;
+}
+.output-tab:hover {
+    background: #e2e9ee;
+}
+.output-tab.active {
+    background: #ffffff;
+    color: #005EB8;
+    border-color: #d6e0e8;
+    border-bottom: 2px solid #ffffff;
+}
+
+.output-label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+/* ── Responsive : barre d'action et menus en petit écran ───────────────────── */
+@media (max-width: 768px) {
+    .action-buttons-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .action-group-secondary {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .dropdown {
+        display: block;
+    }
+    .btn-menu {
+        width: 100%;
+        justify-content: space-between;
+    }
+    /* En pile verticale, un menu absolu chevaucherait les boutons suivants :
+       on le passe en flux. */
+    .dropdown-menu {
+        position: static;
+        box-shadow: none;
+        min-width: 0;
+        margin: 2px 0 6px;
+    }
+    .btn-danger-wrapper {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        margin-top: 4px;
+    }
+    .btn-primary,
+    .btn-danger {
+        width: 100%;
+        justify-content: center;
+    }
+    .output-tab {
+        flex: 1;
+        text-align: center;
+        padding: 8px 8px;
+    }
+}

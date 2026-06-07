@@ -2,14 +2,24 @@
 
 .notify-container {
     position: fixed;
-    top: 1rem;
-    right: 1rem;
+    /* Sous la pile de boutons fixes haut-droite (Aide → Prévisualiser →
+       Signaler un bug) pour ne plus la recouvrir (chantier UI/UX n°10). */
+    top: 150px;
+    right: 12px;
     z-index: 9999;
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
     max-width: min(360px, 90vw);
     pointer-events: none; /* seuls les toasts captent le clic */
+}
+
+/* Version compacte : la pile de boutons est plus courte sur petit écran. */
+@media (max-width: 768px) {
+    .notify-container {
+        top: 132px;
+        right: 8px;
+    }
 }
 
 .notify {

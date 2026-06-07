@@ -156,6 +156,32 @@ function hideEditingElements() {
     document.querySelectorAll('.optional-field').forEach(field => {
         field.classList.add('preview-hidden');
     });
+
+    // Cacher l'affordance « Ajouter un média » (bouton + panneau d'upload). Le
+    // média éventuellement attaché est ré-affiché proprement par transformMedia().
+    document.querySelectorAll('.media-toggle-wrapper').forEach(wrapper => {
+        wrapper.classList.add('preview-hidden');
+    });
+
+    // Cacher la barre d'en-tête d'édition (sélecteur de banque + flèches ↑/↓) :
+    // ce sont des contrôles d'édition, et c'est ce qui chevauchait l'identifiant
+    // en preview (chantier n°9). Le numéro/type/identifiant sont réaffichés par
+    // transformQuestionHeader() / transformQuestionId().
+    document.querySelectorAll('.question-header-right').forEach(right => {
+        right.classList.add('preview-hidden');
+    });
+
+    // Cacher les actions de banque (« + question », « Supprimer la banque ») :
+    // on ne doit ni ajouter de question ni supprimer une banque en preview.
+    document.querySelectorAll('.bank-actions').forEach(actions => {
+        actions.classList.add('preview-hidden');
+    });
+
+    // Rendre le nom de banque non modifiable en preview (sans le masquer).
+    document.querySelectorAll('.bank-name').forEach(nameInput => {
+        nameInput.readOnly = true;
+        nameInput.classList.add('preview-readonly-bankname');
+    });
 }
 
 
@@ -167,10 +193,16 @@ function showEditingElements() {
     document.querySelectorAll('.preview-hidden').forEach(element => {
         element.classList.remove('preview-hidden');
     });
-    
+
     // Supprimer tous les éléments créés spécifiquement pour la prévisualisation
     document.querySelectorAll('.preview-element').forEach(element => {
         element.remove();
+    });
+
+    // Rendre à nouveau modifiables les noms de banque figés en preview.
+    document.querySelectorAll('.preview-readonly-bankname').forEach(nameInput => {
+        nameInput.readOnly = false;
+        nameInput.classList.remove('preview-readonly-bankname');
     });
 }
 
@@ -190,16 +222,23 @@ function transformQuestionsForPreview() {
         
         // Transformer l'identifiant de question
         transformQuestionId(question, questionId);
-        
+
         // Transformer le texte de la question
         transformQuestionText(question, questionId);
-        
+
+        // Afficher le média associé (image) ou une mention, sans affordance
+        // d'édition. Après le texte : transformMedia l'insère JUSTE AVANT lui.
+        transformMedia(question, questionId);
+
         // Transformer les options de réponse selon le type de question
         const questionType = getSelectedQuestionType(questionId);
         transformQuestionOptions(question, questionId, questionType);
-        
+
         // Transformer le feedback général
         transformGeneralFeedback(question, questionId);
+
+        // Transformer le feedback combiné (QCM/QCU uniquement) en lecture seule
+        transformCombinedFeedback(question, questionId, questionType);
     });
 }
 
@@ -267,31 +306,134 @@ function transformQuestionHeader(question, questionId) {
 function transformQuestionId(question, questionId) {
     const idField = document.getElementById(IDS.questionId(questionId));
     if (!idField) return;
-    
-    // Récupérer la valeur de l'identifiant
-    let idValue = idField.value.trim();
-    
-    // Si vide, afficher l'identifiant auto-généré
-    if (!idValue) {
-        const courseCode = document.getElementById('course-code').value.trim();
-        const prefix = courseCode ? courseCode : "Q";
-        const questionNumber = questionId.toString().padStart(2, '0');
-        idValue = `${prefix}-Q${questionNumber}`;
+
+    // Identifiant FINAL via la règle unifiée (sensible à la banque : segment
+    // -B<NN>). Même résultat que GIFT/XML/export lisible — sinon l'ID affiché en
+    // preview était incomplet (banque manquante).
+    const courseCodeEl = document.getElementById('course-code');
+    const courseCode = courseCodeEl ? courseCodeEl.value.trim() : '';
+    let idValue;
+    if (typeof computeFinalQuestionId === 'function') {
+        idValue = computeFinalQuestionId(idField.value.trim(), question, courseCode);
+    } else {
+        // Repli défensif (categoryManager non chargé).
+        const prefix = courseCode || 'Q';
+        idValue = idField.value.trim() || `${prefix}-Q${questionId.toString().padStart(2, '0')}`;
     }
-    
-    // Créer l'élément d'affichage de l'ID
+
+    // Créer l'élément d'affichage de l'ID.
     const idDisplay = document.createElement('div');
     idDisplay.className = 'preview-display preview-id';
     idDisplay.textContent = idValue;
-    
-    // Ajouter l'élément à la question
-    question.insertBefore(idDisplay, question.firstChild);
-    
+
+    // Placé en position absolue dans le coin HAUT-DROIT du cadre de question.
+    // (Les flèches ↑/↓ et le sélecteur de banque sont masqués en preview, donc
+    // plus de chevauchement — cf. chantier n°9.)
+    question.appendChild(idDisplay);
+
     // Cacher le champ original et son label
     const idFormGroup = idField.closest('.form-group');
     if (idFormGroup) {
         idFormGroup.classList.add('preview-hidden-field');
     }
+}
+
+/**
+ * Affiche le média associé à la question en mode prévisualisation : l'image est
+ * rendue ; les autres types (audio/vidéo/PDF) sont mentionnés. Aucune affordance
+ * d'édition (le bouton « Ajouter un média » et son panneau sont masqués).
+ * @param {HTMLElement}   question
+ * @param {string|number} questionId
+ */
+function transformMedia(question, questionId) {
+    const file = window.questionMediaFiles ? window.questionMediaFiles[questionId] : null;
+    if (!file) return;
+
+    const category = (typeof getMediaCategory === 'function') ? getMediaCategory(file.name) : 'other';
+
+    const mediaDisplay = document.createElement('div');
+    mediaDisplay.className = 'preview-display preview-media';
+
+    if (category === 'image') {
+        const img = document.createElement('img');
+        img.className = 'preview-media-img';
+        img.alt = 'Média de la question';
+        img.src = URL.createObjectURL(file);
+        mediaDisplay.appendChild(img);
+    } else {
+        const note = document.createElement('div');
+        note.className = 'preview-media-note';
+        const icon = (typeof getMediaIcon === 'function') ? getMediaIcon(file.name) : '📎';
+        note.textContent = `${icon} ${file.name}`;
+        mediaDisplay.appendChild(note);
+    }
+
+    // Insérer juste avant le texte de la question s'il est déjà transformé,
+    // sinon à la fin de la question.
+    const textDisplay = question.querySelector('.preview-question-text');
+    if (textDisplay) {
+        textDisplay.parentNode.insertBefore(mediaDisplay, textDisplay);
+    } else {
+        question.appendChild(mediaDisplay);
+    }
+}
+
+/**
+ * Affiche le feedback combiné (correct / partiellement correct / incorrect) en
+ * lecture seule, et masque le bloc d'édition `<details>` original. N'est rendu
+ * que pour les QCM/QCU et seulement si au moins un des trois champs est renseigné.
+ * @param {HTMLElement}   question
+ * @param {string|number} questionId
+ * @param {string}        questionType
+ */
+function transformCombinedFeedback(question, questionId, questionType) {
+    // Toujours masquer le bloc d'édition original en preview (sinon ses champs
+    // restent visibles ET éditables — cf. capture utilisateur).
+    const block = document.getElementById(IDS.combinedFeedbackBlock(questionId));
+    if (block) block.classList.add('preview-hidden-field');
+
+    // Le feedback combiné n'a de sens que pour les QCM/QCU.
+    if (questionType !== 'mc' && questionType !== 'sc') return;
+
+    const correct   = getRichTextValue(IDS.correctFeedback(questionId));
+    const partial   = getRichTextValue(IDS.partiallyCorrectFeedback(questionId));
+    const incorrect = getRichTextValue(IDS.incorrectFeedback(questionId));
+    if (!correct && !partial && !incorrect) return;
+
+    const display = document.createElement('div');
+    display.className = 'preview-display preview-combined-feedback';
+
+    const title = document.createElement('div');
+    title.className = 'preview-combined-title';
+    title.textContent = 'Feedback combiné';
+    display.appendChild(title);
+
+    /**
+     * Ajoute une ligne de feedback combiné si son contenu est non vide.
+     * @param {string} html
+     * @param {string} label
+     * @param {string} variant - classe modificatrice (ok / partial / ko)
+     */
+    const addItem = (html, label, variant) => {
+        if (!html) return;
+        const item = document.createElement('div');
+        item.className = `preview-combined-item preview-combined-${variant}`;
+        const lbl = document.createElement('span');
+        lbl.className = 'preview-combined-label';
+        lbl.textContent = label;
+        const content = document.createElement('span');
+        content.className = 'preview-combined-content';
+        content.innerHTML = sanitizeRichHtml(html);
+        item.appendChild(lbl);
+        item.appendChild(content);
+        display.appendChild(item);
+    };
+
+    addItem(correct,   'Si correct', 'ok');
+    addItem(partial,   'Si partiellement correct', 'partial');
+    addItem(incorrect, 'Si incorrect', 'ko');
+
+    question.appendChild(display);
 }
 
 /**

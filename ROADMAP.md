@@ -25,7 +25,8 @@
 | 6 | Système d'authentification | n/a | À cadrer | Plus tard | `[ ]` |
 | 7 | Import **Moodle XML** (rééditer le feedback combiné) | ❌ GIFT / ✅ XML | Moyen | 7 | `[x]` 0.19.0 |
 | 8 | Médias dans l'export/import **XML** (base64) | n/a (XML) | Moyen | 8 | `[x]` 0.19.0 |
-| 9 | Refonte du mode prévisualisation + correctif chevauchement flèches/ID | n/a (UI) | Faible | 6 | `[ ]` |
+| 9 | Refonte du mode prévisualisation + correctif chevauchement flèches/ID | n/a (UI) | Faible | 6 | `[x]` 0.22.0 |
+| 10 | Refonte UI/UX globale (preview, menus, onglets XML, RTF, responsive, bug, favicon, renommage) | n/a (UI) | Élevé | 6 | `[x]` 0.22.0 |
 | Q | Qualité continue (confirm/alert, tests) | — | Faible | continu | `[~]` |
 
 ---
@@ -334,7 +335,15 @@ fichier Moodle **autonome** (sans ZIP annexe). Complète les chantiers n°5
 
 ---
 
-## 9. Refonte du mode prévisualisation + correctif flèches/ID
+## 9. Refonte du mode prévisualisation + correctif flèches/ID — `[x]` livré en 0.22.0
+
+> **Livré** dans la session du 2026-06-07 (0.22.0), au sein du chantier **n°10**
+> (refonte UI/UX globale qui l'absorbe). Preview compacte et contrastée (bonnes
+> réponses **bleu**, mauvaises **rouge**), feedback combiné en **lecture seule**
+> et bien placé, média affiché / affordance d'ajout masquée, chevauchement
+> identifiant ↔ flèches corrigé (identifiant déplacé dans l'en-tête, contrôles
+> d'édition masqués). Voir aussi `CHANGELOG.md` [0.22.0]. Descriptif d'origine
+> conservé ci-dessous pour la traçabilité.
 
 **Objectif.** Améliorer la lisibilité du **mode prévisualisation** (rendu jugé
 peu convaincant) et corriger un **bug d'UI** : en mode édition, les **flèches de

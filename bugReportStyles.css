@@ -1,0 +1,156 @@
+/* ── bugReportStyles.css ──────────────────────────────────────────────────────
+ * Bouton « Signaler un bug » (3ᵉ élément de la pile fixe haut-droite) et sa
+ * modale → mailto. Chantier UI/UX n°10. Charte CNED.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Bouton dans la pile fixe (sous Aide et Prévisualiser) ─────────────────── */
+.bug-report-btn {
+    position: fixed;
+    right: 12px;
+    top: 100px; /* sous .preview-btn (56 + 36 + 8) */
+    width: 150px;
+    box-sizing: border-box;
+    height: 36px;
+    border-radius: 18px;
+    background-color: #5a6b7b; /* gris ardoise — distinct d'Aide (bleu), Prévisualiser (turquoise/rose) */
+    color: #fff;
+    border: none;
+    font-weight: bold;
+    padding: 0 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+.bug-report-btn:hover {
+    background-color: #45535f;
+    transform: scale(1.05);
+}
+.bug-icon {
+    margin-right: 5px;
+    font-size: 15px;
+}
+.bug-text {
+    font-size: 13px;
+}
+
+/* ── Modale ────────────────────────────────────────────────────────────────── */
+.bug-report-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.bug-report-dialog {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    width: min(560px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.bug-report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 2px solid #f0e0ea;
+}
+.bug-report-header h2 {
+    margin: 0;
+    font-size: 1.15em;
+    color: #ae2585;
+}
+.bug-report-close {
+    background: none;
+    border: none;
+    font-size: 1.6em;
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+}
+.bug-report-close:hover { color: #ae2585; }
+
+.bug-report-body {
+    padding: 16px 18px;
+}
+.bug-report-intro {
+    margin-top: 0;
+    font-size: 0.92em;
+    color: #555;
+    line-height: 1.45;
+}
+.bug-report-body label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.bug-report-row {
+    display: flex;
+    gap: 12px;
+}
+.bug-report-field {
+    flex: 1;
+}
+.bug-report-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+.bug-report-textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* Champs nom/prénom empilés sur petit écran. */
+@media (max-width: 480px) {
+    .bug-report-row { flex-direction: column; gap: 0; }
+}
+.bug-report-meta {
+    margin-bottom: 0;
+    font-size: 0.85em;
+    color: #666;
+    background: #f7f7f7;
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.bug-report-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 18px;
+    border-top: 1px solid #eee;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .bug-report-btn {
+        right: 8px;
+        top: 84px; /* sous .preview-btn compact (48 + 32 + 4) */
+        width: 130px;
+        height: 32px;
+    }
+    .bug-text { font-size: 12px; }
+}

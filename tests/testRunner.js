@@ -908,6 +908,39 @@
             assertMatch(gift(), /\n=[^\n]*Paris/, 'export GIFT toujours fonctionnel');
             assertMatch(generateMoodleXmlCode(), /<question type="multichoice">/, 'export XML toujours fonctionnel');
         });
+
+        // ── Séparateurs RTF de natures différentes (chantier UI/UX n°10) ──────
+        await test('RTF : séparateur de composante « Réponses » + filet pointillé', () => {
+            resetApp();
+            const id = newQuestion('tf');
+            document.getElementById(`true-option-${id}`).checked = true;
+            setRichTextValue(`question-text-${id}`, 'Vrai ?');
+            const rtf = buildRtf(buildPrintableStates(), META);
+            assertMatch(rtf, /\\brdrdot/, 'filet pointillé de composante présent');
+            // « é » est échappé en \u233? par rtfEscape → on tolère l'échappement.
+            assertMatch(rtf, /\{\\b\\fs18\\cf1 R[^}]*ponses\\par\}/, 'label « Réponses » de composante');
+        });
+
+        await test('RTF : en-tête de banque (filet double + 📚) émis en banque, absent hors banque', () => {
+            // Hors banque : aucun en-tête de banque.
+            resetApp();
+            const id0 = newQuestion('tf');
+            document.getElementById(`true-option-${id0}`).checked = true;
+            setRichTextValue(`question-text-${id0}`, 'Sans banque');
+            assertNoMatch(buildRtf(buildPrintableStates(), META), /\\brdrdb/, 'pas de filet double hors banque');
+
+            // En banque : en-tête de banque avec filet double et libellé.
+            resetApp();
+            window.courseCode.value = 'CODE';
+            const id1 = newQuestion('tf');
+            document.getElementById(`true-option-${id1}`).checked = true;
+            setRichTextValue(`question-text-${id1}`, 'En banque');
+            const section = createBank('Algèbre');
+            moveQuestionToBank(document.querySelector(`.question-container[data-id="${id1}"]`), section);
+            const rtf = buildRtf(buildPrintableStates(), META);
+            assertMatch(rtf, /\\brdrdb/, 'filet double de banque présent');
+            assertMatch(rtf, /Banque B01/, 'libellé de banque dans le RTF');
+        });
     }
 
     // ─────────────────────────────────────────────────────────────────────────

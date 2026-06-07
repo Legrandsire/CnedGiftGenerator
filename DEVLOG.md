@@ -22,6 +22,73 @@
 
 ---
 
+## 2026-06-07 (suite 3) — Refonte UI/UX globale (0.22.0)
+
+- **Objectif** : chantier ROADMAP n°10 (absorbe le n°9) — refonte visuelle,
+  ergonomie, responsive, sans toucher aux exports/imports (GIFT/XML/lisible) ni
+  casser la suite de tests.
+- **Choix validés (AskUserQuestion)** : (a) renommage **« CNED Quiz Builder »** ;
+  (b) barre du bas en **menus déroulants** par format ; (c) sortie XML en
+  **onglets** GIFT/XML (zone unique) ; (d) signalement de bug = **formulaire
+  modal → mailto** ; (e) **une seule MINOR 0.22.0**.
+- **Livré en 0.22.0** :
+  - **Preview refondue** (`previewMode.js` / `previewStyles.css`) : compacte,
+    bonnes réponses **bleu** / mauvaises **rouge** (dégradés/bordures), feedback
+    combiné **lecture seule** bien placé (`transformCombinedFeedback`), média
+    affiché (`transformMedia`), affordance « Ajouter un média » et contrôles
+    d'en-tête (banque + flèches) masqués ; **identifiant déplacé dans l'en-tête**
+    → fin du chevauchement avec les flèches ↑/↓ (correctif chantier n°9).
+  - **Pile de boutons haut-droite** : Aide → Prévisualiser → Signaler un bug, à
+    **largeur fixe**, empilés (`helpStyles.css`, `previewStyles.css`,
+    `bugReportStyles.css`). **Toasts** repositionnés en dessous (`notifyStyles.css`).
+  - **Menus déroulants + onglets** (`actionMenu.js` / `actionMenuStyles.css`) :
+    « GIFT ▾ / Moodle ▾ / Document ▾ » ; les boutons gardent leurs **id** (câblage
+    intact). Onglets de sortie GIFT/XML (`switchOutputTab`) + bouton **« Générer &
+    visualiser »** le code Moodle (affichage sans téléchargement, sans base64).
+  - **Contact** (`bugReport.js` / `bugReportStyles.css`) : bouton « 📧 Contact »
+    (gris ardoise, distinct d'« Éditer »), modale = formulaire nom/prénom/email/
+    message → `mailto:` pré-rempli (expéditeur + message + version + navigateur)
+    vers `vincent.grandsire@ac-cned.fr`.
+  - **RTF** (`exportPrintable.js`) : séparateurs de natures différentes — filet
+    **double** + libellé pour les **banques** (`rtfBankHeader`), filet sous le
+    titre de question, filet **pointillé** entre **composantes** (`rtfRule`).
+    `readQuestionState` porte désormais `bankNum`/`bankName`.
+  - **Renommage** (index.html : `<title>`, `<h1>`, intro) + **favicon** (logo CNED).
+  - **Responsive** : media queries (barre d'action, en-tête, métadonnées,
+    sommaire défilable, preview, pile de boutons).
+  - **Tour guidé** : étape copier/télécharger → menu « GIFT » (`#gift-menu-toggle`).
+- **Fichiers modifiés** : `core.js` (0.21.0 → 0.22.0), `index.html`, `styles.css`,
+  `previewMode.js`, `previewStyles.css`, `helpStyles.css`, `helpManager.js`,
+  `notifyStyles.css`, `exportPrintable.js`, `tests/testRunner.js`, `CHANGELOG.md`,
+  `ROADMAP.md`, `CLAUDE.md`. **Nouveaux** : `actionMenu.js`, `actionMenuStyles.css`,
+  `bugReport.js`, `bugReportStyles.css`.
+- **Décisions techniques** :
+  - Menus déroulants : les boutons d'action **conservent leurs identifiants** →
+    aucun recâblage de core/download/export ; `actionMenu.js` ne gère que
+    l'ouverture/fermeture et les onglets.
+  - Visualisation XML **sans embarquement base64** (lisibilité de la zone de
+    sortie) ; le téléchargement `.xml` reste, lui, autonome (médias inclus).
+  - Nouveaux scripts **non chargés dans `tests/tests.html`** (composants UI sans
+    test dédié) ; les câblages touchant de nouveaux DOM (`xml-output`, onglets,
+    `generate-xml-btn`) sont **défensifs** (vérification d'existence).
+- **Retours utilisateur (en cours de chantier)** :
+  - Preview **plus compacte** : paddings/gaps réduits, marges des `<p>` du RTE
+    neutralisées, icônes de validité plus petites.
+  - Bouton de contact **gris ardoise** (l'ancien rose doublonnait avec « Éditer »).
+  - **Choix validés (AskUserQuestion, 2ᵉ tour)** : envoi = **formulaire enrichi →
+    mailto** (refus d'un service tiers pour préserver « aucune donnée transmise »,
+    Spec.md 1.1) ; renommage **« Signaler un bug » → « Contact »** + champs
+    nom/prénom/email.
+- **Tests** : +2 (séparateurs RTF) → **74**. Validés en Node pour la **syntaxe**
+  des fichiers modifiés/créés ; la suite complète exige le navigateur.
+- **En suspens / à valider** : ouvrir `tests/tests.html` et confirmer les **74
+  tests** verts ; valider visuellement la preview, les menus, les onglets, le
+  responsive et le mailto au navigateur avant le tag.
+- **Tag Git proposé (non exécuté)** : `v0.22.0`.
+- **Version** : 0.22.0 (MINOR — refonte UI/UX rétrocompatible).
+
+---
+
 ## 2026-06-07 (suite 2) — Banques de questions / catégories (0.21.0)
 
 - **Objectif** : chantier ROADMAP n°2 — classer les questions en **banques**

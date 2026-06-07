@@ -11,6 +11,52 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.22.0] — 2026-06-07
+
+### Ajouté
+- **Refonte UI/UX** — chantier ROADMAP n°10 (absorbe le n°9). Nouveaux modules
+  `actionMenu.js` / `actionMenuStyles.css` et `bugReport.js` / `bugReportStyles.css`.
+- **Mode prévisualisation** entièrement repensé : rendu plus **compact** et plus
+  **contrasté** ; bonnes réponses en **bleu**, mauvaises en **rouge** (dégradés,
+  bordures) ; le **feedback combiné** est désormais affiché en **lecture seule**
+  et bien placé (il restait éditable et mal positionné) ; le **média** associé est
+  affiché et l'affordance « Ajouter un média » est masquée.
+- **Onglets de sortie** « Code GIFT » / « Code Moodle XML » sur une zone unique :
+  nouveau bouton **« Générer & visualiser »** dans le menu Moodle pour afficher le
+  code XML sans le télécharger.
+- **Barre d'action** regroupée en **menus déroulants** par format (« GIFT ▾ »,
+  « Moodle ▾ », « Document ▾ »), à côté du bouton primaire « Générer » et de
+  « Tout effacer ».
+- **Bouton « Contact »** (pile haut-droite) : formulaire modal (nom, prénom,
+  adresse électronique, message) qui ouvre un courriel **pré-rempli** (expéditeur,
+  message, version, navigateur) vers `vincent.grandsire@ac-cned.fr`. App 100 %
+  statique → lien `mailto:`, sans backend ni service tiers (aucune donnée
+  transmise hors du navigateur).
+- **RTF plus lisible** : séparateurs de **natures différentes** — filet **double**
+  turquoise + libellé pour les **banques**, filet sous le **titre** de question,
+  filet **pointillé** entre les **composantes** (énoncé / réponses / rétroactions).
+- **Renommage** de l'outil en **« CNED Quiz Builder »** (`<title>`, en-tête,
+  texte d'introduction), reflétant la production de GIFT **et** de Moodle XML.
+- **Favicon** : le logo CNED apparaît désormais dans l'onglet du navigateur.
+- **Responsive** smartphone/tablette : barre d'action et menus en pile, en-tête,
+  métadonnées, sommaire (défilement horizontal) et prévisualisation adaptés.
+
+### Modifié
+- **Pile de boutons haut-droite** : « Prévisualiser » passe en **largeur fixe** et
+  se place **sous** « Aide » (plus de chevauchement ni de variation de largeur).
+- **Notifications (toasts)** repositionnées **sous** la pile de boutons (elles la
+  recouvraient).
+- **Correctif chevauchement (chantier n°9)** : en prévisualisation, l'identifiant
+  ne se superpose plus aux flèches ↑/↓ (placé dans l'en-tête, contrôles d'édition
+  masqués).
+- **Tour guidé** : l'étape « Copier/Télécharger » pointe désormais vers le menu
+  « GIFT ».
+
+### Tests
+- +2 (séparateurs RTF : composante « Réponses », en-tête de banque) → **74**.
+
+---
+
 ## [0.21.0] — 2026-06-07
 
 ### Ajouté

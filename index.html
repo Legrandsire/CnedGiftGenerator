@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Générateur de code GIFT</title>
+    <title>CNED Quiz Builder — Générateur GIFT &amp; Moodle XML</title>
+    <!-- Favicon : logo CNED (chantier UI/UX n°10) -->
+    <link rel="icon" type="image/png" href="images/CNED_Logo_RVB_HD.PNG">
     <link rel="stylesheet" href="rteStyles.css">
     <link rel="stylesheet" href="styles.css">
     <!-- Ajout du fichier CSS d'aide -->
@@ -20,16 +22,20 @@
     <!-- Styles de l'export lisible (PDF / HTML). Règles scopées sous .printable-doc :
          sans effet sur l'app ; inlinées dans le document généré par exportPrintable.js. -->
     <link rel="stylesheet" href="printStyles.css">
+    <!-- Menus déroulants de la barre d'action + onglets de sortie GIFT/XML -->
+    <link rel="stylesheet" href="actionMenuStyles.css">
+    <!-- Formulaire « Signaler un bug » (modale → mailto) -->
+    <link rel="stylesheet" href="bugReportStyles.css">
 
 </head>
 <body>
     <div class="container">
         <div class="header-container">
             <img src="images/CNED_Logo_RVB_HD.PNG" alt="Logo CNED" class="logo">
-            <h1>Générateur de code GIFT</h1>
+            <h1>CNED Quiz Builder</h1>
             <!-- Le bouton d'aide sera ajouté ici par helpManager.js -->
         </div>
-        <p>Cet outil vous permet de créer des questions au format GIFT pour Moodle et d'autres LMS compatibles.</p>
+        <p>Cet outil vous permet de créer des questions pour Moodle et d'autres LMS compatibles, aux formats GIFT et Moodle&nbsp;XML.</p>
         
         <h3 class="section-title">Importation d'un fichier existant</h3>
         <div class="form-group">
@@ -110,45 +116,72 @@
     <div class="action-buttons-row">
         <!-- ACTION PRINCIPALE -->
         <button id="generate-btn" class="btn-primary">
-            ⚙️ Générer le code GIFT
+            ⚙️ Générer
         </button>
 
-        <!-- ACTIONS SECONDAIRES -->
+        <!-- ACTIONS SECONDAIRES regroupées en menus déroulants par format
+             (chantier UI/UX n°10). Les IDENTIFIANTS des boutons sont conservés :
+             le câblage existant (core.js, downloadManager.js, exportMoodleXml.js,
+             exportPrintable.js) reste inchangé. -->
         <div class="action-group-secondary">
-            <button id="copy-btn" class="btn-secondary">
-                📋 Copier
-            </button>
-            <button id="download-btn" class="btn-download">
-                ⬇️ Télécharger (.txt)
-            </button>
-            <button id="download-zip-btn" class="btn-download-zip">
-                📦 Télécharger le ZIP
-                <span class="media-badge" id="media-count-badge" style="display:none">0 média</span>
-            </button>
-            <button id="download-xml-btn" class="btn-download-xml" title="Export Moodle XML : supporte le feedback combiné (correct / partiellement correct / incorrect), impossible en GIFT.">
-                🎓 Moodle XML (.xml)
-            </button>
-            <button id="print-pdf-btn" class="btn-print" title="Document lisible mis en forme (charte CNED). Ouvre la fenêtre d'impression : choisissez « Enregistrer au format PDF ».">
-                📄 PDF (impression)
-            </button>
-            <button id="download-rtf-btn" class="btn-print" title="Document lisible éditable, ouvrable dans Word/LibreOffice.">
-                📝 RTF (.rtf)
-            </button>
-            <button id="download-html-btn" class="btn-print" title="Page HTML autonome, lisible et ouvrable partout.">
-                🌐 HTML (.html)
-            </button>
+            <!-- Menu GIFT -->
+            <div class="dropdown" data-dropdown>
+                <button type="button" id="gift-menu-toggle" class="dropdown-toggle btn-menu" aria-haspopup="true" aria-expanded="false">
+                    📝 GIFT <span class="dropdown-caret">▾</span>
+                </button>
+                <div class="dropdown-menu" role="menu">
+                    <button id="copy-btn" class="dropdown-item" role="menuitem">📋 Copier le code</button>
+                    <button id="download-btn" class="dropdown-item" role="menuitem">⬇️ Télécharger (.txt)</button>
+                    <button id="download-zip-btn" class="dropdown-item" role="menuitem">
+                        📦 Télécharger le ZIP
+                        <span class="media-badge" id="media-count-badge" style="display:none">0 média</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Menu Moodle XML -->
+            <div class="dropdown" data-dropdown>
+                <button type="button" class="dropdown-toggle btn-menu btn-menu-xml" aria-haspopup="true" aria-expanded="false"
+                        title="Format Moodle XML : supporte le feedback combiné (correct / partiellement correct / incorrect), impossible en GIFT.">
+                    🎓 Moodle <span class="dropdown-caret">▾</span>
+                </button>
+                <div class="dropdown-menu" role="menu">
+                    <button id="generate-xml-btn" class="dropdown-item" role="menuitem">⚙️ Générer &amp; visualiser le code</button>
+                    <button id="download-xml-btn" class="dropdown-item" role="menuitem">🎓 Télécharger (.xml)</button>
+                </div>
+            </div>
+
+            <!-- Menu Document lisible -->
+            <div class="dropdown" data-dropdown>
+                <button type="button" class="dropdown-toggle btn-menu btn-menu-doc" aria-haspopup="true" aria-expanded="false">
+                    📄 Document <span class="dropdown-caret">▾</span>
+                </button>
+                <div class="dropdown-menu" role="menu">
+                    <button id="print-pdf-btn" class="dropdown-item" role="menuitem" title="Document lisible mis en forme (charte CNED). Ouvre la fenêtre d'impression : choisissez « Enregistrer au format PDF ».">📄 PDF (impression)</button>
+                    <button id="download-rtf-btn" class="dropdown-item" role="menuitem" title="Document lisible éditable, ouvrable dans Word/LibreOffice.">📝 RTF (.rtf)</button>
+                    <button id="download-html-btn" class="dropdown-item" role="menuitem" title="Page HTML autonome, lisible et ouvrable partout.">🌐 HTML (.html)</button>
+                </div>
+            </div>
         </div>
 
         <!-- ACTION DESTRUCTIVE -->
-        <button id="clear-btn" class="btn-danger">
-            🗑️ Tout effacer
-        </button>
+        <span class="btn-danger-wrapper">
+            <button id="clear-btn" class="btn-danger">
+                🗑️ Tout effacer
+            </button>
+        </span>
     </div>
 </div>
-        
+
+        <!-- Sortie : onglets GIFT / Moodle XML sur une zone unique (chantier n°10) -->
         <div class="form-group">
-            <label for="gift-output">Code GIFT généré:</label>
+            <div class="output-tabs" role="tablist">
+                <button type="button" id="tab-gift" class="output-tab active" data-output-tab="gift" role="tab" aria-selected="true">Code GIFT</button>
+                <button type="button" id="tab-xml" class="output-tab" data-output-tab="xml" role="tab" aria-selected="false">Code Moodle XML</button>
+            </div>
+            <label for="gift-output" id="output-label" class="output-label">Code GIFT généré&nbsp;:</label>
             <textarea id="gift-output" readonly></textarea>
+            <textarea id="xml-output" class="hidden" readonly aria-label="Code Moodle XML généré"></textarea>
         </div>
         
         <footer class="footer">
@@ -195,5 +228,9 @@
     <!-- Ajout des nouveaux scripts -->
     <script src="previewMode.js"></script>
     <script src="unsavedChangesAlert.js"></script>
+    <!-- Menus déroulants de la barre d'action + onglets de sortie GIFT/XML -->
+    <script src="actionMenu.js"></script>
+    <!-- Formulaire « Signaler un bug » (modale → mailto) -->
+    <script src="bugReport.js"></script>
 </body>
 </html>

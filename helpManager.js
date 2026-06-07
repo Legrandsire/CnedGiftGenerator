@@ -204,12 +204,8 @@ function initTooltips() {
             text: 'Générer le code GIFT à partir des questions créées'
         },
         {
-            selector: '#copy-btn',
-            text: 'Copier le code généré dans le presse-papier'
-        },
-        {
-            selector: '#download-btn',
-            text: 'Télécharger le code généré sous forme de fichier texte'
+            selector: '#gift-menu-toggle',
+            text: 'Menu GIFT : copier le code, le télécharger en .txt ou en ZIP (avec les médias). Les autres formats sont dans les menus « Moodle » et « Document ».'
         },
         {
             selector: '#clear-btn',

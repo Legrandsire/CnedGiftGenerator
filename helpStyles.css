@@ -3,11 +3,16 @@
  * Styles pour les composants d'aide du générateur de code GIFT
  */
 
-/* Bouton d'aide fixe en haut de l'écran */
+/* Bouton d'aide — premier élément de la pile fixe en haut à droite.
+   La pile (Aide → Prévisualiser → Signaler un bug) est alignée à droite, à
+   largeur FIXE (cf. previewStyles.css / bugReportStyles.css), pour ne plus
+   chevaucher ni varier selon le libellé (chantier UI/UX n°10). */
 .help-btn {
     position: fixed;
-    right: 160px; /* Position à droite du bouton preview avec un espace adéquat */
-    top: 15px;
+    right: 12px;
+    top: 12px;
+    width: 150px;
+    box-sizing: border-box;
     height: 36px;
     border-radius: 18px;
     background-color: #005EB8;
@@ -513,8 +518,9 @@ select[data-tooltip]::before {
     }
     
     .help-btn {
-        right: 120px; /* Ajusté pour petits écrans */
-        top: 10px;
+        right: 8px;
+        top: 8px;
+        width: 130px;
         height: 32px;
         padding: 0 10px;
         font-size: 13px;

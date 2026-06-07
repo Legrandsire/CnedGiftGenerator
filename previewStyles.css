@@ -6,11 +6,15 @@
  * du générateur de code GIFT en mode prévisualisation.
  */
 
-/* Bouton de prévisualisation repositionné */
+/* Bouton de prévisualisation — 2ᵉ élément de la pile fixe haut-droite, SOUS le
+   bouton Aide. Largeur FIXE (identique à .help-btn) : le libellé bascule entre
+   « Prévisualiser » et « Éditer » sans faire varier la largeur (chantier n°10). */
 .preview-btn {
     position: fixed;
-    right: 10px;
-    top: 15px; /* Positionné dans le coin supérieur droit */
+    right: 12px;
+    top: 56px; /* sous .help-btn (12px + 36px de haut + 8px de gouttière) */
+    width: 150px;
+    box-sizing: border-box;
     height: 36px;
     border-radius: 18px;
     background-color: #2da288;
@@ -24,7 +28,7 @@
     justify-content: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
-    z-index: 100;
+    z-index: 1000;
 }
 
 .preview-btn:hover {
@@ -63,27 +67,47 @@
 
 /* Styles généraux pour les éléments en prévisualisation */
 .preview-display {
-    margin-bottom: 15px;
+    margin-bottom: 9px;
 }
 
-/* Identifiant de question */
+/* Neutraliser les marges des blocs (<p>, etc.) produits par le RTE : sinon
+   chaque réponse/énoncé gagne ~1 ligne de marge → preview trop haute. */
+.preview-question-text > p:first-child,
+.preview-option-text > p,
+.preview-option-feedback > p,
+.preview-general-feedback p,
+.preview-combined-content p {
+    margin: 0;
+}
+.preview-question-text > p { margin: 0.2em 0; }
+
+/* Identifiant de question — coin HAUT-DROIT du cadre (position absolue). Les
+   flèches ↑/↓ et le sélecteur de banque sont masqués en preview → plus de
+   chevauchement (chantier n°9). L'ID est complet (avec la banque). */
 .preview-id {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    font-family: monospace;
-    background-color: #f5f5f5;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 0.9em;
-    color: #666;
+    top: 12px;
+    right: 14px;
+    margin: 0;
+    font-family: ui-monospace, Consolas, monospace;
+    background-color: #eef2f5;
+    border: 1px solid #dbe3ea;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.82em;
+    color: #4a5b6b;
+    white-space: nowrap;
 }
 
-/* En-tête de question avec type à côté */
+/* En-tête de question avec type à côté. padding-right réserve la place de l'ID
+   absolu (le type peut passer à la ligne sous le numéro si besoin). */
 .preview-header-container {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    padding-right: 150px;
 }
 
 .preview-question-number {
@@ -92,63 +116,99 @@
     color: #2c3e50;
 }
 
+/* Étiquette de type : pastille pleine à fort contraste (texte blanc). La couleur
+   s'accorde à la parité du cadre de question (turquoise/rose), réglée plus bas. */
 .preview-question-type {
-    color: #2da288;
-    font-size: 1em;
-    font-weight: normal;
-    margin-left: 15px;
-    background-color: rgba(45, 162, 136, 0.1);
+    color: #ffffff;
+    background-color: #2da288; /* défaut (questions impaires) */
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-left: 0;
     display: inline-block;
-    padding: 5px 15px;
+    padding: 4px 12px;
     border-radius: 15px;
+}
+
+/* Accord avec la couleur du cadre (cf. .question-odd / .question-even). */
+body.preview-mode .question-odd .preview-question-type {
+    background-color: #2da288; /* turquoise CNED */
+}
+body.preview-mode .question-even .preview-question-type {
+    background-color: #ae2585; /* rose CNED */
 }
 
 /* Texte de la question */
 .preview-question-text {
-    font-size: 1.1em;
-    margin-bottom: 20px;
-    line-height: 1.5;
-    background-color: #f9f9f9;
-    padding: 15px;
-    border-left: 4px solid #2da288;
-    border-radius: 0 4px 4px 0;
+    font-size: 1.02em;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    background-color: #f7f9fb;
+    padding: 8px 12px;
+    border-left: 4px solid #00bcb4;
+    border-radius: 0 6px 6px 0;
+}
+
+/* Média en preview */
+.preview-media {
+    margin-bottom: 14px;
+}
+.preview-media-img {
+    max-width: 100%;
+    max-height: 280px;
+    border: 1px solid #d6e9e4;
+    border-radius: 6px;
+    display: block;
+}
+.preview-media-note {
+    display: inline-block;
+    font-style: italic;
+    color: #555;
+    background-color: #f3f3f3;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.92em;
 }
 
 /* Options de réponse */
 .preview-options {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .preview-options-title, .preview-feedback-title {
-    font-size: 1.1em;
-    margin-bottom: 15px;
+    font-size: 0.95em;
+    margin-bottom: 6px;
     color: #2c3e50;
 }
 
 .preview-options-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
 }
 
-/* Style pour les options individuelles - alignement amélioré */
+/* Style pour les options individuelles — plus compactes et plus contrastées.
+   Charte chantier n°10 : bonnes réponses en BLEU, mauvaises en ROUGE. */
 .preview-option {
     display: flex;
     align-items: center;
-    padding: 12px 15px;
-    border-radius: 4px;
-    background-color: #f5f5f5;
-    border-left: 4px solid #ddd;
+    flex-wrap: wrap;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background-color: #f4f6f8;
+    border: 1px solid #e3e8ec;
+    border-left: 4px solid #cfd6dc;
 }
 
 .preview-option-correct {
-    border-left-color: #2da288; /* Vert pour les réponses correctes */
-    background-color: rgba(45, 162, 136, 0.1);
+    border-color: #b6d4f0;
+    border-left-color: #005EB8; /* Bleu pour les réponses correctes */
+    background: linear-gradient(180deg, #eef5fc 0%, #dcebfa 100%);
 }
 
 .preview-option-incorrect {
-    border-left-color: #ae2585; /* Rose pour les réponses incorrectes */
-    background-color: rgba(174, 37, 133, 0.05);
+    border-color: #f3c9c6;
+    border-left-color: #c62828; /* Rouge pour les réponses incorrectes */
+    background: linear-gradient(180deg, #fdeceb 0%, #fbe0de 100%);
 }
 
 /* Icône de validité (✓ ou ✗) */
@@ -157,46 +217,50 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    margin-right: 12px;
+    margin-right: 9px;
     font-weight: bold;
+    font-size: 0.8em;
+    color: #fff;
 }
 
 .preview-option-correct .preview-validity-icon {
-    color: #2da288;
+    background-color: #005EB8;
 }
 
 .preview-option-incorrect .preview-validity-icon {
-    color: #ae2585;
+    background-color: #c62828;
 }
 
 /* Texte de l'option */
 .preview-option-text {
     flex-grow: 1;
     line-height: 1.4;
+    color: #1f2d3a;
 }
 
 /* Pondération */
 .preview-option-weight {
     flex-shrink: 0;
-    margin-left: 15px;
+    margin-left: 12px;
     font-weight: bold;
-    color: #666;
-    font-size: 0.9em;
+    color: #4a5b6b;
+    font-size: 0.85em;
     white-space: nowrap;
-    padding: 3px 8px;
-    background-color: rgba(0, 0, 0, 0.05);
+    padding: 2px 8px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 12px;
 }
 
 .preview-option-correct .preview-option-weight {
-    color: #2da288;
+    color: #005EB8;
 }
 
 .preview-option-incorrect .preview-option-weight {
-    color: #ae2585;
+    color: #c62828;
 }
 
 /* Informations supplémentaires pour les options */
@@ -218,18 +282,25 @@
     color: #666;
 }
 
-/* Feedback pour les options */
+/* Feedback pour les options — plus contrasté/lisible (retour utilisateur),
+   et compact (pas de double encadré volumineux). */
 .preview-option-feedback {
     width: 100%;
-    margin-top: 8px;
-    margin-left: 36px; /* Aligné avec le texte de l'option */
-    font-style: italic;
-    color: #666;
-    font-size: 0.9em;
-    padding: 8px 12px;
-    border-top: 1px dashed #ddd;
-    background-color: rgba(0, 0, 0, 0.02);
+    margin-top: 4px;
+    margin-left: 27px; /* Aligné avec le texte de l'option */
+    color: #2f3d4a;
+    font-size: 0.86em;
+    line-height: 1.35;
+    padding: 3px 9px;
+    border-left: 3px solid rgba(0, 0, 0, 0.18);
+    background-color: rgba(255, 255, 255, 0.55);
     border-radius: 4px;
+}
+.preview-option-correct .preview-option-feedback {
+    border-left-color: #005EB8;
+}
+.preview-option-incorrect .preview-option-feedback {
+    border-left-color: #c62828;
 }
 
 /* Styles spécifiques pour questions Vrai/Faux */
@@ -252,17 +323,55 @@
 }
 
 /* Feedback général */
-.preview-feedback {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    border-left: 4px solid #666;
+.preview-feedback,
+.preview-general-feedback {
+    margin-top: 9px;
+    padding: 6px 12px;
+    background-color: #fafafa;
+    border-radius: 0 6px 6px 0;
+    border-left: 4px solid #00bcb4;
+    font-size: 0.92em;
+    line-height: 1.4;
 }
 
 .preview-feedback-content {
-    line-height: 1.5;
+    line-height: 1.4;
 }
+
+/* Feedback combiné (QCM/QCU) — lecture seule, bien placé après le feedback
+   général. Trois variantes colorées (chantier n°10). */
+.preview-combined-feedback {
+    margin-top: 9px;
+}
+.preview-combined-title {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+.preview-combined-item {
+    padding: 5px 11px;
+    margin-bottom: 4px;
+    border-radius: 0 6px 6px 0;
+    background-color: #fafafa;
+    font-size: 0.9em;
+    line-height: 1.35;
+}
+.preview-combined-label {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 0.78em;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 0.5em;
+}
+.preview-combined-content { color: #2f3d4a; }
+.preview-combined-ok      { border-left: 4px solid #005EB8; }
+.preview-combined-ok      .preview-combined-label { color: #005EB8; }
+.preview-combined-partial { border-left: 4px solid #c47f00; }
+.preview-combined-partial .preview-combined-label { color: #c47f00; }
+.preview-combined-ko      { border-left: 4px solid #c62828; }
+.preview-combined-ko      .preview-combined-label { color: #c62828; }
 
 /* Style pour les éléments manquants */
 .preview-missing {
@@ -290,8 +399,9 @@ body.preview-mode .question-even {
         padding: 0 10px;
         height: 32px;
         font-size: 13px;
-        right: 10px;
-        top: 15px;
+        right: 8px;
+        top: 48px; /* sous .help-btn en version compacte (8 + 32 + 8) */
+        width: 130px;
     }
     
     .preview-tf-options {
@@ -300,12 +410,15 @@ body.preview-mode .question-even {
     }
     
     .preview-id {
-        position: relative;
-        top: 0;
-        right: 0;
-        margin-bottom: 10px;
+        top: 8px;
+        right: 8px;
+        font-size: 0.75em;
+        padding: 2px 7px;
     }
-    
+    .preview-header-container {
+        padding-right: 96px;
+    }
+
     .preview-option {
         flex-wrap: wrap;
     }
