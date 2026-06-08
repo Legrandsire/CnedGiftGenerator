@@ -153,6 +153,12 @@
     margin-bottom: 10px;
 }
 
+/* Boutons du bloc « Nouveau sur l'outil ? » (tour guidé + guide PDF) :
+   espacés et passant à la ligne proprement sur petite largeur. */
+.start-tour-container .control-btn {
+    margin: 4px;
+}
+
 /* Contenu du panneau d'aide */
 .help-content {
     padding: 20px;

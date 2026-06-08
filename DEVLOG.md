@@ -22,6 +22,38 @@
 
 ---
 
+## 2026-06-08 (suite 2) — Guide d'utilisation imprimable PDF (0.24.0)
+
+- **Objectif** : produire un guide d'utilisation complet mais synthétique, au
+  format **PDF imprimable** (charte CNED), téléchargeable depuis le menu d'aide.
+- **Choix validés (AskUserQuestion)** : nouveau module **`userGuide.js`** (reco) ;
+  déclencheur dans le **panneau d'aide seul** (reco).
+- **Réalisé** :
+  - **`userGuide.js`** : `openUserGuide()` construit un document HTML autonome
+    (CSS inline charté CNED, A4, sauts de page maîtrisés), `window.open` +
+    `document.write` + auto-impression — exactement le procédé de
+    `exportPrintable.js` (`openPrintableView`), donc sans dépendance et compatible
+    `file://`. Contenu **statique** (10 sections) → pas d'image externe
+    (about:blank), en-tête typographique aux couleurs CNED.
+  - **`helpManager.js`** : bouton « 📘 Télécharger le guide (PDF) » dans le bloc
+    « Nouveau sur l'outil ? » (onglet Général) + câblage (`openUserGuide`, garde
+    défensive). **`helpStyles.css`** : espacement des deux boutons du bloc.
+  - **`index.html`** : `<script src="userGuide.js">` (après tourManager.js).
+- **Fichiers** : `core.js` (0.23.0 → 0.24.0), `index.html`, `helpManager.js`,
+  `helpStyles.css`, `CHANGELOG.md`, `DEVLOG.md`, `ROADMAP.md`, `CLAUDE.md`.
+  **Nouveau** : `userGuide.js`.
+- **Décisions** : contenu statique (décrit l'outil, pas les questions) → robuste,
+  aucune lecture du DOM ; couleurs/format alignés sur `printStyles.css` sans le
+  réutiliser (document totalement autonome).
+- **Tests** : suite `tests/tests.html` **inchangée (74)** — `userGuide.js` non
+  chargé par le harnais (composant UI sans test dédié). `node --check` OK.
+- **À valider (navigateur)** : panneau d'aide → bouton guide → fenêtre PDF charte
+  CNED, impression/enregistrement PDF, rendu hors-ligne (`file://`).
+- **Tag Git proposé (non exécuté)** : `v0.24.0`.
+- **Version** : 0.24.0 (MINOR — nouvelle fonctionnalité rétrocompatible).
+
+---
+
 ## 2026-06-08 — Correctifs preview/génération + visite guidée plus robuste (0.23.0, non publiée)
 
 - **Objectif** : retours utilisateur sur la 0.23.0 (encore non commitée/taggée) —

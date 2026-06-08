@@ -49,6 +49,7 @@ function initHelpPanel() {
                 <div class="start-tour-container">
                     <p><strong>Nouveau sur l'outil ?</strong></p>
                     <button id="start-tour-from-panel" class="control-btn">Démarrer le tour guidé</button>
+                    <button id="download-guide-from-panel" class="control-btn">📘 Télécharger le guide (PDF)</button>
                 </div>
                 
                 <h4>Pour commencer</h4>
@@ -181,6 +182,17 @@ function initHelpPanel() {
         startTourBtn.addEventListener('click', function() {
             helpPanel.classList.add('hidden');
             startGuidedTour();
+        });
+    }
+
+    // Télécharger le guide d'utilisation (PDF imprimable) — module userGuide.js.
+    const guideBtn = document.getElementById('download-guide-from-panel');
+    if (guideBtn) {
+        guideBtn.addEventListener('click', function() {
+            helpPanel.classList.add('hidden');
+            if (typeof openUserGuide === 'function') {
+                openUserGuide();
+            }
         });
     }
 }

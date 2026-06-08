@@ -11,6 +11,23 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.24.0] — 2026-06-08
+
+### Ajouté
+- **Guide d'utilisation imprimable (PDF)** — nouveau module **`userGuide.js`** :
+  document HTML autonome mis en forme à la **charte CNED** (turquoise/rose, A4),
+  ouvert dans une fenêtre puis envoyé à l'impression (« Enregistrer au format
+  PDF »), **sans dépendance** (même procédé que l'export lisible) et **hors-ligne**.
+  - Contenu **complet mais synthétique** : présentation/démarrage rapide, import,
+    métadonnées & identifiants, banques, types de questions + éditeur enrichi +
+    média, rétroactions (par option / générale / combinée), sommaire & navigation,
+    prévisualisation, génération & exports (GIFT / Moodle XML / Document lisible),
+    hors-ligne / contact / visite guidée.
+  - Téléchargeable depuis le **panneau d'aide** (onglet Général) via le bouton
+    « 📘 Télécharger le guide (PDF) ».
+
+---
+
 ## [0.23.0] — 2026-06-07
 
 ### Ajouté

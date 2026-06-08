@@ -29,6 +29,7 @@
 | 10 | Refonte UI/UX globale (preview, menus, onglets XML, RTF, responsive, bug, favicon, renommage) | n/a (UI) | Élevé | 6 | `[x]` 0.22.0 |
 | 11 | Mode hors-ligne (vendoring JSZip + indicateur réseau) | n/a (local) | Faible | 6 | `[x]` 0.23.0 |
 | 12 | Refonte de la visite guidée (module dédié, parcours complet, positionnement) | n/a (UI) | Moyen | 6 | `[x]` 0.23.0 |
+| 13 | Guide d'utilisation imprimable (PDF charté CNED) | n/a (doc) | Faible | 6 | `[x]` 0.24.0 |
 | Q | Qualité continue (confirm/alert, tests) | — | Faible | continu | `[~]` |
 
 ---
@@ -397,6 +398,19 @@ déplacement ↑/↓** se **superposent à l'identifiant** de la question.
 > **ouverture automatique des menus déroulants** pour les étapes concernées.
 > Choix validés (AskUserQuestion) : parcours complet, style explicatif, extraction
 > dans `tourManager.js`, version unique 0.23.0.
+
+---
+
+## 13. Guide d'utilisation imprimable (PDF) — `[x]` livré en 0.24.0
+
+> **Livré** dans la session du 2026-06-08 (0.24.0). Nouveau module
+> **`userGuide.js`** : `openUserGuide()` produit un document HTML **autonome**
+> charté CNED (CSS inline, A4, contenu **statique** en 10 sections), ouvert dans
+> une fenêtre puis imprimé (`window.print()` → « Enregistrer au format PDF »),
+> selon le même procédé que l'export lisible (`exportPrintable.js`) — **sans
+> dépendance**, **hors-ligne**. Téléchargeable depuis le **panneau d'aide**
+> (bouton « 📘 Télécharger le guide (PDF) »). Choix validés (AskUserQuestion) :
+> module dédié, déclencheur dans le panneau d'aide seul.
 
 ---
 

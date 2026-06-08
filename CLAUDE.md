@@ -62,6 +62,7 @@ domaine fonctionnel précis.
 | `exportPrintable.js` | Export **lisible** pour relecture humaine : **PDF** (impression `window.print()`), **RTF** (.rtf) et **HTML** autonome. Fonction partagée `readQuestionState()`. N'altère ni le GIFT ni le XML |
 | `helpManager.js` | Panneau d'aide latéral et tooltips contextuels (la visite guidée a été extraite vers `tourManager.js`) |
 | `tourManager.js` | **Visite guidée** (module dédié, remplace l'ancien `advancedTourFeatures.js`) : parcours **explicatif** complet, positionnement clampé dans le viewport, ouverture auto des menus déroulants, proposition « première visite » (`checkFirstVisit`) |
+| `userGuide.js` | **Guide d'utilisation imprimable (PDF)** : document HTML autonome charté CNED (CSS inline, contenu **statique**) ouvert puis imprimé (`window.print()`). Sans dépendance, hors-ligne. Déclenché depuis le panneau d'aide (`openUserGuide`) |
 | `summaryManager.js` | Résumé des questions et navigation |
 | `previewMode.js` | Mode prévisualisation (lecture seule) : rendu compact, bonnes réponses en **bleu** / mauvaises en **rouge**, feedback combiné et média affichés en lecture seule, contrôles d'édition masqués |
 | `actionMenu.js` | **Menus déroulants** de la barre d'action (GIFT / Moodle / Document) + **onglets de sortie** GIFT/XML (`switchOutputTab`). Ne fait que l'UI : les boutons conservent leurs identifiants et leur câblage |
