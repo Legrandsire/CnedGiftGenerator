@@ -11,6 +11,25 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.25.0] — 2026-06-08
+
+### Modifié
+- **Réorganisation de l'arborescence** (sans changement fonctionnel) : les
+  fichiers sources, jusqu'ici tous à la racine, sont désormais classés par
+  nature :
+  - `css/` — l'ensemble des feuilles de style (13 fichiers) ;
+  - `js/` — l'ensemble des modules JavaScript (24 fichiers) ;
+  - `assets/images/` — logo CNED et favicon (anciennement `images/`) ;
+  - `docs/` — documentation de référence (`Spec.md`, `ROADMAP.md`, `AUDIT.md`).
+  - Restent à la racine : `index.html` (point d'entrée), `CLAUDE.md`,
+    `CHANGELOG.md`, `DEVLOG.md`, ainsi que `vendor/` et `tests/`.
+- Chemins mis à jour dans `index.html`, `tests/tests.html` et `js/userGuide.js`
+  (logo). **L'ordre de chargement des scripts est inchangé.** Fonctionnement
+  **100 % hors-ligne / `file://`** préservé.
+- Historique Git conservé (déplacements via `git mv`).
+
+---
+
 ## [0.24.0] — 2026-06-08
 
 ### Ajouté

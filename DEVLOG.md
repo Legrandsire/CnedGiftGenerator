@@ -22,6 +22,34 @@
 
 ---
 
+## 2026-06-08 (suite 3) — Réorganisation de l'arborescence (0.25.0)
+
+- **Objectif** : classer les modules (jusqu'ici tous à la racine, ~50 fichiers)
+  dans des dossiers par nature, pour la lisibilité/maintenance.
+- **Option retenue (validée par l'utilisateur)** : **Option A** — découpage
+  simple par nature plutôt que sous-groupement de `js/` par domaine (Option B,
+  écartée : bénéfice surtout cosmétique, plus de chemins à maintenir).
+- **Réalisé** :
+  - Création de `css/`, `js/`, `assets/images/`, `docs/`. Déplacements via
+    `git mv` (historique préservé) : 13 CSS → `css/`, 24 JS → `js/`, logo →
+    `assets/images/`, `Spec.md`/`ROADMAP.md`/`AUDIT.md` → `docs/`.
+  - Restent à la racine : `index.html`, `CLAUDE.md`, `CHANGELOG.md`,
+    `DEVLOG.md`, `vendor/`, `tests/`.
+  - Chemins corrigés : `index.html` (favicon + 13 `<link>` + 23 `<script>`,
+    `vendor/jszip.min.js` intact), `tests/tests.html` (`../css/`, `../js/`),
+    `js/userGuide.js` (logo `assets/images/...`).
+- **Vérifications** : aucun `import`/`fetch` ES6 (rien à corriger côté JS) ;
+  lecture de `printStyles.css` dans `exportPrintable.js` robuste (test par
+  `indexOf`, insensible au dossier) ; ordre de chargement inchangé ; grep de
+  contrôle → aucune référence orpheline.
+- **En suspens** : exécuter `tests/tests.html` dans un navigateur pour confirmer
+  visuellement (validation par chemins faite, suite de tests non lancée en
+  headless). Tag Git `v0.25.0` à poser.
+- **Version** : 0.25.0 (MINOR — réorganisation rétrocompatible, zéro changement
+  fonctionnel).
+
+---
+
 ## 2026-06-08 (suite 2) — Guide d'utilisation imprimable PDF (0.24.0)
 
 - **Objectif** : produire un guide d'utilisation complet mais synthétique, au

@@ -256,9 +256,9 @@ function getCnedLogoSrc() {
     const existing = document.querySelector('img.logo');
     if (existing && existing.src) return existing.src;
     try {
-        return new URL('images/CNED_Logo_RVB_HD.PNG', document.baseURI).href;
+        return new URL('assets/images/CNED_Logo_RVB_HD.PNG', document.baseURI).href;
     } catch (e) {
-        return 'images/CNED_Logo_RVB_HD.PNG';
+        return 'assets/images/CNED_Logo_RVB_HD.PNG';
     }
 }
 

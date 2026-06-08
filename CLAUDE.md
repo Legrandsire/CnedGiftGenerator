@@ -17,7 +17,7 @@ pour Moodle et autres LMS compatibles.
 - **Public visé** : ingénieurs pédagogiques et auteurs (utilisateurs non techniciens).
 - **Langue** de l'interface et de la documentation : français.
 
-La spécification fonctionnelle complète se trouve dans **`Spec.md`**.
+La spécification fonctionnelle complète se trouve dans **`docs/Spec.md`**.
 
 ---
 
@@ -39,8 +39,27 @@ Ne pas réordonner sans vérifier les dépendances.
 
 ## 3. Architecture (à respecter impérativement)
 
-Modularité **par fichier à responsabilité unique**. Chaque `.js` couvre un
-domaine fonctionnel précis.
+### Arborescence des fichiers (depuis la v0.25.0)
+
+Les fichiers sont classés par **nature** ; `index.html` reste le point d'entrée
+à la racine. Aucun module ES6 → les chemins ne vivent que dans `index.html`
+(balises `<link>`/`<script>`) et `tests/tests.html`.
+
+```
+CnedGiftGenerator/
+├─ index.html              ← point d'entrée (référence css/ et js/)
+├─ CLAUDE.md  CHANGELOG.md  DEVLOG.md   ← fichiers de tête (racine)
+├─ vendor/jszip.min.js     ← dépendance tierce (JSZip 3.10.1)
+├─ assets/images/          ← logo CNED, favicon
+├─ css/                    ← tous les *.css (un fichier par domaine)
+├─ js/                     ← tous les *.js (modules ci-dessous)
+├─ docs/                   ← Spec.md, ROADMAP.md, AUDIT.md
+└─ tests/                  ← tests.html + testRunner.js
+```
+
+Modularité **par fichier à responsabilité unique**. Chaque `js/*.js` couvre un
+domaine fonctionnel précis (les noms ci-dessous sont donnés sans le préfixe
+`js/`).
 
 | Fichier | Responsabilité |
 |---|---|

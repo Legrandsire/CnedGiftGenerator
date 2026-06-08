@@ -5,29 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNED Quiz Builder — Générateur GIFT &amp; Moodle XML</title>
     <!-- Favicon : logo CNED (chantier UI/UX n°10) -->
-    <link rel="icon" type="image/png" href="images/CNED_Logo_RVB_HD.PNG">
-    <link rel="stylesheet" href="rteStyles.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="assets/images/CNED_Logo_RVB_HD.PNG">
+    <link rel="stylesheet" href="css/rteStyles.css">
+    <link rel="stylesheet" href="css/styles.css">
     <!-- Ajout du fichier CSS d'aide -->
-    <link rel="stylesheet" href="helpStyles.css">
+    <link rel="stylesheet" href="css/helpStyles.css">
     <!-- Styles de la visite guidée (module tourManager.js) -->
-    <link rel="stylesheet" href="tourStyles.css">
+    <link rel="stylesheet" href="css/tourStyles.css">
     <!-- Ajout du fichier CSS pour le résumé des questions -->
-    <link rel="stylesheet" href="summaryStyles.css">
+    <link rel="stylesheet" href="css/summaryStyles.css">
     <!-- Ajout du fichier CSS pour le mode prévisualisation -->
-    <link rel="stylesheet" href="previewStyles.css">
-    <link rel="stylesheet" href="mediaStyles.css">
-    <link rel="stylesheet" href="notifyStyles.css">
-    <link rel="stylesheet" href="confirmDialogStyles.css">
+    <link rel="stylesheet" href="css/previewStyles.css">
+    <link rel="stylesheet" href="css/mediaStyles.css">
+    <link rel="stylesheet" href="css/notifyStyles.css">
+    <link rel="stylesheet" href="css/confirmDialogStyles.css">
     <!-- Styles des banques de questions (catégories Moodle) -->
-    <link rel="stylesheet" href="categoryStyles.css">
+    <link rel="stylesheet" href="css/categoryStyles.css">
     <!-- Styles de l'export lisible (PDF / HTML). Règles scopées sous .printable-doc :
          sans effet sur l'app ; inlinées dans le document généré par exportPrintable.js. -->
-    <link rel="stylesheet" href="printStyles.css">
+    <link rel="stylesheet" href="css/printStyles.css">
     <!-- Menus déroulants de la barre d'action + onglets de sortie GIFT/XML -->
-    <link rel="stylesheet" href="actionMenuStyles.css">
+    <link rel="stylesheet" href="css/actionMenuStyles.css">
     <!-- Formulaire « Signaler un bug » (modale → mailto) -->
-    <link rel="stylesheet" href="bugReportStyles.css">
+    <link rel="stylesheet" href="css/bugReportStyles.css">
 
 </head>
 <body>
@@ -206,38 +206,38 @@
     </div>
 
     <!-- Scripts modularisés -->
-    <script src="sanitize.js"></script>
-    <script src="domIds.js"></script>
-    <script src="notify.js"></script>
-    <script src="confirmDialog.js"></script>
-    <script src="richTextEditor.js"></script>
-    <script src="core.js"></script>
+    <script src="js/sanitize.js"></script>
+    <script src="js/domIds.js"></script>
+    <script src="js/notify.js"></script>
+    <script src="js/confirmDialog.js"></script>
+    <script src="js/richTextEditor.js"></script>
+    <script src="js/core.js"></script>
     <!-- JSZip 3.10.1 — hébergé en local (vendor/) pour un fonctionnement 100 % hors-ligne, y compris en ouverture directe file:// -->
     <script src="vendor/jszip.min.js"></script>
-    <script src="mediaManager.js"></script>
-    <script src="optionManager.js"></script>
-    <script src="categoryManager.js"></script>
-    <script src="questionManager.js"></script>
-    <script src="giftGenerator.js"></script>
-    <script src="exportMoodleXml.js"></script>
-    <script src="importGift.js"></script>
-    <script src="importMoodleXml.js"></script>
-    <script src="downloadManager.js"></script>
-    <script src="exportPrintable.js"></script>
+    <script src="js/mediaManager.js"></script>
+    <script src="js/optionManager.js"></script>
+    <script src="js/categoryManager.js"></script>
+    <script src="js/questionManager.js"></script>
+    <script src="js/giftGenerator.js"></script>
+    <script src="js/exportMoodleXml.js"></script>
+    <script src="js/importGift.js"></script>
+    <script src="js/importMoodleXml.js"></script>
+    <script src="js/downloadManager.js"></script>
+    <script src="js/exportPrintable.js"></script>
     <!-- Ajout des scripts d'aide -->
-    <script src="helpManager.js"></script>
+    <script src="js/helpManager.js"></script>
     <!-- Visite guidée (module dédié, remplace l'ancien advancedTourFeatures.js) -->
-    <script src="tourManager.js"></script>
+    <script src="js/tourManager.js"></script>
     <!-- Guide d'utilisation imprimable (PDF) téléchargeable depuis le panneau d'aide -->
-    <script src="userGuide.js"></script>
+    <script src="js/userGuide.js"></script>
     <!-- Ajout du script pour le résumé des questions -->
-    <script src="summaryManager.js"></script>
+    <script src="js/summaryManager.js"></script>
     <!-- Ajout des nouveaux scripts -->
-    <script src="previewMode.js"></script>
-    <script src="unsavedChangesAlert.js"></script>
+    <script src="js/previewMode.js"></script>
+    <script src="js/unsavedChangesAlert.js"></script>
     <!-- Menus déroulants de la barre d'action + onglets de sortie GIFT/XML -->
-    <script src="actionMenu.js"></script>
+    <script src="js/actionMenu.js"></script>
     <!-- Formulaire « Signaler un bug » (modale → mailto) -->
-    <script src="bugReport.js"></script>
+    <script src="js/bugReport.js"></script>
 </body>
 </html>
