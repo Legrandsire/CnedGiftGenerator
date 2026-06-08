@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="styles.css">
     <!-- Ajout du fichier CSS d'aide -->
     <link rel="stylesheet" href="helpStyles.css">
+    <!-- Styles de la visite guidée (module tourManager.js) -->
+    <link rel="stylesheet" href="tourStyles.css">
     <!-- Ajout du fichier CSS pour le résumé des questions -->
     <link rel="stylesheet" href="summaryStyles.css">
     <!-- Ajout du fichier CSS pour le mode prévisualisation -->
@@ -58,11 +60,11 @@
             <div class="metadata-section">
                 <h3>Informations sur l'auteur</h3>
                 <div class="form-group">
-                    <label for="author-lastname">Nom de l'auteur:</label>
+                    <label for="author-lastname">Nom de l'auteur :</label>
                     <input type="text" id="author-lastname" placeholder="Entrez le nom de l'auteur">
                 </div>
                 <div class="form-group">
-                    <label for="author-firstname">Prénom de l'auteur:</label>
+                    <label for="author-firstname">Prénom de l'auteur :</label>
                     <input type="text" id="author-firstname" placeholder="Entrez le prénom de l'auteur">
                 </div>
             </div>
@@ -70,7 +72,7 @@
             <div class="metadata-section">
                 <h3>Chargé d'ingénierie de formation</h3>
                 <div class="form-group">
-                    <label for="course-code">Code article:</label>
+                    <label for="course-code">Code article :</label>
                     <input type="text" id="course-code" placeholder="Entrez le code article">
                 </div>
             </div>
@@ -189,6 +191,7 @@
                 <div class="version">
                     <p>V. W. G. Grandsire</p>
                     <p id="app-version"></p>
+                    <p id="network-status" class="network-status" title="Cet outil fonctionne sans connexion Internet."></p>
                 </div>
                 <div class="copyright">
                     <p>© 2026 CNED</p>
@@ -209,7 +212,8 @@
     <script src="confirmDialog.js"></script>
     <script src="richTextEditor.js"></script>
     <script src="core.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- JSZip 3.10.1 — hébergé en local (vendor/) pour un fonctionnement 100 % hors-ligne, y compris en ouverture directe file:// -->
+    <script src="vendor/jszip.min.js"></script>
     <script src="mediaManager.js"></script>
     <script src="optionManager.js"></script>
     <script src="categoryManager.js"></script>
@@ -222,7 +226,8 @@
     <script src="exportPrintable.js"></script>
     <!-- Ajout des scripts d'aide -->
     <script src="helpManager.js"></script>
-    <script src="advancedTourFeatures.js"></script>
+    <!-- Visite guidée (module dédié, remplace l'ancien advancedTourFeatures.js) -->
+    <script src="tourManager.js"></script>
     <!-- Ajout du script pour le résumé des questions -->
     <script src="summaryManager.js"></script>
     <!-- Ajout des nouveaux scripts -->

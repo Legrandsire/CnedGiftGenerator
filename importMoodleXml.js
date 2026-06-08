@@ -518,6 +518,13 @@
         const generateBtn = document.getElementById('generate-btn');
         if (generateBtn) generateBtn.click();
 
+        // Si la prévisualisation était active, ré-appliquer son rendu aux
+        // questions importées (sinon elles restent éditables sous l'habillage
+        // preview tant qu'on n'a pas rebasculé manuellement — retour utilisateur).
+        if (typeof window.refreshPreviewMode === 'function') {
+            window.refreshPreviewMode();
+        }
+
         // Compte rendu.
         if (successCount === 0) {
             notify.error('Aucune question exploitable n\'a pu être importée depuis ce fichier XML.');

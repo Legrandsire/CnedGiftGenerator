@@ -101,10 +101,22 @@ function initOutputTabs() {
         });
     });
 
-    // Générer le GIFT → afficher l'onglet GIFT (le code vient d'y être écrit).
+    // Bouton « Générer » : produit les DEUX formats d'un coup (retour
+    // utilisateur — il ne générait que le GIFT). Le GIFT est écrit par le
+    // gestionnaire de core.js (generateGIFTCode) ; on remplit ici aussi la zone
+    // Moodle XML pour que l'onglet correspondant soit prêt, puis on affiche
+    // l'onglet GIFT par défaut.
     const generateBtn = document.getElementById('generate-btn');
+    const xmlOutputForGen = document.getElementById('xml-output');
     if (generateBtn) {
         generateBtn.addEventListener('click', function () {
+            if (xmlOutputForGen && typeof generateMoodleXmlCode === 'function' &&
+                document.querySelectorAll('.question-container').length > 0) {
+                // Sans embarquement base64 (lisibilité de la zone ; le
+                // téléchargement .xml embarque les médias, lui).
+                const xml = generateMoodleXmlCode();
+                if (xml && xml.trim()) xmlOutputForGen.value = xml;
+            }
             switchOutputTab('gift');
         });
     }
@@ -152,6 +164,7 @@ function switchOutputTab(name) {
     });
 }
 
-// Exposition globale (utilisée par d'autres modules / le clavier).
+// Exposition globale (utilisée par d'autres modules / le clavier / la visite guidée).
 window.switchOutputTab = switchOutputTab;
 window.closeAllDropdowns = closeAllDropdowns;
+window.openDropdown = openDropdown;

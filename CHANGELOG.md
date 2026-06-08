@@ -11,6 +11,68 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.23.0] — 2026-06-07
+
+### Ajouté
+- **Mode hors-ligne** : l'outil fonctionne désormais **sans connexion Internet**,
+  y compris en ouverture directe `file://`.
+  - **JSZip hébergé en local** (`vendor/jszip.min.js`, version 3.10.1) au lieu du
+    CDN cdnjs : plus aucune dépendance réseau à l'exécution. L'export ZIP est
+    inchangé.
+  - **Indicateur d'état réseau** discret en pied de page (« ● En ligne » turquoise /
+    « ● Hors-ligne » gris), mis à jour en temps réel (`navigator.onLine` +
+    événements `online`/`offline`).
+  - Mention **« Fonctionne sans connexion »** ajoutée à l'aide (onglet Général).
+- **Visite guidée refondue** — nouveau module dédié **`tourManager.js`** (+
+  `tourStyles.css`) :
+  - Parcours **complet** couvrant tout le flux actuel : métadonnées, import,
+    banques de questions, ajout de question, type, éditeur enrichi, média,
+    feedback combiné, sommaire, génération, **menus GIFT / Moodle / Document**,
+    **onglets de sortie GIFT/XML**, prévisualisation, **Contact** et aide.
+  - **Ouverture automatique des menus déroulants** pour les étapes dont la cible
+    se trouve à l'intérieur (refermés au changement d'étape et en fin de visite).
+- Le bouton **« Générer »** produit désormais **les deux formats d'un coup** :
+  le code GIFT **et** le code Moodle XML (l'onglet « Code Moodle XML » est prêt
+  sans cliquer « Générer & visualiser »).
+
+### Modifié
+- **Visite guidée plus robuste** (retours utilisateur) :
+  - **Encadré précis** : défilement **instantané** + mesure différée (double
+    `requestAnimationFrame`) au lieu d'un défilement animé qui faussait la mesure ;
+    suppression de la transition géométrique de la surbrillance (plus de
+    « traînage »). L'encadré se cale exactement sur la cible.
+  - **Sortie automatique de la prévisualisation** au lancement de la visite (elle
+    masque/transforme des éléments) → toutes les étapes fonctionnent, y compris
+    quand des questions sont déjà créées ou importées.
+  - **Repositionnement au défilement et au redimensionnement** (sans reconstruire
+    l'infobulle).
+  - Positionnement déjà fiabilisé : coordonnées viewport (`position: fixed`),
+    **clamp sur les deux axes**, bascule de côté près des bords, infobulle
+    **au-dessus** de la pile de boutons fixes (Aide / Prévisualiser / Contact).
+- Visite guidée passée d'un dispositif **dupliqué** (`startGuidedTour` dans
+  `helpManager.js` + `enhancedGuidedTour` orphelin) à un **module unique**
+  explicatif. `helpManager.js` ne gère plus que le panneau d'aide et les tooltips.
+
+### Corrigé
+- **Import en mode prévisualisation** : importer un fichier GIFT/XML pendant que
+  la prévisualisation est active affiche désormais **directement** le contenu en
+  preview, au lieu de rendre les champs éditables sous l'habillage preview
+  jusqu'à un rebascule manuel (`refreshPreviewMode()` ré-applique le rendu sans
+  clignotement).
+- **Nom de banque modifiable en prévisualisation** : le champ « Nom » des banques
+  (existantes comme nouvelles) est désormais réellement non modifiable en preview —
+  présenté comme un **texte statique** (ni bordure, ni fond, non focalisable via
+  souris ou clavier : `readOnly` + `tabindex=-1` + `pointer-events:none`). Les
+  boutons de création/repli de banque sont en outre masqués en preview.
+- **Prévisualisation** : suppression de la petite **flèche « ↳ »** devant le
+  feedback d'une réponse.
+
+### Supprimé
+- **`advancedTourFeatures.js`** (tour « démo » orphelin, jamais appelé) et ses
+  démonstrations animées (saisie auto, faux clics).
+
+---
+
 ## [0.22.1] — 2026-06-07
 
 ### Modifié

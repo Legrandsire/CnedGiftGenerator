@@ -275,8 +275,8 @@ body.preview-mode .question-even .preview-question-type {
     color: #666;
 }
 
-/* Feedback d'une option — épuré : texte en retrait préfixé « ↳ », sans cadre
-   ni fond. */
+/* Feedback d'une option — épuré : texte en retrait, sans cadre ni fond ni
+   préfixe (la flèche « ↳ » a été retirée à la demande de l'utilisateur). */
 .preview-option-feedback {
     width: 100%;
     margin-top: 1px;
@@ -285,11 +285,6 @@ body.preview-mode .question-even .preview-question-type {
     font-size: 0.86em;
     line-height: 1.35;
     font-style: italic;
-}
-.preview-option-feedback::before {
-    content: "↳ ";
-    font-style: normal;
-    color: #aab4bd;
 }
 
 /* Styles spécifiques pour questions Vrai/Faux — en ligne, sans filet de
@@ -475,4 +470,19 @@ body.preview-mode .question-even .preview-question-text {
         margin-left: 0;
         width: 100%;
     }
+}
+
+/* ── Nom de banque en prévisualisation ────────────────────────────────────────
+   Le champ est mis en lecture seule par JS (previewMode.js), mais son apparence
+   de champ de saisie (bordure, fond blanc, anneau de focus) laissait croire
+   qu'il restait modifiable et permettait de le focaliser. On le rend ici inerte
+   et présenté comme un simple texte : ni bordure, ni fond, non focalisable. */
+.preview-readonly-bankname {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    padding-left: 0;
+    cursor: default;
+    pointer-events: none; /* empêche clic/focus → aucune interaction possible */
 }

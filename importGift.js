@@ -431,6 +431,13 @@ if (Object.keys(mediaFiles).length > 0) {
             if (generateBtn) {
                 generateBtn.click();
             }
+
+            // Si la prévisualisation était active, ré-appliquer son rendu aux
+            // questions fraîchement importées (sinon elles s'affichent éditables
+            // sous l'habillage preview — retour utilisateur).
+            if (typeof window.refreshPreviewMode === 'function') {
+                window.refreshPreviewMode();
+            }
         } catch (error) {
             console.error('Erreur lors de l\'import:', error);
             notify.error('Une erreur s\'est produite lors de l\'importation du fichier GIFT.');

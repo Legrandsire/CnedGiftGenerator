@@ -625,6 +625,22 @@ textarea {
     line-height: 1.5;
 }
 
+/* Indicateur d'état réseau (mode hors-ligne) — discret, sous la version */
+.network-status {
+    margin: 2px 0 0;
+    font-size: 0.8em;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+}
+
+.network-status.is-online {
+    color: #2da288; /* turquoise CNED */
+}
+
+.network-status.is-offline {
+    color: #8a8f98; /* gris discret : hors-ligne est un état normal, non une erreur */
+}
+
 .footer a {
     color: #005EB8;
     text-decoration: none;

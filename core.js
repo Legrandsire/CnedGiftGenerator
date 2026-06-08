@@ -1,5 +1,5 @@
 // Variables globales partagées entre les fichiers
-const APP_VERSION = '0.22.1';
+const APP_VERSION = '0.23.0';
 let questionCounter = 0;
 
 // ── Orchestrateur d'initialisation centralisé ([A2]) ────────────────────────
@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Injection de la version dans le pied de page
     const versionEl = document.getElementById('app-version');
     if (versionEl) versionEl.textContent = 'Version ' + APP_VERSION;
+    // Indicateur d'état réseau (l'outil fonctionne hors-ligne)
+    initNetworkStatusIndicator();
     // Éléments DOM principaux
     const questionsContainer = document.getElementById('questions-container');
     const addQuestionBtn = document.getElementById('add-question-btn');
@@ -93,3 +95,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// ── Indicateur d'état réseau (mode hors-ligne) ──────────────────────────────
+/**
+ * Affiche dans le pied de page un indicateur discret « ● En ligne / ● Hors-ligne »,
+ * mis à jour en temps réel via les événements `online`/`offline` du navigateur.
+ * L'outil étant entièrement local (aucune dépendance réseau à l'exécution depuis
+ * que JSZip est hébergé en local), il reste pleinement utilisable hors-ligne :
+ * l'indicateur est purement informatif et rassure l'utilisateur.
+ * @returns {void}
+ */
+function initNetworkStatusIndicator() {
+    const statusEl = document.getElementById('network-status');
+    if (!statusEl) return;
+
+    /** Met à jour le libellé et la classe selon l'état de connexion. */
+    function refresh() {
+        const online = navigator.onLine;
+        statusEl.textContent = online ? '● En ligne' : '● Hors-ligne';
+        statusEl.classList.toggle('is-online', online);
+        statusEl.classList.toggle('is-offline', !online);
+    }
+
+    refresh();
+    window.addEventListener('online', refresh);
+    window.addEventListener('offline', refresh);
+}

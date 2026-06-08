@@ -22,6 +22,109 @@
 
 ---
 
+## 2026-06-08 — Correctifs preview/génération + visite guidée plus robuste (0.23.0, non publiée)
+
+- **Objectif** : retours utilisateur sur la 0.23.0 (encore non commitée/taggée) —
+  corriger plusieurs désagréments et fiabiliser la visite guidée.
+- **Visite guidée — robustesse** (`tourManager.js`, `tourStyles.css`) :
+  - Encadrés imprécis → **défilement instantané** (`behavior: 'auto'`) + mesure
+    en **double `requestAnimationFrame`** (l'ancien `smooth` + `setTimeout(350)`
+    mesurait en plein défilement). **Transition géométrique retirée** de
+    `.tour-target-highlight` (plus de « traînage »).
+  - **Sortie auto de la preview** au démarrage (`isPreviewModeActive` →
+    `togglePreviewMode`) : la preview masquait/transformait des cibles → parcours
+    cassé, surtout avec questions importées.
+  - **Repositionnement au scroll + resize** throttlé en rAF ; séparation
+    `renderTooltip` (contenu, 1×/étape) / `position` (géométrie, rappelable).
+- **Preview — correctifs** (`previewMode.js`, `previewStyles.css`) :
+  - Nouvelle fonction **`refreshPreviewMode()`** (restore + apply, synchrone)
+    exposée et appelée en fin d'**import GIFT et XML** (`importGift.js`,
+    `importMoodleXml.js`) → l'import en preview affiche directement le contenu.
+  - **Boutons de banque** (`#add-bank-btn`, `#toggle-all-banks-btn`) masqués en
+    preview → plus de banque créable au nom éditable.
+  - **Nom de banque (existantes)** : le `readOnly` seul laissait le champ
+    *paraître* éditable (bordure, fond, focus) — voire focalisable. Corrigé en le
+    rendant **statique et inerte** : `readOnly` + `tabIndex=-1` +
+    `pointer-events:none` et style sans bordure/fond (`previewStyles.css`,
+    `.preview-readonly-bankname`), restauré à la sortie.
+  - **Flèche « ↳ »** du feedback d'option supprimée (`.preview-option-feedback::before`).
+- **Génération** (`actionMenu.js`) : le bouton **« Générer »** remplit aussi la
+  zone **Moodle XML** (via `generateMoodleXmlCode`, sans base64), en plus du GIFT ;
+  garde sur `.question-container.length > 0` pour éviter une double notification
+  d'erreur quand il n'y a pas de question.
+- **Fichiers** : `tourManager.js`, `tourStyles.css`, `previewMode.js`,
+  `previewStyles.css`, `actionMenu.js`, `importGift.js`, `importMoodleXml.js`,
+  `CHANGELOG.md`, `DEVLOG.md`.
+- **Décisions** : tout consolidé dans **0.23.0** (jamais publiée) plutôt qu'un
+  nouveau numéro ; visite = pas de restauration de la preview en fin de tour
+  (le tour décrit l'édition, on reste en édition).
+- **Tests** : suite `tests/tests.html` **inchangée (74)** — modules concernés non
+  chargés par le harnais. `node --check` OK sur les 5 JS modifiés.
+- **En suspens / à valider (navigateur)** : visite guidée (encadrés précis aux 4
+  bords, départ depuis preview, longue page avec questions importées) ; import
+  GIFT/XML en preview ; nom de banque non éditable ; bouton Générer remplissant
+  les 2 onglets ; flèche « ↳ » disparue.
+- **Tag Git proposé (non exécuté)** : `v0.23.0` (englobe ces correctifs).
+- **Version** : 0.23.0 (inchangée — consolidation avant publication).
+
+---
+
+## 2026-06-07 (suite 5) — Mode hors-ligne + refonte de la visite guidée (0.23.0)
+
+- **Objectif** : deux chantiers UI/UX menés l'un après l'autre.
+  1. **Hors-ligne** : rendre l'outil utilisable sans connexion (utilisateurs non
+     techniciens), la seule dépendance réseau étant JSZip via CDN.
+  2. **Visite guidée** : incomplète depuis l'ajout de fonctionnalités et buguée
+     graphiquement (infobulle masquant des boutons) ; deux implémentations
+     coexistaient (dont une orpheline).
+- **Choix validés (AskUserQuestion)** : (1a) vendoring JSZip **+ indicateur**
+  d'état réseau ; (1c) dossier **`vendor/`** ; (2a) parcours **complet** ; (2b)
+  tour **explicatif** (sans démos animées) ; (2c) extraction dans **`tourManager.js`** ;
+  versionnage = **une seule MINOR 0.23.0**.
+- **Réalisé — Chantier 1 (hors-ligne)** :
+  - JSZip 3.10.1 téléchargé dans **`vendor/jszip.min.js`** ; `index.html` pointe
+    dessus (plus de cdnjs). Export ZIP inchangé (même global `JSZip`).
+  - **Indicateur réseau** en pied de page : `#network-status` (index.html) +
+    `initNetworkStatusIndicator()` (core.js, événements `online`/`offline`) +
+    styles `.network-status` (styles.css). Sortie défensive si l'élément est
+    absent (cas de `tests.html`).
+  - Ligne d'aide « ✈️ Fonctionne sans connexion » (helpManager.js, onglet Général).
+- **Réalisé — Chantier 2 (visite guidée)** :
+  - Nouveau **`tourManager.js`** + **`tourStyles.css`**. 17 étapes couvrant tout
+    le flux (métadonnées → … → menus/onglets → preview → Contact → aide).
+  - **Positionnement réécrit** : `position: fixed` (coordonnées viewport), clamp
+    X **et** Y, `chooseSide`/`anchorFor` (bascule de côté), z-index 1601 (au-dessus
+    de la pile fixe), repositionnement au `resize`, garde « cible introuvable → skip ».
+  - **Ouverture auto des menus** via `openMenu` par étape (expose `openDropdown`
+    depuis actionMenu.js ; ferme avec `closeAllDropdowns`).
+  - `checkFirstVisit()` déplacé de helpManager.js vers tourManager.js (sa propre
+    entrée `APP_INIT`). **`advancedTourFeatures.js` supprimé** (`git rm`) + retrait
+    des blocs de tour de `helpStyles.css`.
+- **Fichiers** : `core.js` (0.22.1 → 0.23.0 + indicateur), `index.html` (script
+  JSZip local, `<script>`/`<link>` tour, `#network-status`), `styles.css`,
+  `helpManager.js` (allégé), `actionMenu.js` (expose `openDropdown`), `helpStyles.css`
+  (blocs tour retirés), `CHANGELOG.md`, `ROADMAP.md`, `CLAUDE.md`. **Nouveaux** :
+  `vendor/jszip.min.js`, `tourManager.js`, `tourStyles.css`. **Supprimé** :
+  `advancedTourFeatures.js`.
+- **Décisions techniques** :
+  - Indicateur réseau dans `core.js` (init/footer, pas de domaine dédié justifiant
+    un fichier) ; hors-ligne traité en gris (état normal, pas une erreur).
+  - Tour en `position: fixed` : la mesure `getBoundingClientRect()` est
+    viewport-relative → clamp trivial, plus de calcul de `scrollTop`.
+  - Étapes pointant des items de menu : on vise le **déclencheur** et on ouvre le
+    menu (cible toujours présente, même repliée).
+- **Tests** : suite `tests/tests.html` **inchangée (74)** — ni JSZip ni les
+  modules d'aide/tour n'y sont chargés ; l'ajout dans `core.js` est neutre hors
+  `#network-status`. Syntaxe Node (`node --check`) validée sur core/actionMenu/
+  helpManager/tourManager.
+- **En suspens / à valider** : ouvrir `tests/tests.html` (confirmer 74 verts) ;
+  valider au navigateur l'export ZIP en `file://`, l'indicateur réseau, et la
+  visite guidée complète (positionnement aux 4 bords, ouverture des menus).
+- **Tag Git proposé (non exécuté)** : `v0.23.0`.
+- **Version** : 0.23.0 (MINOR — deux fonctionnalités rétrocompatibles).
+
+---
+
 ## 2026-06-07 (suite 4) — Prévisualisation épurée (0.22.1)
 
 - **Objectif** : retour utilisateur après 0.22.0 — la preview était jugée

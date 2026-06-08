@@ -27,6 +27,8 @@
 | 8 | Médias dans l'export/import **XML** (base64) | n/a (XML) | Moyen | 8 | `[x]` 0.19.0 |
 | 9 | Refonte du mode prévisualisation + correctif chevauchement flèches/ID | n/a (UI) | Faible | 6 | `[x]` 0.22.0 |
 | 10 | Refonte UI/UX globale (preview, menus, onglets XML, RTF, responsive, bug, favicon, renommage) | n/a (UI) | Élevé | 6 | `[x]` 0.22.0 |
+| 11 | Mode hors-ligne (vendoring JSZip + indicateur réseau) | n/a (local) | Faible | 6 | `[x]` 0.23.0 |
+| 12 | Refonte de la visite guidée (module dédié, parcours complet, positionnement) | n/a (UI) | Moyen | 6 | `[x]` 0.23.0 |
 | Q | Qualité continue (confirm/alert, tests) | — | Faible | continu | `[~]` |
 
 ---
@@ -365,6 +367,36 @@ déplacement ↑/↓** se **superposent à l'identifiant** de la question.
 `previewStyles.css` ; éventuellement réemploi de `printStyles.css`.
 
 **Origine.** Signalé lors de la relecture du chantier n°4 (session 2026-06-07).
+
+---
+
+## 11. Mode hors-ligne — `[x]` livré en 0.23.0
+
+> **Livré** dans la session du 2026-06-07 (0.23.0). La seule dépendance réseau à
+> l'exécution (JSZip via CDN cdnjs) est désormais **hébergée en local**
+> (`vendor/jszip.min.js`, v3.10.1) ; `index.html` pointe dessus. L'outil
+> fonctionne **100 % hors-ligne**, y compris en ouverture directe `file://`.
+> Ajout d'un **indicateur d'état réseau** discret en pied de page
+> (`initNetworkStatusIndicator()` dans `core.js`, événements `online`/`offline`)
+> et d'une mention « Fonctionne sans connexion » dans l'aide. **Pas de PWA/service
+> worker** (inadapté à l'usage `file://` documenté). Choix validés
+> (AskUserQuestion) : vendoring + indicateur, dossier `vendor/`.
+
+---
+
+## 12. Refonte de la visite guidée — `[x]` livré en 0.23.0
+
+> **Livré** dans la session du 2026-06-07 (0.23.0). Nouveau module dédié
+> **`tourManager.js`** (+ `tourStyles.css`) remplaçant le dispositif dupliqué
+> (`startGuidedTour` dans `helpManager.js` + `enhancedGuidedTour` orphelin dans
+> `advancedTourFeatures.js`, **supprimé**). Parcours **complet** (17 étapes)
+> couvrant tout le flux actuel (banques, menus GIFT/Moodle/Document, onglets de
+> sortie, exports, Contact, prévisualisation…). Tour **explicatif** (sans démos
+> animées). **Positionnement fiabilisé** : `position: fixed`, clamp X/Y, bascule
+> de côté près des bords, z-index au-dessus de la pile de boutons fixes,
+> **ouverture automatique des menus déroulants** pour les étapes concernées.
+> Choix validés (AskUserQuestion) : parcours complet, style explicatif, extraction
+> dans `tourManager.js`, version unique 0.23.0.
 
 ---
 

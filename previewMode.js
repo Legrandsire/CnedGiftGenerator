@@ -126,6 +126,13 @@ function hideEditingElements() {
     if (addQuestionSection) {
         addQuestionSection.classList.add('preview-hidden');
     }
+
+    // Cacher les boutons de création/repli de banque : on ne crée pas de banque
+    // en preview (sinon son champ « Nom » apparaît éditable — retour utilisateur).
+    ['add-bank-btn', 'toggle-all-banks-btn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.add('preview-hidden');
+    });
     
     // Cacher les sélecteurs de type de question
     document.querySelectorAll('.radio-group').forEach(group => {
@@ -177,9 +184,12 @@ function hideEditingElements() {
         actions.classList.add('preview-hidden');
     });
 
-    // Rendre le nom de banque non modifiable en preview (sans le masquer).
+    // Rendre le nom de banque non modifiable en preview (sans le masquer) :
+    // lecture seule + hors séquence de tabulation. La classe associée le rend
+    // aussi visuellement statique et non focalisable (cf. previewStyles.css).
     document.querySelectorAll('.bank-name').forEach(nameInput => {
         nameInput.readOnly = true;
+        nameInput.tabIndex = -1;
         nameInput.classList.add('preview-readonly-bankname');
     });
 }
@@ -202,6 +212,7 @@ function showEditingElements() {
     // Rendre à nouveau modifiables les noms de banque figés en preview.
     document.querySelectorAll('.preview-readonly-bankname').forEach(nameInput => {
         nameInput.readOnly = false;
+        nameInput.removeAttribute('tabindex');
         nameInput.classList.remove('preview-readonly-bankname');
     });
 }
@@ -828,8 +839,26 @@ function getQuestionTypeLabel(questionType) {
     }
 }
 
+/**
+ * Ré-applique le rendu de prévisualisation si le mode est actif. À appeler après
+ * toute opération qui reconstruit le DOM des questions hors de la preview
+ * (notamment un IMPORT GIFT/XML) : sans cela, les nouveaux champs s'affichent
+ * éditables sous l'habillage preview tant qu'on n'a pas rebasculé manuellement
+ * (retour utilisateur). L'opération est SYNCHRONE (restauration puis ré-application
+ * dans la même tâche) donc sans clignotement visible.
+ * @returns {void}
+ */
+function refreshPreviewMode() {
+    if (!window.isPreviewMode) return;
+    // Repartir d'un état d'édition propre (retire les éléments preview-display,
+    // réaffiche les champs masqués, lève les readOnly), puis re-transformer tout.
+    restoreEditMode();
+    applyPreviewMode();
+}
+
 // Exposer les fonctions principales dans l'espace global pour permettre leur utilisation depuis d'autres scripts
 window.togglePreviewMode = togglePreviewMode;
+window.refreshPreviewMode = refreshPreviewMode;
 window.isPreviewModeActive = function() {
     return window.isPreviewMode || false;
 };

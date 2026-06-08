@@ -28,7 +28,7 @@ La spécification fonctionnelle complète se trouve dans **`Spec.md`**.
 | Frontend | HTML / CSS / JavaScript **vanilla** | **Aucun framework** (ni React, ni Vue, etc.) |
 | Modules JS | Scripts classiques chargés par `<script>` | **Pas de modules ES6** (`import`/`export`) — portée globale via `window` |
 | Build | Aucun | Ouverture directe de `index.html`, pas de compilation |
-| Dépendance externe | JSZip (CDN) | Seule dépendance autorisée sans validation |
+| Dépendance externe | JSZip 3.10.1, **hébergée en local** (`vendor/jszip.min.js`) | Seule dépendance autorisée sans validation. **Plus de CDN** → fonctionnement 100 % hors-ligne, y compris en `file://` |
 | Persistance | `localStorage` | Usage léger uniquement (ex. première visite) |
 
 L'ordre de chargement des `<script>` dans `index.html` **est significatif** :
@@ -60,8 +60,8 @@ domaine fonctionnel précis.
 | `importMoodleXml.js` | Import **Moodle XML** (`DOMParser`) : mapping inverse des 5 types, feedback combiné, `<usecase>`/`<tolerance>`, médias base64 |
 | `downloadManager.js` | Téléchargement `.txt` et `.zip` |
 | `exportPrintable.js` | Export **lisible** pour relecture humaine : **PDF** (impression `window.print()`), **RTF** (.rtf) et **HTML** autonome. Fonction partagée `readQuestionState()`. N'altère ni le GIFT ni le XML |
-| `helpManager.js` | Panneau d'aide, tooltips, tour guidé |
-| `advancedTourFeatures.js` | Fonctionnalités avancées du tour guidé |
+| `helpManager.js` | Panneau d'aide latéral et tooltips contextuels (la visite guidée a été extraite vers `tourManager.js`) |
+| `tourManager.js` | **Visite guidée** (module dédié, remplace l'ancien `advancedTourFeatures.js`) : parcours **explicatif** complet, positionnement clampé dans le viewport, ouverture auto des menus déroulants, proposition « première visite » (`checkFirstVisit`) |
 | `summaryManager.js` | Résumé des questions et navigation |
 | `previewMode.js` | Mode prévisualisation (lecture seule) : rendu compact, bonnes réponses en **bleu** / mauvaises en **rouge**, feedback combiné et média affichés en lecture seule, contrôles d'édition masqués |
 | `actionMenu.js` | **Menus déroulants** de la barre d'action (GIFT / Moodle / Document) + **onglets de sortie** GIFT/XML (`switchOutputTab`). Ne fait que l'UI : les boutons conservent leurs identifiants et leur câblage |
@@ -75,7 +75,14 @@ sections repliables, badges `B<NN>`, sélecteur de banque), `printStyles.css`
 (export lisible — règles scopées sous `.printable-doc`, inlinées dans le document
 généré par `exportPrintable.js`), `actionMenuStyles.css` (menus déroulants +
 onglets de sortie), `bugReportStyles.css` (bouton et modale de signalement de
-bug) — un fichier par domaine, en cohérence avec le découpage JS.
+bug), `tourStyles.css` (visite guidée : surcouche, surbrillance, infobulle
+positionnée en `fixed` au-dessus de la pile de boutons fixes) — un fichier par
+domaine, en cohérence avec le découpage JS.
+
+**Dépendances tierces** : le dossier `vendor/` héberge les bibliothèques
+externes non modifiées (actuellement `vendor/jszip.min.js`, JSZip 3.10.1). Aucun
+appel réseau à l'exécution → l'outil fonctionne **100 % hors-ligne**, y compris
+en ouverture directe `file://`.
 
 **Règle d'or** : une nouvelle fonctionnalité va dans le fichier dont c'est la
 responsabilité. Si elle ne rentre dans aucun, proposer un nouveau fichier dédié
