@@ -22,6 +22,22 @@
 
 ---
 
+## 2026-06-09 — Correctif logo CNED de l'en-tête (0.25.1)
+
+- **Objectif** : le logo CNED ne s'affichait plus dans le bandeau de
+  l'application.
+- **Cause** : reliquat de la réorganisation v0.25.0. Le favicon avait bien été
+  repointé vers `assets/images/`, mais le `<img>` du bandeau d'en-tête est resté
+  sur l'ancien chemin `images/CNED_Logo_RVB_HD.PNG` → image cassée.
+- **Réalisé** : correction du `src` en `assets/images/CNED_Logo_RVB_HD.PNG`
+  ([index.html:36]). Grep de contrôle → aucune autre référence orpheline à
+  `images/` (CSS/JS inclus).
+- **En suspens** : rien. Rafraîchissement forcé (`Ctrl+F5`) conseillé côté
+  utilisateur pour vider le cache navigateur.
+- **Version** : 0.25.1 (PATCH — correctif sans nouvelle fonctionnalité).
+
+---
+
 ## 2026-06-08 (suite 3) — Réorganisation de l'arborescence (0.25.0)
 
 - **Objectif** : classer les modules (jusqu'ici tous à la racine, ~50 fichiers)

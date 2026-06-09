@@ -11,6 +11,17 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.25.1] — 2026-06-09
+
+### Corrigé
+- **Logo CNED de l'en-tête non affiché** : le chemin de l'image (`<img>` du
+  bandeau) était resté sur l'ancien dossier `images/…` après la réorganisation
+  v0.25.0, alors que le fichier a été déplacé dans `assets/images/`. Chemin
+  corrigé en `assets/images/CNED_Logo_RVB_HD.PNG` (le favicon, déjà correct,
+  n'était pas concerné).
+
+---
+
 ## [0.25.0] — 2026-06-08
 
 ### Modifié
