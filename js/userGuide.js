@@ -120,7 +120,7 @@ function buildUserGuideBody() {
     return `
     <section>
         <h2>1. Présentation et démarrage rapide</h2>
-        <p><strong>CNED Quiz Builder</strong> crée des questions pour Moodle et autres LMS,
+        <p><strong>Quiz Builder</strong> crée des questions pour Moodle et autres LMS,
         aux formats <strong>GIFT</strong> et <strong>Moodle&nbsp;XML</strong>, ainsi que des
         documents lisibles (PDF/RTF/HTML). Outil <strong>100&nbsp;% local</strong> : aucune
         donnée n'est transmise, et il <strong>fonctionne sans connexion</strong>.</p>
@@ -184,7 +184,7 @@ function buildUserGuideBody() {
         </table>
         <h3>Éditeur de texte enrichi</h3>
         <p>Sur l'énoncé et les rétroactions : <strong>gras</strong>, <em>italique</em>, souligné,
-        exposant et indice. La <strong>typographie CNED</strong> (espaces insécables, guillemets)
+        exposant et indice. La <strong>typographie française</strong> (espaces insécables, guillemets)
         est appliquée automatiquement à la génération.</p>
         <h3>Média</h3>
         <p><strong>« Ajouter un média »</strong> joint une image, un son ou une vidéo à la question.
@@ -256,9 +256,9 @@ function getCnedLogoSrc() {
     const existing = document.querySelector('img.logo');
     if (existing && existing.src) return existing.src;
     try {
-        return new URL('assets/images/CNED_Logo_RVB_HD.PNG', document.baseURI).href;
+        return new URL('assets/images/logo.png', document.baseURI).href;
     } catch (e) {
-        return 'assets/images/CNED_Logo_RVB_HD.PNG';
+        return 'assets/images/logo.png';
     }
 }
 
@@ -278,17 +278,17 @@ function openUserGuide() {
     const html =
         '<!DOCTYPE html>\n<html lang="fr"><head><meta charset="UTF-8">' +
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-        '<title>Guide d\'utilisation — CNED Quiz Builder</title>' +
+        '<title>Guide d\'utilisation — Quiz Builder</title>' +
         `<style>\n${USER_GUIDE_CSS}\n</style></head><body><div class="guide">` +
         '<header class="guide-header">' +
-            `<img class="guide-logo" src="${logoSrc}" alt="Logo CNED">` +
-            '<h1 class="guide-title">CNED Quiz Builder</h1>' +
+            `<img class="guide-logo" src="${logoSrc}" alt="Logo">` +
+            '<h1 class="guide-title">Quiz Builder</h1>' +
             '<p class="guide-subtitle">Guide d\'utilisation — Générateur GIFT &amp; Moodle XML</p>' +
             `<p class="guide-meta"><span>Version ${version}</span>` +
             `<span>Édité le ${date}</span></p>` +
         '</header>' +
         buildUserGuideBody() +
-        `<footer>CNED Quiz Builder — version ${version} · Document généré pour impression / PDF · ` +
+        `<footer>Quiz Builder — version ${version} · Document généré pour impression / PDF · ` +
         'Outil 100&nbsp;% local, fonctionne sans connexion.</footer>' +
         '</div>' +
         '<script>window.onload=function(){setTimeout(function(){window.focus();window.print();},250);};<\/script>' +

@@ -11,6 +11,24 @@ et le projet adhère au [versionnage sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [0.25.2] — 2026-06-12
+
+### Modifié
+- **Retrait provisoire de la marque CNED dans l'interface** : nom de
+  l'application devenu « Quiz Builder » (titre d'onglet, bandeau, guide
+  d'utilisation, objet du courriel de contact, pied de page « © 2026 »),
+  « typographie CNED » reformulée en « typographie française » (visite guidée,
+  guide), infobulle du bouton PDF sans « charte CNED ». Le code couleur
+  (turquoise/rose) est conservé. Les commentaires internes du code ne sont pas
+  concernés (retour en arrière facilité).
+- **Logo** : le favicon, le bandeau d'en-tête et le guide pointent désormais
+  vers `assets/images/logo.png` (monogramme personnel, à déposer) ; l'ancien
+  fichier `CNED_Logo_RVB_HD.PNG` reste dans le dépôt pour restauration.
+- **Adresse du formulaire de contact** : `vincent.grandsire@ac-cned.fr` →
+  `Vincent.grandsire@outlook.com`.
+
+---
+
 ## [0.25.1] — 2026-06-09
 
 ### Corrigé

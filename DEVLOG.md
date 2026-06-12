@@ -22,6 +22,30 @@
 
 ---
 
+## 2026-06-12 — Retrait provisoire de la marque CNED (0.25.2)
+
+- **Objectif** : enlever provisoirement toute mention du CNED visible dans
+  l'interface et remplacer le logo par le monogramme personnel fourni par
+  l'utilisateur, sans toucher au code couleur.
+- **Fichiers modifiés** : `index.html` (titre, favicon, bandeau, infobulle PDF,
+  pied de page), `js/userGuide.js` (titres, logo, « typographie française »),
+  `js/tourManager.js` (étape 7), `js/bugReport.js` (objet du mail + adresse
+  destinataire → `Vincent.grandsire@outlook.com`, validé), `js/core.js`
+  (version), `CHANGELOG.md`.
+- **Décisions** : retrait limité aux chaînes **visibles** ; les commentaires
+  internes mentionnant le CNED sont conservés pour faciliter la restauration
+  (changement annoncé comme provisoire). Toutes les références du logo pointent
+  vers un chemin neutre unique `assets/images/logo.png` ; l'ancien
+  `CNED_Logo_RVB_HD.PNG` reste dans `assets/images/`.
+- **En suspens** : **déposer l'image du monogramme sous
+  `assets/images/logo.png`** (l'agent ne peut pas extraire l'image jointe à la
+  conversation) — d'ici là, favicon et logo d'en-tête sont cassés. Tag Git
+  `v0.25.2` à poser après commit.
+- **Version** : 0.25.2 (PATCH — changement cosmétique, validé par
+  l'utilisateur).
+
+---
+
 ## 2026-06-09 — Correctif logo CNED de l'en-tête (0.25.1)
 
 - **Objectif** : le logo CNED ne s'affichait plus dans le bandeau de

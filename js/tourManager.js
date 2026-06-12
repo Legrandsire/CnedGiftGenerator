@@ -77,7 +77,7 @@ const TOUR_STEPS = [
     {
         selector: '.question-container .rte-toolbar',
         title: '7. Éditeur de texte enrichi',
-        content: 'Mettez l\'énoncé en forme : <strong>gras</strong>, <em>italique</em>, souligné, exposant et indice. La typographie CNED (espaces insécables, guillemets) est appliquée à la génération.',
+        content: 'Mettez l\'énoncé en forme : <strong>gras</strong>, <em>italique</em>, souligné, exposant et indice. La typographie française (espaces insécables, guillemets) est appliquée à la génération.',
         position: 'bottom'
     },
     {

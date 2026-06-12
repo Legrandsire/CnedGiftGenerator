@@ -13,8 +13,8 @@
  * Vanilla JS, portée globale via window. Aucun framework.
  */
 
-// Destinataire du formulaire de contact (CNED).
-const BUG_REPORT_EMAIL = 'vincent.grandsire@ac-cned.fr';
+// Destinataire du formulaire de contact.
+const BUG_REPORT_EMAIL = 'Vincent.grandsire@outlook.com';
 
 APP_INIT.push(function initBugReport() {
     createBugReportButton();
@@ -127,7 +127,7 @@ function sendBugReport(data) {
     const version = (typeof APP_VERSION !== 'undefined') ? APP_VERSION : '?';
 
     const fullName = `${data.firstname || ''} ${data.lastname || ''}`.trim();
-    const subject = `[Contact] CNED Quiz Builder v${version}` + (fullName ? ` — ${fullName}` : '');
+    const subject = `[Contact] Quiz Builder v${version}` + (fullName ? ` — ${fullName}` : '');
 
     const body =
         'Expéditeur :\n' +
